@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { Worker, TradeCategory } from '../../types';
 import type { Coordinates } from '../../utils/geo';
 import { calculateHaversineDistance, formatDistance } from '../../utils/geo';
@@ -25,10 +25,15 @@ import {
   Calendar,
   DollarSign,
   AlertCircle,
+  SlidersHorizontal,
+  BadgeCheck,
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
-import { OptionWheel } from '../../components/ui/OptionWheel';
 import { SquishSwitch } from '../../components/ui/SquishSwitch';
+import { PageHero } from '../../components/layout/PageHero';
+import './Seeker.css';
+
+type SortKey = 'distancia' | 'reputacion' | 'precio' | 'trabajos';
 
 interface SeekerDirectoryProps {
   workers: Worker[];
@@ -36,6 +41,8 @@ interface SeekerDirectoryProps {
   onSelectWorker: (worker: Worker) => void;
   onOpenSendRequest: (selectedWorkers?: Worker[]) => void;
   onChangeTradeCategory: (trade?: TradeCategory) => void;
+  /** Muestra la banda PageHero propia (la vista de inicio la oculta porque trae la suya). */
+  showHero?: boolean;
 }
 
 export const CATEGORIES: { id: TradeCategory; label: string; icon: React.ReactNode; avgRate: number; description: string; sampleTasks: string[] }[] = [
@@ -219,7 +226,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
   userLocation,
   onSelectWorker,
   onOpenSendRequest,
-  onChangeTradeCategory
+  onChangeTradeCategory,
+  showHero = true
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<TradeCategory | null>(null);
@@ -229,7 +237,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
   const [minRating, setMinRating] = useState<number>(0);
   const [onlyAvailable, setOnlyAvailable] = useState<boolean>(false);
   const [availabilityDay, setAvailabilityDay] = useState<string>('todos');
-  const [sortBy, setSortBy] = useState<'distancia' | 'reputacion' | 'precio' | 'trabajos'>('distancia');
+  const [sortBy, setSortBy] = useState<SortKey>('distancia');
   const [showFilterModal, setShowFilterModal] = useState<boolean>(false);
   const [showCatalogModal, setShowCatalogModal] = useState<boolean>(false);
 
@@ -371,7 +379,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
     sortBy
   ]);
 
-  const handleWheelChange = (val: string) => {
+  const handleCategoryChange = (val: string) => {
     if (val === 'todos') {
       setSelectedCategory(null);
       onChangeTradeCategory(undefined);
@@ -394,727 +402,526 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
     if (filterKey === 'nlp') setSearchQuery('');
   };
 
+  const resetAllFilters = () => {
+    setSelectedCategory(null);
+    onChangeTradeCategory(undefined);
+    setSelectedZone('Todas las zonas');
+    setMaxRadiusKm(15);
+    setMaxBudgetRate(70000);
+    setMinRating(0);
+    setOnlyAvailable(false);
+    setAvailabilityDay('todos');
+    setSearchQuery('');
+  };
+
+  // Cierre de modales con Escape (soporte de teclado)
+  useEffect(() => {
+    if (!showFilterModal && !showCatalogModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowFilterModal(false);
+        setShowCatalogModal(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showFilterModal, showCatalogModal]);
+
+  const hasAdvancedFilters =
+    selectedZone !== 'Todas las zonas' || maxBudgetRate < 70000 || minRating > 0 || onlyAvailable;
+  const hasActiveFilters =
+    Boolean(selectedCategory) || hasAdvancedFilters || maxRadiusKm !== 12 || availabilityDay !== 'todos';
+  const selectedCategoryLabel = CATEGORIES.find(c => c.id === selectedCategory)?.label;
+
+  const SORT_OPTIONS: { value: SortKey; label: string; icon: React.ReactNode }[] = [
+    { value: 'distancia', label: 'Más cercanos', icon: <MapPin size={14} /> },
+    { value: 'reputacion', label: 'Mejor reputación', icon: <Star size={14} /> },
+    { value: 'precio', label: 'Menor tarifa', icon: <DollarSign size={14} /> },
+    { value: 'trabajos', label: 'Más trabajos', icon: <Hammer size={14} /> }
+  ];
+
   return (
-    <div className="seeker-directory" style={{ padding: '24px 0 60px' }}>
-      <div className="container">
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '280px', position: 'relative' }}>
-            <Search
-              size={18}
-              style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }}
-            />
-            <input
-              type="text"
-              className="input-base"
-              placeholder="¿Qué necesitas solucionar?"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{ paddingLeft: '48px', height: '56px', fontSize: '16px', borderRadius: '28px' }}
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}
-              >
-                <X size={18} />
-              </button>
-            )}
-          </div>
+    <div className="seeker-directory">
+      {showHero && (
+        <PageHero
+          tone="marino"
+          eyebrow={<><MapPin size={14} aria-hidden="true" /> Directorio en Bogotá D.C.</>}
+          title={<>Encuentra a tu<br />experto</>}
+          subtitle="Profesionales verificados cerca de ti, ordenados por distancia y reputación real."
+          stickers={[
+            { icon: <Zap size={26} />, tone: 'amarillo', style: { top: '14%', right: '6%', rotate: '-10deg' } },
+            { icon: <Wrench size={26} />, tone: 'esmeralda', style: { top: '46%', right: '15%', rotate: '8deg' } },
+            { icon: <Paintbrush size={26} />, tone: 'fuego', style: { top: '12%', right: '24%', rotate: '6deg' } },
+            { icon: <>4.8 ★</>, tone: 'blanco', pill: true, style: { bottom: '14%', right: '5%', rotate: '-4deg' } }
+          ]}
+        />
+      )}
 
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={() => setShowCatalogModal(true)}
-              className="btn btn-secondary"
-              style={{ height: '56px', padding: '0 20px', borderRadius: '28px', fontSize: '14px' }}
-            >
-              Oficios
-            </button>
-
-            <button
-              onClick={() => setShowFilterModal(true)}
-              className="btn btn-secondary"
-              style={{ height: '56px', padding: '0 20px', borderRadius: '28px', fontSize: '14px' }}
-            >
-              Filtros
-              {(selectedZone !== 'Todas las zonas' || maxBudgetRate < 70000 || minRating > 0 || onlyAvailable) && (
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-text-main)', marginLeft: '8px' }} />
-              )}
-            </button>
-
-            <button
-              onClick={() => onOpenSendRequest()}
-              className="btn btn-primary"
-              style={{ height: '56px', padding: '0 24px', borderRadius: '28px', fontSize: '14px' }}
-            >
-              Solicitar
-            </button>
-          </div>
-        </div>
-
-        {/* Banner de Búsqueda Libre / Asistente NLP de Many (RF-11) */}
-        {nlpMatch && (
-          <div
-            style={{
-              background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.09) 0%, rgba(255, 199, 44, 0.14) 100%)',
-              border: '1.5px solid var(--role-primary)',
-              borderRadius: '16px',
-              padding: '12px 18px',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '12px'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <MascotAvatar trade={nlpMatch.trade} size="sm" />
-              <div>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--role-primary)', display: 'block' }}>
-                  Búsqueda Inteligente: Interpretamos tu consulta como "{nlpMatch.label}"
-                </span>
-                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                  {nlpMatch.problemTitle} en Bogotá D.C.
-                </span>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                onClick={() => {
-                  setSelectedCategory(nlpMatch.trade);
-                  onChangeTradeCategory(nlpMatch.trade);
-                }}
-                className="btn btn-primary"
-                style={{ padding: '6px 14px', fontSize: '12px' }}
-              >
-                Filtrar por {nlpMatch.label}
-              </button>
-              <button
-                onClick={() => removeFilter('nlp')}
-                style={{ background: 'transparent', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer' }}
-              >
-                <X size={16} />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Selector de Oficios Interactivo (OptionWheel) */}
-        <div style={{ marginBottom: '32px' }}>
-          <OptionWheel
-            options={[
-              { value: 'todos', label: 'Todos los oficios', icon: <Search size={20} /> },
-              ...CATEGORIES.map(c => ({ value: c.id, label: c.label, icon: c.icon }))
-            ]}
-            value={selectedCategory || 'todos'}
-            onChange={handleWheelChange}
-            visibleCount={2}
+      {/* Buscador en píldora + accesos rápidos */}
+      <div className="seeker-toolbar">
+        <div className="seeker-search">
+          <Search size={20} className="seeker-search__icon" aria-hidden="true" />
+          <input
+            type="text"
+            className="seeker-search__input"
+            placeholder="¿Qué necesitas solucionar?"
+            aria-label="Buscar por problema, oficio, nombre o barrio"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
           />
-        </div>
-
-        {/* Barra de Filtros Activos y Ordenamiento */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Filtros:</span>
-
-            {selectedCategory && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  background: 'var(--role-primary-light)',
-                  color: 'var(--role-primary)',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  padding: '3px 10px',
-                  borderRadius: '999px',
-                  border: '1px solid var(--role-primary)'
-                }}
-              >
-                Oficio: {CATEGORIES.find(c => c.id === selectedCategory)?.label}
-                <X size={12} style={{ cursor: 'pointer' }} onClick={() => removeFilter('category')} />
-              </span>
-            )}
-
-            {selectedZone !== 'Todas las zonas' && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  background: 'var(--color-surface-hover)',
-                  color: 'var(--color-text-main)',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  padding: '3px 10px',
-                  borderRadius: '999px',
-                  border: '1px solid var(--color-border)'
-                }}
-              >
-                Zona: {selectedZone}
-                <X size={12} style={{ cursor: 'pointer' }} onClick={() => removeFilter('zone')} />
-              </span>
-            )}
-
-            {maxBudgetRate < 70000 && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  background: 'var(--color-surface-hover)',
-                  color: 'var(--color-text-main)',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  padding: '3px 10px',
-                  borderRadius: '999px',
-                  border: '1px solid var(--color-border)'
-                }}
-              >
-                Hasta ${maxBudgetRate.toLocaleString()} COP/h
-                <X size={12} style={{ cursor: 'pointer' }} onClick={() => removeFilter('budget')} />
-              </span>
-            )}
-
-            {minRating > 0 && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  background: 'var(--color-warm-soft)',
-                  color: 'var(--color-accent-text)',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  padding: '3px 10px',
-                  borderRadius: '999px'
-                }}
-              >
-                {minRating}+ estrellas
-                <X size={12} style={{ cursor: 'pointer' }} onClick={() => removeFilter('rating')} />
-              </span>
-            )}
-
-            {onlyAvailable && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  background: 'var(--color-success-bg)',
-                  color: 'var(--color-status-text)',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  padding: '3px 10px',
-                  borderRadius: '999px'
-                }}
-              >
-                ● Solo disponibles YA
-                <X size={12} style={{ cursor: 'pointer' }} onClick={() => removeFilter('available')} />
-              </span>
-            )}
-          </div>
-
-          {/* Selector de Ordenamiento (RF-17, RF-18) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <ArrowUpDown size={14} /> Ordenar por:
-            </span>
-            <select
-              className="input-base"
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value as any)}
-              style={{ fontSize: '12px', padding: '6px 12px', height: '34px', width: 'auto' }}
-            >
-              <option value="distancia">Distancia (Más cercanos)</option>
-              <option value="reputacion">Mayor reputación (Calificación + Reseñas)</option>
-              <option value="precio">Tarifa (Menor a mayor)</option>
-              <option value="trabajos">Más trabajos completados</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Alerta de Ampliación de Zona Automática (RF-70) */}
-        {isRadiusExpanded && (
-          <div
-            style={{
-              background: 'var(--color-trust-soft)',
-              border: '1px solid var(--color-trust)',
-              borderRadius: '14px',
-              padding: '12px 18px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              color: '#1E3A8A',
-              fontSize: '13px'
-            }}
-          >
-            <AlertCircle size={20} color="var(--color-trust)" />
-            <div>
-              <strong>Zona de búsqueda ampliada automáticamente:</strong> No encontramos profesionales en tu radio inicial de {originalRadius} km.
-              Ampliamos la cobertura a 25 km en Bogotá D.C. para mostrarte {filteredWorkers.length} candidatos compatibles.
-            </div>
-          </div>
-        )}
-
-
-        {/* Encabezado del Directorio General */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(150, 150, 150, 0.15)', paddingBottom: '16px' }}>
-          <div>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: 900, letterSpacing: '-0.5px' }}>
-              {selectedCategory ? `Profesionales en ${CATEGORIES.find(c => c.id === selectedCategory)?.label}` : 'Directorio de Profesionales'}
-            </h2>
-            <span style={{ fontSize: '14px', color: 'var(--color-text-muted)', fontWeight: 500 }}>
-              {filteredWorkers.length} perfiles disponibles
-            </span>
-          </div>
-        </div>
-
-        {/* Cuadrícula de Tarjetas de Profesionales */}
-        {filteredWorkers.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px', background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)' }}>
-            <span style={{ fontSize: '3rem', display: 'block', marginBottom: '12px' }}></span>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '6px' }}>No encontramos profesionales con estos filtros</h3>
-            <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', maxWidth: '440px', margin: '0 auto 16px' }}>
-              Intenta aumentar el presupuesto, seleccionar otra zona o restablecer el oficio para ver más opciones en Bogotá D.C.
-            </p>
+          {searchQuery && (
             <button
-              onClick={() => {
-                setSelectedCategory(null);
-                setSelectedZone('Todas las zonas');
-                setMaxRadiusKm(15);
-                setMaxBudgetRate(70000);
-                setMinRating(0);
-                setOnlyAvailable(false);
-                setSearchQuery('');
-              }}
-              className="btn btn-secondary"
+              type="button"
+              className="oy-icon-btn seeker-search__clear"
+              onClick={() => setSearchQuery('')}
+              aria-label="Borrar búsqueda"
             >
-              Restablecer todos los filtros
+              <X size={16} />
             </button>
-          </div>
-        ) : (
-          <div className="seeker-directory-grid">
-            {filteredWorkers.map((worker, index) => {
-              const category = CATEGORIES.find(c => c.id === worker.trade);
-              
-              const organicRadii = [
-                '40% 60% 70% 30% / 40% 50% 60% 50%',
-                '60% 40% 30% 70% / 60% 30% 70% 40%',
-                '50% 50% 20% 80% / 25% 80% 20% 75%',
-                '30% 70% 70% 30% / 30% 30% 70% 70%'
-              ];
-              const shapeRadius = organicRadii[index % organicRadii.length];
-              const tagRadius = organicRadii[(index + 2) % organicRadii.length];
-              const isEven = index % 2 === 0;
+          )}
+        </div>
 
-              return (
-                <div
-                  key={worker.id}
-                  onClick={() => onSelectWorker(worker)}
-                  className="seeker-worker-row"
-                >
-                  {/* FOTO PROTAGONISTA */}
-                  <div style={{ position: 'relative', flexShrink: 0 }}>
-                    <img 
-                      src={`https://i.pravatar.cc/150?u=${worker.id}`} 
-                      alt={worker.name}
-                      className="seeker-worker-img"
-                      style={{
-                        width: '110px',
-                        height: '110px',
-                        objectFit: 'cover',
-                        borderRadius: shapeRadius,
-                        boxShadow: '0 4px 14px rgba(0,0,0,0.08)'
-                      }}
-                    />
-                    {/* Acento del oficio (icono) integrado sutilmente */}
-                    <div style={{
-                      position: 'absolute',
-                      bottom: '-4px',
-                      [isEven ? 'right' : 'left']: '-4px',
-                      background: worker.avatarColor,
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#fff',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                    }}>
-                      {category?.icon}
-                    </div>
-                  </div>
-                  
-                  {/* INFORMACIÓN TEXTUAL (Minimizada y enfocada) */}
-                  <div style={{ 
-                    flex: 1, 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'flex-start',
-                    textAlign: 'left',
-                    gap: '4px' 
-                  }}>
-                    {/* Nombre y Disponibilidad */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontWeight: 800, fontSize: '18px', color: 'var(--color-text-main)', letterSpacing: '-0.3px' }}>
-                        {worker.name}
-                      </span>
-                      <div 
-                        style={{ width: 8, height: 8, borderRadius: '50%', background: worker.available ? '#10B981' : 'var(--color-danger)' }} 
-                        title={worker.available ? 'Disponible' : 'Ocupado'}
-                      />
-                    </div>
-
-                    {/* Oficio con color de marca suave */}
-                    <span style={{ fontSize: '15px', color: 'var(--color-trust)', fontWeight: 700, letterSpacing: '0.2px' }}>
-                      {worker.tradeLabel}
-                    </span>
-
-                    {/* Línea secundaria única: Calificación y Distancia */}
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '6px', 
-                      fontSize: '13px',
-                      color: 'var(--color-text-muted)',
-                      marginTop: '2px'
-                    }}>
-                      <Star size={13} fill="var(--color-star)" color="var(--color-star)" style={{ marginTop: '-2px' }} />
-                      <span style={{ fontWeight: 700, color: 'var(--color-text-main)' }}>{worker.rating.toFixed(1)}</span>
-                      <span style={{ opacity: 0.4 }}>•</span>
-                      <span>{formatDistance(worker.distanceKm || 0)}</span>
-                    </div>
-
-                    {/* ACCIÓN CONTEXTUAL (Aparece en hover) y PRECIO */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
-                      <div style={{
-                        background: 'var(--color-surface)',
-                        border: '1.5px solid var(--color-energy)',
-                        color: 'var(--color-text-main)',
-                        padding: '4px 10px',
-                        borderRadius: tagRadius,
-                        fontWeight: 800,
-                        fontSize: '13px',
-                        display: 'inline-block'
-                      }}>
-                        ${worker.hourlyRate.toLocaleString()}/h
-                      </div>
-                      
-                      <div className="seeker-worker-action hide-on-mobile" style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        background: 'var(--role-primary-light)',
-                        color: 'var(--role-primary)'
-                      }}>
-                        <ChevronRight size={18} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <div className="seeker-toolbar__actions">
+          <button type="button" onClick={() => setShowCatalogModal(true)} className="btn btn-secondary seeker-toolbar__btn">
+            <BookOpen size={16} aria-hidden="true" /> Oficios
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowFilterModal(true)}
+            className="btn btn-secondary seeker-toolbar__btn"
+            aria-label={hasAdvancedFilters ? 'Filtros (hay filtros activos)' : 'Filtros'}
+          >
+            <SlidersHorizontal size={16} aria-hidden="true" /> Filtros
+            {hasAdvancedFilters && <span className="seeker-dot" aria-hidden="true" />}
+          </button>
+          <button type="button" onClick={() => onOpenSendRequest()} className="btn btn-primary seeker-toolbar__btn">
+            Solicitar
+          </button>
+        </div>
       </div>
 
-      {/* Modal de Filtros Avanzados (RF-13, RF-14, RF-15, RF-16) */}
-      {showFilterModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.5)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(4px)',
-            padding: '16px'
-          }}
+      {/* Búsqueda libre interpretada por Many (RF-11) */}
+      {nlpMatch && (
+        <div className="seeker-nlp" role="status">
+          <div className="seeker-nlp__text">
+            <MascotAvatar trade={nlpMatch.trade} size="sm" />
+            <div>
+              <span className="seeker-nlp__title">
+                Búsqueda Inteligente: Interpretamos tu consulta como "{nlpMatch.label}"
+              </span>
+              <span className="seeker-nlp__sub">{nlpMatch.problemTitle} en Bogotá D.C.</span>
+            </div>
+          </div>
+          <div className="seeker-nlp__actions">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedCategory(nlpMatch.trade);
+                onChangeTradeCategory(nlpMatch.trade);
+              }}
+              className="btn btn-primary seeker-btn-sm"
+            >
+              Filtrar por {nlpMatch.label}
+            </button>
+            <button
+              type="button"
+              className="oy-icon-btn"
+              onClick={() => removeFilter('nlp')}
+              aria-label="Descartar sugerencia"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Oficios en chips (RF-12) */}
+      <div className="seeker-chip-row" role="group" aria-label="Filtrar por oficio">
+        <button
+          type="button"
+          className="oy-chip"
+          aria-pressed={!selectedCategory}
+          onClick={() => handleCategoryChange('todos')}
         >
-          <div
-            className="card"
-            style={{
-              width: '100%',
-              maxWidth: '520px',
-              borderRadius: '24px',
-              padding: '24px',
-              maxHeight: '90vh',
-              overflowY: 'auto'
-            }}
+          <Search size={14} aria-hidden="true" /> Todos los oficios
+        </button>
+        {CATEGORIES.map(c => (
+          <button
+            key={c.id}
+            type="button"
+            className="oy-chip"
+            aria-pressed={selectedCategory === c.id}
+            onClick={() => handleCategoryChange(c.id)}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '1.25rem' }}>Filtros avanzados de búsqueda</h3>
-              <button onClick={() => setShowFilterModal(false)} style={{ color: 'var(--color-text-muted)' }}>
+            {c.icon} {c.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Orden (RF-17, RF-18) y disponibilidad inmediata (RF-32) */}
+      <div className="seeker-sortbar">
+        <div className="seeker-sortbar__group" role="group" aria-label="Ordenar resultados">
+          <span className="oy-label seeker-sortbar__label">
+            <ArrowUpDown size={14} aria-hidden="true" /> Ordenar
+          </span>
+          {SORT_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              className="oy-chip"
+              aria-pressed={sortBy === opt.value}
+              onClick={() => setSortBy(opt.value)}
+            >
+              {opt.icon} {opt.label}
+            </button>
+          ))}
+        </div>
+        <div className="seeker-available-toggle">
+          <span>Disponibles ya</span>
+          <SquishSwitch
+            checked={onlyAvailable}
+            onChange={setOnlyAvailable}
+            ariaLabel="Solo profesionales disponibles ahora"
+            trackOnColor="var(--oy-verde-esmeralda)"
+          />
+        </div>
+      </div>
+
+      {/* Filtros activos */}
+      {hasActiveFilters && (
+        <div className="seeker-active-filters" aria-label="Filtros activos">
+          <span className="oy-label seeker-sortbar__label">Filtros</span>
+          {selectedCategory && (
+            <button type="button" className="seeker-tag seeker-tag--marino" onClick={() => removeFilter('category')} aria-label={`Quitar filtro de oficio ${selectedCategoryLabel}`}>
+              Oficio: {selectedCategoryLabel} <X size={12} aria-hidden="true" />
+            </button>
+          )}
+          {selectedZone !== 'Todas las zonas' && (
+            <button type="button" className="seeker-tag" onClick={() => removeFilter('zone')} aria-label={`Quitar filtro de zona ${selectedZone}`}>
+              Zona: {selectedZone} <X size={12} aria-hidden="true" />
+            </button>
+          )}
+          {maxRadiusKm !== 12 && (
+            <button type="button" className="seeker-tag" onClick={() => removeFilter('radius')} aria-label="Quitar filtro de radio">
+              Radio {maxRadiusKm} km <X size={12} aria-hidden="true" />
+            </button>
+          )}
+          {maxBudgetRate < 70000 && (
+            <button type="button" className="seeker-tag" onClick={() => removeFilter('budget')} aria-label="Quitar filtro de tarifa">
+              Hasta ${maxBudgetRate.toLocaleString()} COP/h <X size={12} aria-hidden="true" />
+            </button>
+          )}
+          {minRating > 0 && (
+            <button type="button" className="seeker-tag seeker-tag--amarillo" onClick={() => removeFilter('rating')} aria-label="Quitar filtro de calificación">
+              {minRating}+ estrellas <X size={12} aria-hidden="true" />
+            </button>
+          )}
+          {availabilityDay === 'fines_semana' && (
+            <button type="button" className="seeker-tag" onClick={() => setAvailabilityDay('todos')} aria-label="Quitar filtro de fines de semana">
+              Sábados y Domingos <X size={12} aria-hidden="true" />
+            </button>
+          )}
+          {onlyAvailable && (
+            <button type="button" className="seeker-tag seeker-tag--esmeralda" onClick={() => removeFilter('available')} aria-label="Quitar filtro de solo disponibles">
+              ● Solo disponibles YA <X size={12} aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Ampliación automática de zona (RF-70) */}
+      {isRadiusExpanded && (
+        <div className="seeker-expanded" role="status">
+          <span className="seeker-expanded__icon" aria-hidden="true"><AlertCircle size={20} /></span>
+          <p>
+            <strong>Zona de búsqueda ampliada automáticamente:</strong> No encontramos profesionales en tu radio inicial de {originalRadius} km.
+            Ampliamos la cobertura a 25 km en Bogotá D.C. para mostrarte {filteredWorkers.length} candidatos compatibles.
+          </p>
+        </div>
+      )}
+
+      {/* Encabezado del directorio */}
+      <div className="oy-section-head seeker-results-head">
+        <div>
+          <h2 className="oy-section-title">
+            {selectedCategory ? `Profesionales en ${selectedCategoryLabel}` : 'Directorio de Profesionales'}
+          </h2>
+          <p className="oy-section-sub">{filteredWorkers.length} perfiles disponibles</p>
+        </div>
+      </div>
+
+      {filteredWorkers.length === 0 ? (
+        <div className="oy-empty">
+          <MascotAvatar size="lg" />
+          <h3 className="oy-empty__title">No encontramos profesionales con estos filtros</h3>
+          <p className="oy-empty__text">
+            Intenta aumentar el presupuesto, seleccionar otra zona o restablecer el oficio para ver más opciones en Bogotá D.C.
+          </p>
+          <button type="button" onClick={resetAllFilters} className="btn btn-secondary">
+            Restablecer todos los filtros
+          </button>
+        </div>
+      ) : (
+        <ul className="seeker-directory-grid">
+          {filteredWorkers.map(worker => {
+            const category = CATEGORIES.find(c => c.id === worker.trade);
+            return (
+              <li key={worker.id}>
+                <button
+                  type="button"
+                  onClick={() => onSelectWorker(worker)}
+                  className="seeker-worker-row"
+                  aria-label={`Ver perfil de ${worker.name}, ${worker.tradeLabel}, ${worker.rating.toFixed(1)} estrellas, ${worker.available ? 'disponible' : 'ocupado'}`}
+                >
+                  <span className="seeker-worker-photo">
+                    <img
+                      src={`https://i.pravatar.cc/150?u=${worker.id}`}
+                      alt=""
+                      className="seeker-worker-img"
+                      loading="lazy"
+                    />
+                    <span className="seeker-worker-trade" aria-hidden="true">{category?.icon}</span>
+                  </span>
+
+                  <span className="seeker-worker-info">
+                    <span className="seeker-worker-badges">
+                      <span className={`seeker-status ${worker.available ? 'seeker-status--on' : 'seeker-status--off'}`}>
+                        <span className="seeker-status__dot" aria-hidden="true" />
+                        {worker.available ? 'Disponible' : 'Ocupado'}
+                      </span>
+                      {worker.verified && (
+                        <span className="seeker-status seeker-status--verified">
+                          <BadgeCheck size={12} aria-hidden="true" /> Verificado
+                        </span>
+                      )}
+                    </span>
+
+                    <span className="seeker-worker-name">{worker.name}</span>
+                    <span className="seeker-worker-tradelabel">{worker.tradeLabel}</span>
+
+                    <span className="seeker-worker-meta">
+                      <Star size={13} fill="var(--color-star)" color="var(--color-star)" aria-hidden="true" />
+                      <strong>{worker.rating.toFixed(1)}</strong>
+                      <span aria-hidden="true">·</span>
+                      <span>{formatDistance(worker.distanceKm || 0)}</span>
+                      <span aria-hidden="true">·</span>
+                      <span className="seeker-worker-zone">{worker.location.zoneName}</span>
+                    </span>
+
+                    <span className="seeker-worker-foot">
+                      <span className="seeker-worker-price">${worker.hourlyRate.toLocaleString()}/h</span>
+                      <span className="seeker-worker-action" aria-hidden="true">
+                        <ChevronRight size={18} />
+                      </span>
+                    </span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {/* Modal de filtros avanzados (RF-13, RF-14, RF-15, RF-16, RF-32) */}
+      {showFilterModal && (
+        <div className="oy-modal-backdrop" onClick={e => e.target === e.currentTarget && setShowFilterModal(false)}>
+          <div className="oy-modal seeker-modal--filters" role="dialog" aria-modal="true" aria-labelledby="seeker-filters-title">
+            <div className="oy-modal__head">
+              <div>
+                <span className="oy-eyebrow"><SlidersHorizontal size={12} aria-hidden="true" /> Afina tu búsqueda</span>
+                <h3 id="seeker-filters-title" className="oy-modal__title seeker-modal__title">Filtros avanzados de búsqueda</h3>
+              </div>
+              <button type="button" className="oy-icon-btn" onClick={() => setShowFilterModal(false)} aria-label="Cerrar filtros">
                 <X size={20} />
               </button>
             </div>
 
-            {/* RF-13: Filtrar por Zona / Barrio en Bogotá */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                <MapPin size={14} /> Zona / Localidad en Bogotá
-              </label>
-              <select
-                className="input-base"
-                value={selectedZone}
-                onChange={e => setSelectedZone(e.target.value)}
-              >
-                {BOGOTA_ZONES.map(z => (
-                  <option key={z} value={z}>{z}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* RF-14: Tarifa aproximada máxima */}
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <label style={{ fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <DollarSign size={14} /> Presupuesto máx. por hora
+            <div className="oy-modal__body seeker-filter-body">
+              {/* RF-13: Zona / Barrio */}
+              <div className="seeker-field">
+                <label htmlFor="seeker-zone" className="seeker-field__label">
+                  <MapPin size={14} aria-hidden="true" /> Zona / Localidad en Bogotá
                 </label>
-                <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--role-primary)' }}>
-                  ${maxBudgetRate.toLocaleString()} COP/h
+                <select
+                  id="seeker-zone"
+                  className="input-base seeker-select"
+                  value={selectedZone}
+                  onChange={e => setSelectedZone(e.target.value)}
+                >
+                  {BOGOTA_ZONES.map(z => (
+                    <option key={z} value={z}>{z}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* RF-14: Tarifa máxima */}
+              <div className="seeker-field">
+                <div className="seeker-field__row">
+                  <label htmlFor="seeker-budget" className="seeker-field__label">
+                    <DollarSign size={14} aria-hidden="true" /> Presupuesto máx. por hora
+                  </label>
+                  <span className="seeker-field__value">${maxBudgetRate.toLocaleString()} COP/h</span>
+                </div>
+                <input
+                  id="seeker-budget"
+                  type="range"
+                  min="25000"
+                  max="80000"
+                  step="5000"
+                  value={maxBudgetRate}
+                  onChange={e => setMaxBudgetRate(parseInt(e.target.value))}
+                  className="slider-custom"
+                />
+                <div className="seeker-field__scale" aria-hidden="true">
+                  <span>$25.000 COP</span>
+                  <span>$50.000 COP</span>
+                  <span>$80.000 COP</span>
+                </div>
+              </div>
+
+              {/* Radio de distancia */}
+              <div className="seeker-field">
+                <div className="seeker-field__row">
+                  <label htmlFor="seeker-radius" className="seeker-field__label">Radio de cobertura geográfica</label>
+                  <span className="seeker-field__value">{maxRadiusKm} km</span>
+                </div>
+                <input
+                  id="seeker-radius"
+                  type="range"
+                  min="1"
+                  max="25"
+                  step="1"
+                  value={maxRadiusKm}
+                  onChange={e => setMaxRadiusKm(parseFloat(e.target.value))}
+                  className="slider-custom"
+                />
+              </div>
+
+              {/* RF-15: Disponibilidad semanal */}
+              <div className="seeker-field">
+                <span className="seeker-field__label" id="seeker-days-label">
+                  <Calendar size={14} aria-hidden="true" /> Disponibilidad en agenda
                 </span>
-              </div>
-              <input
-                type="range"
-                min="25000"
-                max="80000"
-                step="5000"
-                value={maxBudgetRate}
-                onChange={e => setMaxBudgetRate(parseInt(e.target.value))}
-                className="slider-custom"
-              />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-                <span>$25.000 COP</span>
-                <span>$50.000 COP</span>
-                <span>$80.000 COP</span>
-              </div>
-            </div>
-
-            {/* Radio de distancia */}
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <label style={{ fontSize: '13px', fontWeight: 700 }}>Radio de cobertura geográfica</label>
-                <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--role-primary)' }}>{maxRadiusKm} km</span>
-              </div>
-              <input
-                type="range"
-                min="1"
-                max="25"
-                step="1"
-                value={maxRadiusKm}
-                onChange={e => setMaxRadiusKm(parseFloat(e.target.value))}
-                className="slider-custom"
-              />
-            </div>
-
-            {/* RF-15: Disponibilidad semanal */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                <Calendar size={14} /> Disponibilidad en agenda
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={() => setAvailabilityDay('todos')}
-                  style={{
-                    padding: '8px',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    background: availabilityDay === 'todos' ? 'var(--role-primary)' : 'var(--color-surface)',
-                    color: availabilityDay === 'todos' ? '#FFF' : 'var(--color-text-main)',
-                    border: '1px solid var(--color-border)'
-                  }}
-                >
-                  Cualquier día
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAvailabilityDay('fines_semana')}
-                  style={{
-                    padding: '8px',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    background: availabilityDay === 'fines_semana' ? 'var(--role-primary)' : 'var(--color-surface)',
-                    color: availabilityDay === 'fines_semana' ? '#FFF' : 'var(--color-text-main)',
-                    border: '1px solid var(--color-border)'
-                  }}
-                >
-                  Sábados y Domingos
-                </button>
-              </div>
-            </div>
-
-            {/* RF-16: Calificación mínima */}
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-                Calificación mínima del profesional
-              </label>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {[0, 4.0, 4.5, 4.8].map(rating => (
-                  <button
-                    key={rating}
-                    type="button"
-                    onClick={() => setMinRating(rating)}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      background: minRating === rating ? 'var(--color-warm-soft)' : 'var(--color-surface)',
-                      color: minRating === rating ? 'var(--color-accent-text)' : 'var(--color-text-main)',
-                      border: minRating === rating ? '1.5px solid #F59E0B' : '1px solid var(--color-border)'
-                    }}
-                  >
-                    {rating === 0 ? 'Todas' : `${rating}+ estrellas`}
+                <div className="seeker-chip-grid" role="group" aria-labelledby="seeker-days-label">
+                  <button type="button" className="oy-chip" aria-pressed={availabilityDay === 'todos'} onClick={() => setAvailabilityDay('todos')}>
+                    Cualquier día
                   </button>
-                ))}
+                  <button type="button" className="oy-chip" aria-pressed={availabilityDay === 'fines_semana'} onClick={() => setAvailabilityDay('fines_semana')}>
+                    Sábados y Domingos
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* RF-32: Solo Disponibles Ya */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: 'var(--color-surface-hover)', borderRadius: '12px', marginBottom: '24px' }}>
-              <div>
-                <span style={{ fontSize: '13px', fontWeight: 700, display: 'block' }}>Disponible ahora</span>
-                <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Excluir profesionales que estén fuera de línea</span>
+              {/* RF-16: Calificación mínima */}
+              <div className="seeker-field">
+                <span className="seeker-field__label" id="seeker-rating-label">
+                  <Star size={14} aria-hidden="true" /> Calificación mínima del profesional
+                </span>
+                <div className="seeker-chip-grid seeker-chip-grid--4" role="group" aria-labelledby="seeker-rating-label">
+                  {[0, 4.0, 4.5, 4.8].map(rating => (
+                    <button
+                      key={rating}
+                      type="button"
+                      className="oy-chip"
+                      aria-pressed={minRating === rating}
+                      onClick={() => setMinRating(rating)}
+                    >
+                      {rating === 0 ? 'Todas' : `${rating}+ estrellas`}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <SquishSwitch
-                checked={onlyAvailable}
-                onChange={setOnlyAvailable}
-                ariaLabel="Solo profesionales disponibles ahora"
-                trackOnColor="var(--oy-verde-esmeralda)"
-              />
-            </div>
 
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedZone('Todas las zonas');
-                  setMaxBudgetRate(70000);
-                  setMaxRadiusKm(12);
-                  setMinRating(0);
-                  setOnlyAvailable(false);
-                  setAvailabilityDay('todos');
-                }}
-                className="btn btn-secondary"
-                style={{ flex: 1 }}
-              >
-                Limpiar
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowFilterModal(false)}
-                className="btn btn-primary"
-                style={{ flex: 1 }}
-              >
-                Aplicar Filtros
-              </button>
+              {/* RF-32: Solo disponibles ya */}
+              <div className="seeker-switch-row">
+                <div>
+                  <span className="seeker-switch-row__title">Disponible ahora</span>
+                  <span className="seeker-switch-row__sub">Excluir profesionales que estén fuera de línea</span>
+                </div>
+                <SquishSwitch
+                  checked={onlyAvailable}
+                  onChange={setOnlyAvailable}
+                  ariaLabel="Solo profesionales disponibles ahora"
+                  trackOnColor="var(--oy-verde-esmeralda)"
+                />
+              </div>
+
+              <div className="seeker-modal-actions">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedZone('Todas las zonas');
+                    setMaxBudgetRate(70000);
+                    setMaxRadiusKm(12);
+                    setMinRating(0);
+                    setOnlyAvailable(false);
+                    setAvailabilityDay('todos');
+                  }}
+                  className="btn btn-secondary"
+                >
+                  Limpiar
+                </button>
+                <button type="button" onClick={() => setShowFilterModal(false)} className="btn btn-primary">
+                  Aplicar Filtros
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal Catálogo de Oficios Disponibles (RF-77) */}
+      {/* Catálogo de oficios disponibles (RF-77) */}
       {showCatalogModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            zIndex: 1050,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(5px)',
-            padding: '16px'
-          }}
-        >
-          <div
-            className="card"
-            style={{
-              width: '100%',
-              maxWidth: '720px',
-              borderRadius: '24px',
-              padding: '28px',
-              maxHeight: '90vh',
-              overflowY: 'auto'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div className="oy-modal-backdrop" onClick={e => e.target === e.currentTarget && setShowCatalogModal(false)}>
+          <div className="oy-modal seeker-modal--catalog" role="dialog" aria-modal="true" aria-labelledby="seeker-catalog-title">
+            <div className="oy-modal__head">
               <div>
-                <h3 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <BookOpen size={20} color="var(--role-primary)" /> Catálogo de Oficios Disponibles
-                </h3>
-                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                  12 categorías técnicas y asistenciales habilitadas en OficioYa Bogotá
-                </span>
+                <span className="oy-eyebrow"><BookOpen size={12} aria-hidden="true" /> 12 categorías</span>
+                <h3 id="seeker-catalog-title" className="oy-modal__title seeker-modal__title">Catálogo de Oficios Disponibles</h3>
+                <p className="seeker-modal__sub">12 categorías técnicas y asistenciales habilitadas en OficioYa Bogotá</p>
               </div>
-              <button onClick={() => setShowCatalogModal(false)} style={{ color: 'var(--color-text-muted)' }}>
+              <button type="button" className="oy-icon-btn" onClick={() => setShowCatalogModal(false)} aria-label="Cerrar catálogo">
                 <X size={20} />
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '14px' }}>
-              {CATEGORIES.map(cat => {
-                const count = workers.filter(w => w.trade === cat.id).length;
-                return (
-                  <div
-                    key={cat.id}
-                    onClick={() => {
-                      setSelectedCategory(cat.id);
-                      onChangeTradeCategory(cat.id);
-                      setShowCatalogModal(false);
-                    }}
-                    style={{
-                      border: '1px solid var(--color-border)',
-                      borderRadius: '16px',
-                      padding: '16px',
-                      cursor: 'pointer',
-                      background: 'var(--color-surface)',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--role-primary)')}
-                    onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--color-border)')}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '15px' }}>
-                        <span style={{ color: 'var(--role-primary)' }}>{cat.icon}</span>
-                        {cat.label}
-                      </div>
-                      <span className="badge badge-verified" style={{ fontSize: '11px' }}>
-                        {count} {count === 1 ? 'experto' : 'expertos'}
-                      </span>
-                    </div>
-
-                    <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '10px' }}>
-                      {cat.description}
-                    </p>
-
-                    <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '8px' }}>
-                      <strong>Tareas habituales:</strong> {cat.sampleTasks.slice(0, 3).join(', ')}
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--color-border)', paddingTop: '8px', fontSize: '12px' }}>
-                      <span style={{ fontWeight: 700 }}>Tarifa ref.: ${cat.avgRate.toLocaleString()} COP/h</span>
-                      <span style={{ color: 'var(--role-primary)', fontWeight: 700 }}>Explorar &rarr;</span>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="oy-modal__body">
+              <ul className="seeker-catalog-grid">
+                {CATEGORIES.map(cat => {
+                  const count = workers.filter(w => w.trade === cat.id).length;
+                  return (
+                    <li key={cat.id}>
+                      <button
+                        type="button"
+                        className="seeker-catalog-card"
+                        onClick={() => {
+                          setSelectedCategory(cat.id);
+                          onChangeTradeCategory(cat.id);
+                          setShowCatalogModal(false);
+                        }}
+                      >
+                        <span className="seeker-catalog-card__head">
+                          <span className="seeker-catalog-card__name">
+                            <span className="seeker-catalog-card__icon" aria-hidden="true">{cat.icon}</span>
+                            {cat.label}
+                          </span>
+                          <span className="badge badge-verified seeker-catalog-card__count">
+                            {count} {count === 1 ? 'experto' : 'expertos'}
+                          </span>
+                        </span>
+                        <span className="seeker-catalog-card__desc">{cat.description}</span>
+                        <span className="seeker-catalog-card__tasks">
+                          <strong>Tareas habituales:</strong> {cat.sampleTasks.slice(0, 3).join(', ')}
+                        </span>
+                        <span className="seeker-catalog-card__foot">
+                          <span>Tarifa ref.: ${cat.avgRate.toLocaleString()} COP/h</span>
+                          <span className="seeker-catalog-card__cta">Explorar &rarr;</span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
           </div>
         </div>

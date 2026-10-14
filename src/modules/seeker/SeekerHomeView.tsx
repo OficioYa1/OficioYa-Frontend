@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Zap, Wrench, Paintbrush, Key, MapPin, ArrowRight } from 'lucide-react';
 import type { Worker, TradeCategory } from '../../types';
 import type { Coordinates } from '../../utils/geo';
+import { PageHero } from '../../components/layout/PageHero';
 import { SeekerDirectory } from './SeekerDirectory';
+import './Seeker.css';
 
 interface SeekerHomeViewProps {
   workers: Worker[];
@@ -26,75 +28,71 @@ export const SeekerHomeView: React.FC<SeekerHomeViewProps> = ({
     onOpenSendRequest();
   };
 
+  const availableCount = workers.filter(w => w.available && !w.isPaused).length;
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '48px', paddingBottom: '48px' }}>
-      
-      {/* HERO SECTION: Buscador Protagonista */}
-      <section style={{
-        marginTop: '32px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        textAlign: 'center'
-      }}>
-        <div style={{ position: 'relative', width: '100%', maxWidth: '800px' }}>
-          <Search 
-            size={28} 
-            color="var(--color-text-muted)" 
-            style={{ 
-              position: 'absolute', 
-              left: '24px', 
-              top: '50%', 
-              transform: 'translateY(-50%)' 
-            }} 
-          />
+    <div className="seeker-home">
+      <PageHero
+        tone="marino"
+        eyebrow={<><MapPin size={14} aria-hidden="true" /> Bogotá D.C. · {availableCount} disponibles ahora</>}
+        title={<>Encuentra a tu<br />experto</>}
+        subtitle="Cuéntanos qué necesitas solucionar y te conectamos con oficios verificados cerca de ti."
+        stickers={[
+          { icon: <Zap size={26} />, tone: 'amarillo', style: { top: '12%', right: '6%', rotate: '-10deg' } },
+          { icon: <Wrench size={26} />, tone: 'esmeralda', style: { top: '40%', right: '16%', rotate: '9deg' } },
+          { icon: <Paintbrush size={26} />, tone: 'fuego', style: { top: '10%', right: '26%', rotate: '5deg' } },
+          { icon: <Key size={24} />, tone: 'almendra', style: { top: '44%', right: '3%', rotate: '-6deg' } }
+        ]}
+      >
+        <form
+          className="seeker-hero-search"
+          role="search"
+          onSubmit={e => {
+            e.preventDefault();
+            handlePostRequest();
+          }}
+        >
+          <Search size={24} className="seeker-hero-search__icon" aria-hidden="true" />
           <input
             type="text"
-            className="input-base"
+            className="seeker-hero-search__input"
             placeholder="¿Qué necesitas solucionar?"
+            aria-label="Describe lo que necesitas solucionar"
             value={problemDescription}
-            onChange={(e) => setProblemDescription(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handlePostRequest();
-            }}
-            style={{
-              width: '100%',
-              height: '80px',
-              fontSize: '24px',
-              paddingLeft: '72px',
-              paddingRight: '24px',
-              borderRadius: '40px',
-              background: 'var(--color-surface)',
-              border: '1px solid var(--color-border)',
-              color: 'var(--color-text-main)',
-              boxShadow: '0 8px 30px rgba(0,0,0,0.04)'
-            }}
+            onChange={e => setProblemDescription(e.target.value)}
           />
-        </div>
-      </section>
+          <button
+            type="submit"
+            className="btn btn-primary seeker-hero-search__submit"
+            disabled={!problemDescription}
+            aria-label="Publicar solicitud"
+          >
+            <span className="seeker-hero-search__submit-text">Solicitar</span>
+            <ArrowRight size={18} aria-hidden="true" />
+          </button>
+        </form>
+      </PageHero>
 
-      {/* PROFESIONALES DISPONIBLES CERCA */}
-      <section>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10B981' }} />
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.5px' }}>
-            Profesionales disponibles cerca de ti
-          </h2>
+      <section aria-labelledby="seeker-home-nearby">
+        <div className="oy-section-head seeker-home__head">
+          <div>
+            <h2 id="seeker-home-nearby" className="oy-section-title seeker-home__title">
+              <span className="seeker-live-dot" aria-hidden="true" />
+              Profesionales disponibles cerca de ti
+            </h2>
+            <p className="oy-section-sub">Filtra por oficio, zona, tarifa y reputación verificada.</p>
+          </div>
         </div>
-        
-        {/* Usamos el SeekerDirectory pero podemos filtrar solo los disponibles si queremos.
-            Como SeekerDirectory ya tiene todo el diseño editorial orgánico, lo incrustamos y
-            luego en App.tsx manejamos las pestañas.
-        */}
+
         <SeekerDirectory
           workers={workers}
           userLocation={userLocation}
           onSelectWorker={onSelectWorker}
           onOpenSendRequest={onOpenSendRequest}
           onChangeTradeCategory={onChangeTradeCategory}
+          showHero={false}
         />
       </section>
-
     </div>
   );
 };
