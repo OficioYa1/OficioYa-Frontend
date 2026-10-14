@@ -28,7 +28,7 @@
 * **Selector Rápido de Categorías:** 12 oficios clave según `logosOficios.png`.
 * **Filtros Hiperlocales:** Por distancia (km), disponibilidad inmediata (*Toggle: "¿Lo necesitas YA?"*), tarifa y calificación.
 * **Visualizador de Mapa Interactivo:** Trabajadores cercanos con pines de oficio y estado en tiempo real.
-* **Mascota Asistente Flotante ("Basty"):** Guía reactivo con 6 expresiones faciales (Alegre, Guiño, Pensativo, Concentrado, Entusiasta, Sorprendido).
+* **Mascota Asistente Flotante (Many):** Guía reactivo con 6 expresiones faciales (Alegre, Guiño, Pensativo, Concentrado, Entusiasta, Sorprendido).
 
 ### Módulo 2: Perfil Detallado & Solicitud de Servicio
 * **Perfil del Trabajador:** Portafolio de trabajos, insignias de validación de identidad y reseñas verificadas.

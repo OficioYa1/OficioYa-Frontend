@@ -86,7 +86,7 @@ export const PushNotificationToast: React.FC<PushNotificationToastProps> = ({
             {notification?.body}
           </p>
           <span style={{ fontSize: '10px', color: 'var(--color-text-muted)', display: 'block', marginTop: '4px' }}>
-            Push en tiempo real (RF-61) • {notification?.timestamp}
+            {notification?.timestamp}
           </span>
         </div>
 

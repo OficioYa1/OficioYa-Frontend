@@ -170,16 +170,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
             onClick={() => switchRole(role === 'seeker' ? 'provider' : 'seeker')}
             className="btn btn-secondary"
             style={{ fontSize: '12px', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
-            title="Alternar entre modo contratante y modo profesional (RF-55)"
+            title="Alternar entre modo contratante y modo profesional"
           >
             <RefreshCw size={13} />
-            <span>Cambiar a {role === 'seeker' ? 'Profesional' : 'Contratante'} (RF-55)</span>
+            <span>Cambiar a {role === 'seeker' ? 'Profesional' : 'Contratante'}</span>
           </button>
         </div>
 
         {/* Formulario de Datos Básicos y Foto de Perfil (RF-57, RF-59) */}
         <form onSubmit={handleSaveContact} style={{ marginBottom: '24px' }}>
-          <h4 style={{ fontSize: '14px', marginBottom: '12px' }}>Editar Información Básica (RF-57)</h4>
+          <h4 style={{ fontSize: '14px', marginBottom: '12px' }}>Editar Información Básica</h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '14px' }}>
             <div>
               <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>
@@ -237,7 +237,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
             {/* RF-59: Cargar y actualizar foto de perfil */}
             <div>
               <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>
-                URL Foto de perfil / Avatar (RF-59)
+                URL Foto de perfil / Avatar
               </label>
               <div style={{ position: 'relative' }}>
                 <Camera size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
@@ -256,7 +256,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
             {savedSuccess && (
               <span style={{ fontSize: '12px', color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700 }}>
-                <CheckCircle2 size={14} /> Guardado con éxito (RF-57)
+                <CheckCircle2 size={14} /> Guardado con éxito
               </span>
             )}
             <button type="submit" className="btn btn-primary" style={{ fontSize: '12px', padding: '6px 14px' }}>
@@ -268,7 +268,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
         {/* RF-73: Consultar el estado de un reporte enviado */}
         <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px', marginBottom: '20px' }}>
           <h4 style={{ fontSize: '14px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FileText size={16} color="var(--role-primary)" /> Estado de Mis Reportes Enviados (RF-73)
+            <FileText size={16} color="var(--role-primary)" /> Estado de Mis Reportes Enviados
           </h4>
           <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '10px' }}>
             Seguimiento y transparencia de quejas o reportes de reseñas enviadas a moderación.
@@ -393,7 +393,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
               gap: '6px'
             }}
           >
-            <Trash2 size={14} /> Eliminar mi cuenta (Borrado lógico RF-58)
+            <Trash2 size={14} /> Eliminar mi cuenta (borrado lógico)
           </button>
         </div>
 
@@ -418,11 +418,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                     <AlertTriangle size={24} />
                   </div>
                   <h4 style={{ fontSize: '1.2rem', textAlign: 'center', marginBottom: '8px' }}>
-                    ¿Eliminar tu cuenta? (RF-58)
+                    ¿Eliminar tu cuenta?
                   </h4>
                   <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.4, marginBottom: '16px' }}>
                     Por privacidad y cumplimiento normativo, se aplicará un <strong>borrado lógico</strong>.
-                    Tu cuenta quedará inhabilitada de inmediato, pero el historial de transacciones y calificaciones que otros usuarios recibieron se conservará para no romper la reputación del sistema (RF-58).
+                    Tu cuenta quedará inhabilitada de inmediato, pero el historial de transacciones y calificaciones que otros usuarios recibieron se conservará para no romper la reputación del sistema.
                   </p>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button onClick={() => setShowDeleteModal(false)} className="btn btn-secondary" style={{ flex: 1 }}>

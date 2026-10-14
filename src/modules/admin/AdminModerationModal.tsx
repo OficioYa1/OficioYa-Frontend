@@ -128,7 +128,7 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
             <ShieldAlert size={26} />
           </div>
           <div>
-            <h3 style={{ fontSize: '1.35rem' }}>Panel de Moderación y Auditoría (RF-54)</h3>
+            <h3 style={{ fontSize: '1.35rem' }}>Panel de Moderación y Auditoría</h3>
             <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
               Gestión de quejas, reportes de reseñas falsas y suspensión preventiva de cuentas fraudulentas
             </span>
@@ -150,7 +150,7 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
               cursor: 'pointer'
             }}
           >
-            Tickets de Quejas y Reseñas ({tickets.length}) (RF-73)
+            Tickets de Quejas y Reseñas ({tickets.length})
           </button>
           <button
             onClick={() => setActiveTab('usuarios')}
@@ -165,7 +165,7 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
               cursor: 'pointer'
             }}
           >
-            Moderación de Cuentas (RF-39, RF-54)
+            Moderación de Cuentas
           </button>
         </div>
 
@@ -298,7 +298,7 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
                             <span style={{ fontWeight: 800, fontSize: '14px' }}>{w.name}</span>
                             {isLowRating && (
                               <span className="badge badge-danger" style={{ fontSize: '10px' }}>
-                                ⭐ {w.rating} (RF-39: Crítico)
+                                ⭐ {w.rating} (crítico)
                               </span>
                             )}
                           </div>
@@ -313,7 +313,7 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
                           className={`badge ${isPaused ? 'badge-danger' : 'badge-available'}`}
                           style={{ fontSize: '11px' }}
                         >
-                          {isPaused ? 'Suspendido / Pausado (RF-39)' : 'Activo'}
+                          {isPaused ? 'Suspendido / Pausado' : 'Activo'}
                         </span>
 
                         <button
@@ -326,7 +326,7 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
                             border: '1px solid currentColor'
                           }}
                         >
-                          {isPaused ? 'Reactivar Cuenta' : 'Suspender Cuenta (RF-54)'}
+                          {isPaused ? 'Reactivar Cuenta' : 'Suspender Cuenta'}
                         </button>
                       </div>
                     </div>

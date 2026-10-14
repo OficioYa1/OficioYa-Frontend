@@ -142,7 +142,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
       {/* Cabecera con Botón de Estadísticas (RF-46) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h2 style={{ fontSize: '1.4rem' }}>Mis Servicios & Solicitudes (RF-44, RF-72)</h2>
+          <h2 style={{ fontSize: '1.4rem' }}>Mis Servicios & Solicitudes</h2>
           <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
             Seguimiento de citas, cambios de estado y reputación en Bogotá D.C.
           </span>
@@ -154,7 +154,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
             className="btn btn-secondary"
             style={{ padding: '6px 14px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            <BarChart3 size={15} /> Estadísticas de Servicios (RF-46)
+            <BarChart3 size={15} /> Estadísticas de Servicios
           </button>
         </div>
       </div>
@@ -192,10 +192,10 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
         <div style={{ marginBottom: '28px', background: 'var(--color-surface)', padding: '16px 20px', borderRadius: '18px', border: '1px solid var(--color-border)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <h3 style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <UserCheck size={18} color="var(--role-primary)" /> Profesionales Contratados Anteriormente (RF-47)
+              <UserCheck size={18} color="var(--role-primary)" /> Profesionales Contratados Anteriormente
             </h3>
             <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-              Recontrata a tu profesional de confianza con 1 clic (RF-48)
+              Recontrata a tu profesional de confianza con 1 clic
             </span>
           </div>
 
@@ -240,14 +240,14 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                     if (onRehireWorker) {
                       onRehireWorker(w.id, w.name, w.trade);
                     } else {
-                      alert(`Iniciando nueva solicitud con ${w.name} (RF-48)`);
+                      alert(`Iniciando nueva solicitud con ${w.name}`);
                     }
                   }}
                   className="btn btn-secondary"
                   style={{ fontSize: '11px', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                  title="Volver a contactar a este trabajador (RF-48)"
+                  title="Volver a contactar a este trabajador"
                 >
-                  <RotateCcw size={12} /> Volver a contratar (RF-48)
+                  <RotateCcw size={12} /> Volver a contratar
                 </button>
               </div>
             ))}
@@ -266,13 +266,13 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '18px' }}>
           {filteredServices.map(srv => {
             let stripeColor = '#2563EB';
-            let statusLabel = 'En progreso (RF-78)';
+            let statusLabel = 'En progreso';
             if (srv.status === 'finalizado') {
               stripeColor = '#10B981';
-              statusLabel = 'Completado (RF-29)';
+              statusLabel = 'Completado';
             } else if (srv.status === 'cancelado') {
               stripeColor = '#EF4444';
-              statusLabel = 'Cancelado (RF-76)';
+              statusLabel = 'Cancelado';
             }
 
             return (
@@ -319,7 +319,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                         style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }}
                       />
                       <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
-                        Foto inicial adjunta (RF-20)
+                        Foto inicial adjunta
                       </span>
                     </div>
                   )}
@@ -333,7 +333,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                         style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }}
                       />
                       <span style={{ fontSize: '11px', color: '#065F46', fontWeight: 600 }}>
-                        ✓ Evidencia fotográfica del arreglo terminado (RF-62)
+                        ✓ Evidencia fotográfica del arreglo terminado
                       </span>
                     </div>
                   )}
@@ -341,7 +341,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                   {/* Motivo de cancelación si aplica (RF-76) */}
                   {srv.cancelReason && (
                     <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#991B1B', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', marginBottom: '12px' }}>
-                      <strong>Motivo de cancelación (RF-76):</strong> {srv.cancelReason}
+                      <strong>Motivo de cancelación:</strong> {srv.cancelReason}
                     </div>
                   )}
 
@@ -367,7 +367,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                         className="btn btn-primary"
                         style={{ flex: 1, padding: '8px', fontSize: '12px', background: '#10B981' }}
                       >
-                        <CheckCircle2 size={14} /> Marcar Completado (RF-29)
+                        <CheckCircle2 size={14} /> Marcar Completado
                       </button>
 
                       <button
@@ -375,7 +375,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                         className="btn btn-secondary"
                         style={{ flex: 1, padding: '8px', fontSize: '12px', color: 'var(--color-danger)' }}
                       >
-                        <XCircle size={14} /> Cancelar Servicio (RF-76)
+                        <XCircle size={14} /> Cancelar Servicio
                       </button>
                     </>
                   )}
@@ -385,7 +385,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                       {role === 'seeker' ? (
                         srv.reviewDone ? (
                           <span style={{ fontSize: '12px', color: '#10B981', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            ✓ Reseña verificada publicada (RF-36)
+                            ✓ Reseña verificada publicada
                           </span>
                         ) : (
                           <button
@@ -397,7 +397,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                             className="btn btn-primary"
                             style={{ fontSize: '12px', padding: '6px 12px' }}
                           >
-                            <Star size={13} /> Calificar Profesional (RF-34)
+                            <Star size={13} /> Calificar Profesional
                           </button>
                         )
                       ) : (
@@ -406,7 +406,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                           className="btn btn-secondary"
                           style={{ fontSize: '12px', padding: '6px 12px' }}
                         >
-                          <Star size={13} /> Calificar Contratante (RF-35)
+                          <Star size={13} /> Calificar Contratante
                         </button>
                       )}
 
@@ -414,7 +414,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                         onClick={() => onOpenReport(srv)}
                         style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', fontSize: '11px', cursor: 'pointer' }}
                       >
-                        Reportar anomalía (RF-64)
+                        Reportar anomalía
                       </button>
                     </div>
                   )}
@@ -446,9 +446,9 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                 <Camera size={22} />
               </div>
               <div>
-                <h3 style={{ fontSize: '1.25rem' }}>Finalizar Trabajo (RF-29)</h3>
+                <h3 style={{ fontSize: '1.25rem' }}>Finalizar Trabajo</h3>
                 <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                  Adjunta evidencia fotográfica del arreglo terminado (RF-62)
+                  Adjunta evidencia fotográfica del arreglo terminado
                 </span>
               </div>
             </div>
@@ -501,7 +501,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
         >
           <div className="card" style={{ width: '100%', maxWidth: '460px', borderRadius: '24px', padding: '24px' }}>
             <h3 style={{ fontSize: '1.25rem', marginBottom: '10px', color: 'var(--color-danger)' }}>
-              Cancelar Servicio (RF-76)
+              Cancelar Servicio
             </h3>
             <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '14px' }}>
               Para cancelar un servicio aceptado se requiere una justificación obligatoria por transparencia.
@@ -564,9 +564,9 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
           <div className="card" style={{ width: '100%', maxWidth: '460px', borderRadius: '24px', padding: '24px' }}>
             {!reviewSuccess ? (
               <div>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '6px' }}>Calificar a {reviewingService.workerName} (RF-34)</h3>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '6px' }}>Calificar a {reviewingService.workerName}</h3>
                 <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '14px' }}>
-                  Tu reseña quedará vinculada a la transacción verificada {reviewingService.id} (RF-36)
+                  Tu reseña quedará vinculada a la transacción verificada {reviewingService.id}
                 </span>
 
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '16px' }}>
@@ -596,7 +596,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                     Omitir por ahora
                   </button>
                   <button onClick={handleSendReview} className="btn btn-primary" style={{ flex: 1 }}>
-                    Publicar Reseña (RF-36)
+                    Publicar Reseña
                   </button>
                 </div>
               </div>
@@ -605,7 +605,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                 <CheckCircle2 size={36} color="#10B981" style={{ margin: '0 auto 10px' }} />
                 <h4 style={{ fontSize: '1.2rem', marginBottom: '4px' }}>¡Reseña Publicada!</h4>
                 <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                  La reputación digital del trabajador se ha recalculado en tiempo real (RF-37).
+                  La reputación digital del trabajador se ha recalculado en tiempo real.
                 </p>
               </div>
             )}
@@ -630,7 +630,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
         >
           <div className="card" style={{ width: '100%', maxWidth: '460px', borderRadius: '24px', padding: '24px' }}>
             <h3 style={{ fontSize: '1.25rem', marginBottom: '6px' }}>
-              Calificar al Contratante {ratingClientService.clientName} (RF-35)
+              Calificar al Contratante {ratingClientService.clientName}
             </h3>
             <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '14px' }}>
               Valora el trato, las facilidades brindadas y la puntualidad del pago.
@@ -662,7 +662,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                 Cancelar
               </button>
               <button onClick={handleSendClientRating} className="btn btn-primary" style={{ flex: 1 }}>
-                Guardar Valoración (RF-35)
+                Guardar Valoración
               </button>
             </div>
           </div>
@@ -688,7 +688,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <BarChart3 size={20} color="var(--role-primary)" />
-                <h3 style={{ fontSize: '1.25rem' }}>Servicios Más Solicitados (RF-46)</h3>
+                <h3 style={{ fontSize: '1.25rem' }}>Servicios Más Solicitados</h3>
               </div>
               <button onClick={() => setShowStatsModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
                 <X size={20} />

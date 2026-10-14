@@ -175,7 +175,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
                 <Send size={22} />
               </div>
               <div>
-                <h3 style={{ fontSize: '1.25rem' }}>Crear Petición de Servicio (RF-19, RF-24)</h3>
+                <h3 style={{ fontSize: '1.25rem' }}>Crear Petición de Servicio</h3>
                 <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
                   Describe tu necesidad, adjunta evidencia fotográfica y notifica a expertos compatibles
                 </span>
@@ -187,7 +187,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-                    <MapPin size={13} /> Zona de Bogotá (RF-21)
+                    <MapPin size={13} /> Zona de Bogotá
                   </label>
                   <select
                     className="input-base"
@@ -202,7 +202,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
 
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-                    <Calendar size={13} /> Fecha esperada (RF-19)
+                    <Calendar size={13} /> Fecha esperada
                   </label>
                   <input
                     type="date"
@@ -231,7 +231,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
               {/* RF-19: Descripción del trabajo */}
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                  Descripción detallada de la necesidad (RF-19)
+                  Descripción detallada de la necesidad
                 </label>
                 <textarea
                   className="input-base"
@@ -247,7 +247,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <label style={{ fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Camera size={14} color="var(--role-primary)" /> Evidencia fotográfica del problema (RF-20)
+                    <Camera size={14} color="var(--role-primary)" /> Evidencia fotográfica del problema
                   </label>
                   <button
                     type="button"
@@ -338,7 +338,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
               <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <label style={{ fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Users size={14} /> Profesionales Destinatarios (RF-23, RF-24)
+                    <Users size={14} /> Profesionales Destinatarios
                   </label>
                   <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
                     {selectedWorkers.length} {selectedWorkers.length === 1 ? 'destinatario directo' : 'candidatos simultáneos'}
@@ -373,7 +373,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
                 {compatibleWorkers.length > 0 && (
                   <div style={{ background: 'var(--color-surface-hover)', padding: '10px', borderRadius: '10px', marginBottom: '10px' }}>
                     <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--role-primary)', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                      <Sparkles size={12} /> Expertos cercanos compatibles con {selectedZone} (RF-22):
+                      <Sparkles size={12} /> Expertos cercanos compatibles con {selectedZone}:
                     </span>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                       {compatibleWorkers.slice(0, 4).map(w => {
@@ -406,7 +406,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
               <div style={{ background: '#FEF3C7', padding: '8px 12px', borderRadius: '8px', fontSize: '11px', color: '#92400E', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Clock size={14} />
                 <span>
-                  <strong>Plazo de respuesta (RF-28):</strong> Los trabajadores recibirán una alerta push con un plazo de 30 minutos para responder antes de que la invitación expire.
+                  <strong>Plazo de respuesta:</strong> Los trabajadores recibirán una alerta push con un plazo de 30 minutos para responder antes de que la invitación expire.
                 </span>
               </div>
 
@@ -416,7 +416,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
                 className="btn btn-primary"
                 style={{ padding: '12px', fontSize: '14px', fontWeight: 800, marginTop: '6px' }}
               >
-                Enviar Solicitud a {selectedWorkers.length} Profesional{selectedWorkers.length === 1 ? '' : 'es'} (RF-24)
+                Enviar Solicitud a {selectedWorkers.length} Profesional{selectedWorkers.length === 1 ? '' : 'es'}
               </button>
             </form>
           </div>
@@ -429,7 +429,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
             <h3 style={{ fontSize: '1.3rem', marginBottom: '6px' }}>¡Solicitud enviada con éxito!</h3>
             <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', maxWidth: '420px', margin: '0 auto 16px' }}>
               Despachamos la notificación a los <strong>{createdList.length}</strong> profesionales seleccionados en Bogotá.
-              Cuentan con 30 minutos para aceptar antes de expirar (RF-28).
+              Cuentan con 30 minutos para aceptar antes de expirar.
             </p>
 
             <button

@@ -151,7 +151,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   <h2 style={{ fontSize: '1.4rem' }}>{worker.name}</h2>
                   {worker.verified && (
-                    <span className="badge badge-verified" title="Identidad validada con documento (RF-43)">
+                    <span className="badge badge-verified" title="Identidad validada con documento">
                       <ShieldCheck size={14} /> Verificado
                     </span>
                   )}
@@ -159,7 +159,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                     <span
                       className="badge"
                       style={{ background: '#FEF3C7', color: '#B45309', border: '1px solid #F59E0B' }}
-                      title="Referente Comunitario Verificado: referidos activos en >= 3 oficios (RF-69)"
+                      title="Referente Comunitario Verificado: referidos activos en >= 3 oficios"
                     >
                       <Award size={13} /> Referente Comunitario
                     </span>
@@ -179,7 +179,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                 onClick={() => onOpenReport(worker)}
                 className="btn btn-secondary"
                 style={{ padding: '6px 10px', color: 'var(--color-danger)', fontSize: '12px' }}
-                title="Reportar anomalía o queja ante administración (RF-64)"
+                title="Reportar anomalía o queja ante administración"
               >
                 <AlertTriangle size={14} /> Reportar
               </button>
@@ -204,7 +204,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
             >
               <AlertTriangle size={20} color="#EF4444" />
               <div>
-                <strong>Perfil suspendido automáticamente (RF-39):</strong> {worker.pauseReason || 'Promedio menor a 3.0 estrellas en sus últimas 5 reseñas. Se han bloqueado nuevas solicitudes.'}
+                <strong>Perfil suspendido automáticamente:</strong> {worker.pauseReason || 'Promedio menor a 3.0 estrellas en sus últimas 5 reseñas. Se han bloqueado nuevas solicitudes.'}
               </div>
             </div>
           )}
@@ -222,7 +222,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
             }}
           >
             <div>
-              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Calificación (RF-10)</span>
+              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Calificación</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 800, fontSize: '15px' }}>
                 <Star size={16} fill="#FBBF24" color="#FBBF24" /> {worker.rating.toFixed(1)}
                 <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--color-text-muted)' }}>({worker.reviewCount})</span>
@@ -230,19 +230,19 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
             </div>
 
             <div>
-              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Trabajos Completados (RF-08)</span>
+              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Trabajos Completados</span>
               <span style={{ fontWeight: 800, fontSize: '15px', color: 'var(--color-success)' }}>
                 {worker.completedJobsCount} servicios
               </span>
             </div>
 
             <div>
-              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Tarifa Aprox. (RF-05)</span>
+              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Tarifa Aprox.</span>
               <span style={{ fontWeight: 800, fontSize: '15px' }}>${worker.hourlyRate.toLocaleString()} COP /h</span>
             </div>
 
             <div>
-              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Zona (RF-04)</span>
+              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Zona</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700, fontSize: '13px' }}>
                 <MapPin size={14} color="var(--role-primary)" /> {worker.location.zoneName}
               </div>
@@ -275,7 +275,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                 whiteSpace: 'nowrap'
               }}
             >
-              Oficios & Reputación (RF-56)
+              Oficios & Reputación
             </button>
             <button
               onClick={() => setActiveTab('resenas')}
@@ -321,7 +321,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
               {/* RF-60: Métodos de Pago Aceptados */}
               <div style={{ marginBottom: '18px', background: 'var(--color-surface-hover)', padding: '12px 16px', borderRadius: '12px' }}>
                 <h4 style={{ fontSize: '13px', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <CreditCard size={15} color="var(--role-primary)" /> Métodos de Pago Aceptados (RF-60)
+                  <CreditCard size={15} color="var(--role-primary)" /> Métodos de Pago Aceptados
                 </h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {(worker.acceptedPaymentMethods || ['efectivo', 'nequi', 'daviplata']).map(method => (
@@ -349,7 +349,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                   {worker.equipment && (
                     <div style={{ background: 'var(--color-surface-hover)', padding: '12px', borderRadius: '12px' }}>
                       <span style={{ fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                        <Wrench size={13} /> Equipo & Herramientas (RF-09)
+                        <Wrench size={13} /> Equipo & Herramientas
                       </span>
                       <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '12px', color: 'var(--color-text-muted)' }}>
                         {worker.equipment.map((eq, i) => (
@@ -362,7 +362,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                   {worker.brands && (
                     <div style={{ background: 'var(--color-surface-hover)', padding: '12px', borderRadius: '12px' }}>
                       <span style={{ fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                        <Tag size={13} /> Marcas Atendidas (RF-09)
+                        <Tag size={13} /> Marcas Atendidas
                       </span>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                         {worker.brands.map((b, i) => (
@@ -377,7 +377,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                   {worker.species && (
                     <div style={{ background: 'var(--color-surface-hover)', padding: '12px', borderRadius: '12px' }}>
                       <span style={{ fontSize: '12px', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
-                        🐾 Especies Atendidas (RF-09)
+                        🐾 Especies Atendidas
                       </span>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                         {worker.species.map((sp, i) => (
@@ -394,7 +394,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
               {/* Slots de Disponibilidad Semanal (RF-06) */}
               <div style={{ marginBottom: '20px' }}>
                 <h4 style={{ fontSize: '14px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Calendar size={16} /> Horarios y Disponibilidad Semanal (RF-06)
+                  <Calendar size={16} /> Horarios y Disponibilidad Semanal
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {worker.schedule.map((item, idx) => (
@@ -423,7 +423,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
           {activeTab === 'oficios' && (
             <div>
               <div style={{ marginBottom: '16px' }}>
-                <h4 style={{ fontSize: '14px', marginBottom: '4px' }}>Reputación Diferenciada por Oficio (RF-56, RF-71)</h4>
+                <h4 style={{ fontSize: '14px', marginBottom: '4px' }}>Reputación Diferenciada por Oficio</h4>
                 <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
                   Las calificaciones y trabajos no se promedian entre oficios distintos para proteger la reputación especializada.
                 </p>
@@ -435,7 +435,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                 <div style={{ border: '1.5px solid var(--role-primary)', borderRadius: '14px', padding: '14px', background: 'var(--color-surface)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                     <div>
-                      <span className="badge badge-verified" style={{ marginBottom: '4px' }}>OFICIO PRINCIPAL (RF-02)</span>
+                      <span className="badge badge-verified" style={{ marginBottom: '4px' }}>OFICIO PRINCIPAL</span>
                       <h4 style={{ fontSize: '15px', fontWeight: 800 }}>{worker.tradeLabel}</h4>
                     </div>
                     <div style={{ textAlign: 'right' }}>
@@ -450,7 +450,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                   </div>
 
                   <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--color-text-muted)', borderTop: '1px solid var(--color-border)', paddingTop: '8px' }}>
-                    <span><strong>{worker.ratingByTrade?.[worker.trade]?.completedJobs || worker.completedJobsCount}</strong> trabajos completados (RF-74)</span>
+                    <span><strong>{worker.ratingByTrade?.[worker.trade]?.completedJobs || worker.completedJobsCount}</strong> trabajos completados</span>
                     <span>Tarifa: <strong>${worker.hourlyRate.toLocaleString()} COP/h</strong></span>
                   </div>
 
@@ -458,7 +458,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                   {worker.specializations && worker.specializations.length > 0 && (
                     <div style={{ marginTop: '10px' }}>
                       <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>
-                        Especializaciones registradas (RF-66):
+                        Especializaciones registradas:
                       </span>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                         {worker.specializations.map((spec, i) => (
@@ -478,7 +478,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                     <div key={secTrade} style={{ border: '1px solid var(--color-border)', borderRadius: '14px', padding: '14px', background: 'var(--color-surface)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                         <div>
-                          <span className="badge" style={{ background: 'var(--color-surface-hover)', marginBottom: '4px' }}>OFICIO SECUNDARIO (RF-03)</span>
+                          <span className="badge" style={{ background: 'var(--color-surface-hover)', marginBottom: '4px' }}>OFICIO SECUNDARIO</span>
                           <h4 style={{ fontSize: '15px', fontWeight: 800, textTransform: 'capitalize' }}>{secTrade}</h4>
                         </div>
                         <div style={{ textAlign: 'right' }}>
@@ -490,7 +490,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                       </div>
 
                       <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--color-text-muted)', borderTop: '1px solid var(--color-border)', paddingTop: '8px' }}>
-                        <span><strong>{secRep.completedJobs}</strong> trabajos completados (RF-74)</span>
+                        <span><strong>{secRep.completedJobs}</strong> trabajos completados</span>
                       </div>
                     </div>
                   );
@@ -503,7 +503,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                     <Award size={18} color="#D97706" />
                     <h4 style={{ fontSize: '13px', fontWeight: 800, color: '#B45309' }}>
-                      Crecimiento Comunitario & Referidos (RF-68, RF-69)
+                      Crecimiento Comunitario & Referidos
                     </h4>
                   </div>
                   <p style={{ fontSize: '12px', color: '#78350F', margin: '0 0 8px' }}>
@@ -511,7 +511,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                   </p>
                   {worker.referrals.isCommunityReferrer && (
                     <span className="badge" style={{ background: '#F59E0B', color: '#FFF' }}>
-                      Insignia Permanente: Referente Comunitario Verificado (RF-69)
+                      Insignia Permanente: Referente Comunitario Verificado
                     </span>
                   )}
                 </div>
@@ -545,7 +545,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                           <span style={{ fontWeight: 700 }}>{rev.author}</span>
                           {rev.verifiedWork && (
                             <span style={{ fontSize: '10px', color: '#10B981', display: 'flex', alignItems: 'center', gap: '2px', fontWeight: 600 }}>
-                              <CheckCircle2 size={11} /> Trabajo Verificado (RF-36)
+                              <CheckCircle2 size={11} /> Trabajo Verificado
                             </span>
                           )}
                           {rev.tradeCategory && (
@@ -587,7 +587,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                               alignItems: 'center',
                               gap: '4px'
                             }}
-                            title="Reportar reseña potencialmente falsa ante el administrador (RF-38)"
+                            title="Reportar reseña potencialmente falsa ante el administrador"
                           >
                             <Flag size={11} /> Reportar sospechosa
                           </button>
@@ -602,7 +602,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                       {reportingReviewId === rev.id && (
                         <div style={{ marginTop: '10px', padding: '10px', background: 'var(--color-surface)', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
                           <span style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                            Motivo del reporte (RF-38: sin eliminación automática, enviado a auditoría):
+                            Motivo del reporte (lo revisa nuestro equipo; no se borra automáticamente):
                           </span>
                           <input
                             type="text"
@@ -657,7 +657,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                   <span style={{ position: 'absolute', bottom: '6px', right: '6px', background: 'rgba(0,0,0,0.6)', color: '#FFF', padding: '2px 6px', borderRadius: '4px', fontSize: '10px' }}>
-                    <ImageIcon size={10} style={{ display: 'inline', marginRight: '3px' }} /> Evidencia (RF-65)
+                    <ImageIcon size={10} style={{ display: 'inline', marginRight: '3px' }} /> Evidencia
                   </span>
                 </div>
               ))}
@@ -679,7 +679,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
               className="btn btn-secondary"
               style={{ flex: 1, minWidth: '110px' }}
             >
-              <MessageCircle size={16} /> Chatear (RF-51)
+              <MessageCircle size={16} /> Chatear
             </button>
 
             <button
@@ -704,7 +704,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                 cursor: worker.available && !worker.isPaused ? 'pointer' : 'not-allowed'
               }}
             >
-              <Calendar size={16} /> {worker.isPaused ? 'Pausado (RF-39)' : worker.available ? 'Contratar Servicio' : 'No disponible'}
+              <Calendar size={16} /> {worker.isPaused ? 'Pausado' : worker.available ? 'Contratar Servicio' : 'No disponible'}
             </button>
           </div>
         </div>

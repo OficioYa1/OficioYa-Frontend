@@ -746,7 +746,7 @@ export const INITIAL_WORKERS: Worker[] = [
     verified: false,
     available: false,
     isPaused: true,
-    pauseReason: 'Suspendido automáticamente: Calificación promedio menor a 3.0 estrellas en sus últimas 5 reseñas (RF-39)',
+    pauseReason: 'Suspendido automáticamente: Calificación promedio menor a 3.0 estrellas en sus últimas 5 reseñas',
     hourlyRate: 28000,
     responseTime: '> 2 horas',
     bio: 'Pintura de apartamentos y rejas en el sur de Bogotá.',

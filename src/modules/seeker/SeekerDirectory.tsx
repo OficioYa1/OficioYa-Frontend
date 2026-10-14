@@ -653,7 +653,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
           >
             <AlertCircle size={20} color="#2563EB" />
             <div>
-              <strong>Zona de búsqueda ampliada automáticamente (RF-70):</strong> No encontramos profesionales en tu radio inicial de {originalRadius} km.
+              <strong>Zona de búsqueda ampliada automáticamente:</strong> No encontramos profesionales en tu radio inicial de {originalRadius} km.
               Ampliamos la cobertura a 25 km en Bogotá D.C. para mostrarte {filteredWorkers.length} candidatos compatibles.
             </div>
           </div>
@@ -861,7 +861,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
             {/* RF-13: Filtrar por Zona / Barrio en Bogotá */}
             <div style={{ marginBottom: '20px' }}>
               <label style={{ fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                <MapPin size={14} /> Zona / Localidad en Bogotá (RF-13)
+                <MapPin size={14} /> Zona / Localidad en Bogotá
               </label>
               <select
                 className="input-base"
@@ -878,7 +878,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
             <div style={{ marginBottom: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                 <label style={{ fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <DollarSign size={14} /> Presupuesto máx. por hora (RF-14)
+                  <DollarSign size={14} /> Presupuesto máx. por hora
                 </label>
                 <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--role-primary)' }}>
                   ${maxBudgetRate.toLocaleString()} COP/h
@@ -920,7 +920,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
             {/* RF-15: Disponibilidad semanal */}
             <div style={{ marginBottom: '20px' }}>
               <label style={{ fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                <Calendar size={14} /> Disponibilidad en agenda (RF-15)
+                <Calendar size={14} /> Disponibilidad en agenda
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                 <button
@@ -959,7 +959,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
             {/* RF-16: Calificación mínima */}
             <div style={{ marginBottom: '24px' }}>
               <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-                Calificación mínima del profesional (RF-16)
+                Calificación mínima del profesional
               </label>
               <div style={{ display: 'flex', gap: '8px' }}>
                 {[0, 4.0, 4.5, 4.8].map(rating => (
@@ -987,7 +987,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
             {/* RF-32: Solo Disponibles Ya */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: 'var(--color-surface-hover)', borderRadius: '12px', marginBottom: '24px' }}>
               <div>
-                <span style={{ fontSize: '13px', fontWeight: 700, display: 'block' }}>Disponible ahora (RF-32)</span>
+                <span style={{ fontSize: '13px', fontWeight: 700, display: 'block' }}>Disponible ahora</span>
                 <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Excluir profesionales que estén fuera de línea</span>
               </div>
               <input
@@ -1056,7 +1056,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
                 <h3 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <BookOpen size={20} color="var(--role-primary)" /> Catálogo de Oficios Disponibles (RF-77)
+                  <BookOpen size={20} color="var(--role-primary)" /> Catálogo de Oficios Disponibles
                 </h3>
                 <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
                   12 categorías técnicas y asistenciales habilitadas en OficioYa Bogotá

@@ -243,7 +243,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
             <h3 style={{ fontSize: '1.4rem', marginBottom: '6px' }}>¡Reserva Confirmada con Éxito!</h3>
             <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '20px' }}>
-              Basty ha notificado a <strong>{worker.name}</strong>. Podrás ver el estado en tu pestaña de servicios.
+              Many le avisó a <strong>{worker.name}</strong>. Podrás ver el estado en tu pestaña de servicios.
             </p>
 
             <div

@@ -144,18 +144,13 @@ const MainAppContent: React.FC = () => {
           };
           setUserLocation(coords);
           setHasGps(true);
-          triggerPushNotification(
-            'GPS Actualizado (RF-63)',
-            `Coordenadas capturadas con éxito: ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`,
-            'system'
-          );
         },
         _err => {
           setUserLocation(FALLBACK_LOCATION_BOGOTA);
           setHasGps(false);
           triggerPushNotification(
-            'Ubicación Bogotá D.C. (RF-63)',
-            'Usando punto central Chapinero/Chicó (4.6768, -74.0482)',
+            'Usamos Bogotá como referencia',
+            'No pudimos leer tu ubicación. Actívala para ver quién está más cerca.',
             'system'
           );
         },
@@ -244,8 +239,8 @@ const MainAppContent: React.FC = () => {
     setServices(prev => [newService, ...prev]);
     // RF-61: Notificación push en tiempo real
     triggerPushNotification(
-      'Solicitud de Servicio Emitida (RF-61)',
-      `Tu solicitud con ${newService.workerName} ha sido agendada con éxito.`,
+      '¡Solicitud enviada!',
+      `Le avisamos a ${newService.workerName}. Te contamos apenas responda.`,
       'request'
     );
   };
@@ -309,12 +304,6 @@ const MainAppContent: React.FC = () => {
       )
     );
 
-    // RF-61: Notificación push
-    triggerPushNotification(
-      'Mensaje Enviado (RF-61)',
-      text.length > 45 ? `${text.slice(0, 45)}...` : text,
-      'message'
-    );
   };
 
   const handleOpenSendRequest = (worker?: Worker | Worker[]) => {
@@ -328,8 +317,10 @@ const MainAppContent: React.FC = () => {
     setServices(prev => [...newRequests, ...prev]);
     // RF-61: Notificación push por solicitud multidestinatario
     triggerPushNotification(
-      'Petición Multidestinatario Despachada (RF-24, RF-61)',
-      `Notificamos a ${newRequests.length} profesionales compatibles en tu zona de Bogotá.`,
+      '¡Solicitud enviada!',
+      newRequests.length === 1
+        ? `Le avisamos a ${newRequests[0].workerName}. Te contamos apenas responda.`
+        : `Le avisamos a ${newRequests.length} profesionales de tu zona. Te contamos apenas respondan.`,
       'request'
     );
   };
@@ -360,8 +351,8 @@ const MainAppContent: React.FC = () => {
       prev.map(s => (s.id === serviceId ? { ...s, reviewDone: true } : s))
     );
     triggerPushNotification(
-      'Reseña Publicada (RF-36)',
-      'Tu valoración ha sido vinculada al servicio completado.',
+      '¡Gracias por tu reseña!',
+      'Tu opinión ayuda a otros vecinos a elegir con confianza.',
       'system'
     );
   };
@@ -371,8 +362,8 @@ const MainAppContent: React.FC = () => {
       prev.map(s => (s.id === id ? { ...s, status: 'en_curso' } : s))
     );
     triggerPushNotification(
-      '¡Trabajo Aceptado! (RF-26, RF-61)',
-      'El servicio ha sido confirmado e iniciado en tu agenda.',
+      '¡Trabajo aceptado!',
+      'Quedó en tu agenda. Escríbele al cliente para coordinar la llegada.',
       'acceptance'
     );
   };
@@ -571,8 +562,8 @@ const MainAppContent: React.FC = () => {
           onClose={() => setReportingTarget(null)}
           onSubmitComplaint={(_ticket: ComplaintTicket) => {
             triggerPushNotification(
-              'Reporte Registrado (RF-64)',
-              'Tu queja ha sido turnada al equipo de moderación.',
+              'Recibimos tu reporte',
+              'Nuestro equipo lo va a revisar y te contaremos qué pasó.',
               'system'
             );
           }}

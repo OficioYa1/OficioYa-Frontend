@@ -215,13 +215,13 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <h2 style={{ fontSize: '1.4rem' }}>Panel de Control Profesional</h2>
               {isIdentityVerified && (
-                <span className="badge badge-verified" title="Identidad validada con cédula (RF-43)">
-                  <ShieldCheck size={13} /> Identidad Verificada (RF-43)
+                <span className="badge badge-verified" title="Identidad validada con cédula">
+                  <ShieldCheck size={13} /> Identidad Verificada
                 </span>
               )}
               {isCommunityReferrer && (
                 <span className="badge" style={{ background: '#FEF3C7', color: '#B45309', border: '1px solid #F59E0B' }}>
-                  <Award size={13} /> Referente Comunitario (RF-69)
+                  <Award size={13} /> Referente Comunitario
                 </span>
               )}
             </div>
@@ -255,7 +255,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   animation: isAvailableNow ? 'pulseGlow 2s infinite' : 'none'
                 }}
               />
-              {isAvailableNow ? 'DISPONIBLE YA (RF-30)' : 'FUERA DE LÍNEA (RF-31)'}
+              {isAvailableNow ? 'DISPONIBLE YA' : 'FUERA DE LÍNEA'}
             </span>
             <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
               {isAvailableNow ? 'Visible en el mapa local' : 'Oculto para nuevos pedidos'}
@@ -299,7 +299,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
             <CheckCircle2 size={24} />
           </div>
           <div>
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block' }}>Trabajos Completados (RF-08)</span>
+            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block' }}>Trabajos Completados</span>
             <span style={{ fontSize: '1.6rem', fontWeight: 900 }}>{completedJobsCount}</span>
           </div>
         </div>
@@ -309,7 +309,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
             <Star size={24} fill="#FBBF24" color="#FBBF24" />
           </div>
           <div>
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block' }}>Calificación Promedio (RF-10)</span>
+            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block' }}>Calificación Promedio</span>
             <span style={{ fontSize: '1.6rem', fontWeight: 900 }}>4.9 <small style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontWeight: 400 }}>(38 reseñas)</small></span>
           </div>
         </div>
@@ -319,7 +319,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
             <DollarSign size={24} />
           </div>
           <div>
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block' }}>Ingresos Mes (RF-45)</span>
+            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block' }}>Ingresos Mes</span>
             <span style={{ fontSize: '1.5rem', fontWeight: 900 }}>${monthlyRevenue.toLocaleString()} <small style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>COP</small></span>
           </div>
         </div>
@@ -329,7 +329,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
             <BellRing size={24} />
           </div>
           <div>
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block' }}>Solicitudes Pendientes (RF-25)</span>
+            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block' }}>Solicitudes Pendientes</span>
             <span style={{ fontSize: '1.6rem', fontWeight: 900 }}>{incomingRequests.length}</span>
           </div>
         </div>
@@ -339,9 +339,9 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
       <div style={{ marginBottom: '36px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
-            <h3 style={{ fontSize: '1.25rem' }}>Bandeja de Solicitudes Entrantes (RF-25)</h3>
+            <h3 style={{ fontSize: '1.25rem' }}>Bandeja de Solicitudes Entrantes</h3>
             <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-              Clientes en Bogotá solicitando atención. Tiempo de respuesta límite: 30 minutos (RF-28).
+              Clientes en Bogotá solicitando atención. Tiempo de respuesta límite: 30 minutos.
             </span>
           </div>
           <span className="badge badge-closest">{incomingRequests.length} pendientes</span>
@@ -389,7 +389,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                           {req.clientName}
                         </span>
                         <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>
-                          Ver reputación del contratante (RF-53) ↗
+                          Ver reputación del contratante ↗
                         </span>
                       </button>
                       <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{req.address}</span>
@@ -416,7 +416,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                         style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }}
                       />
                       <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
-                        Foto del problema adjunta por el cliente (RF-20)
+                        Foto del problema adjunta por el cliente
                       </span>
                     </div>
                   )}
@@ -445,7 +445,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                       marginBottom: '14px'
                     }}
                   >
-                    <span>⏱ Tiempo para responder (RF-28):</span>
+                    <span>⏱ Tiempo para responder:</span>
                     <span>{minutes}:{seconds < 10 ? `0${seconds}` : seconds} min</span>
                   </div>
 
@@ -455,14 +455,14 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                       className="btn btn-secondary"
                       style={{ flex: 1, padding: '8px', fontSize: '12px' }}
                     >
-                      Rechazar (RF-27)
+                      Rechazar
                     </button>
                     <button
                       onClick={() => onAcceptRequest(req.id)}
                       className="btn btn-primary"
                       style={{ flex: 1, padding: '8px', fontSize: '12px' }}
                     >
-                      Aceptar Trabajo (RF-26)
+                      Aceptar Trabajo
                     </button>
                   </div>
                 </div>
@@ -476,9 +476,9 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
       <div style={{ marginBottom: '36px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
-            <h3 style={{ fontSize: '1.25rem' }}>Mis Oficios, Especializaciones y Tarifas (RF-01, RF-02, RF-03)</h3>
+            <h3 style={{ fontSize: '1.25rem' }}>Mis Oficios, Especializaciones y Tarifas</h3>
             <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-              Configura detalles específicos como equipos, marcas y especialidades (RF-09, RF-67)
+              Configura detalles específicos como equipos, marcas y especialidades
             </span>
           </div>
 
@@ -526,7 +526,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
               {srv.specializations && srv.specializations.length > 0 && (
                 <div style={{ marginBottom: '10px' }}>
                   <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>
-                    Especializaciones (RF-67):
+                    Especializaciones:
                   </span>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                     {srv.specializations.map((spec, i) => (
@@ -548,7 +548,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
 
               <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '10px' }}>
                 <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>
-                  Zonas de cobertura en Bogotá (RF-04):
+                  Zonas de cobertura en Bogotá:
                 </span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                   {srv.coverageZones.map((z, i) => (
@@ -569,7 +569,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
         <div className="card">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
             <CreditCard size={20} color="var(--role-primary)" />
-            <h3 style={{ fontSize: '1.15rem' }}>Métodos de Pago Aceptados (RF-60)</h3>
+            <h3 style={{ fontSize: '1.15rem' }}>Métodos de Pago Aceptados</h3>
           </div>
           <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '14px' }}>
             Selecciona los canales en los que recibes pagos para informar al contratante antes del servicio.
@@ -610,7 +610,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <ImageIcon size={20} color="var(--role-primary)" />
-              <h3 style={{ fontSize: '1.15rem' }}>Portafolio de Trabajos (RF-07)</h3>
+              <h3 style={{ fontSize: '1.15rem' }}>Portafolio de Trabajos</h3>
             </div>
             <button
               onClick={() => setShowPhotoModal(true)}
@@ -640,7 +640,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
         <div className="card">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
             <ShieldCheck size={22} color={isIdentityVerified ? '#10B981' : 'var(--role-primary)'} />
-            <h3 style={{ fontSize: '1.15rem' }}>Verificación de Identidad (RF-41, RF-42, RF-43)</h3>
+            <h3 style={{ fontSize: '1.15rem' }}>Verificación de Identidad</h3>
           </div>
           <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '14px' }}>
             {completedJobsCount >= 10
@@ -670,7 +670,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Users size={22} color="var(--role-primary)" />
-              <h3 style={{ fontSize: '1.15rem' }}>Referidos Comunitarios (RF-68, RF-69)</h3>
+              <h3 style={{ fontSize: '1.15rem' }}>Referidos Comunitarios</h3>
             </div>
             <button
               onClick={() => setShowReferralModal(true)}
@@ -697,7 +697,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
 
           {isCommunityReferrer && (
             <span className="badge" style={{ background: '#F59E0B', color: '#FFF', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <Award size={13} /> Insignia Permanente: Referente Comunitario Verificado (RF-69)
+              <Award size={13} /> Insignia Permanente: Referente Comunitario Verificado
             </span>
           )}
         </div>
@@ -722,7 +722,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <UserCheck size={22} color="var(--role-primary)" />
-                <h3 style={{ fontSize: '1.25rem' }}>Perfil del Contratante (RF-53)</h3>
+                <h3 style={{ fontSize: '1.25rem' }}>Perfil del Contratante</h3>
               </div>
               <button onClick={() => setSelectedClientForProfile(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
                 <X size={20} />
@@ -800,7 +800,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           }}
         >
           <div className="card" style={{ width: '100%', maxWidth: '440px', borderRadius: '24px', padding: '24px' }}>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '14px' }}>Publicar Fotografía en Portafolio (RF-07)</h3>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '14px' }}>Publicar Fotografía en Portafolio</h3>
             <label style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
               URL de la imagen o captura
             </label>
@@ -840,7 +840,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           }}
         >
           <div className="card" style={{ width: '100%', maxWidth: '460px', borderRadius: '24px', padding: '24px' }}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '12px' }}>Soporte de Identidad Verificada (RF-42, RF-43)</h3>
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '12px' }}>Soporte de Identidad Verificada</h3>
             <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>
               Documento validado para emitir el distintivo de Identidad Verificada en tu perfil público de Bogotá.
             </p>
@@ -899,7 +899,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           }}
         >
           <div className="card" style={{ width: '100%', maxWidth: '440px', borderRadius: '24px', padding: '24px' }}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '12px' }}>Registrar un Referido (RF-68)</h3>
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '12px' }}>Registrar un Referido</h3>
             <form onSubmit={handleAddReferral} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
@@ -963,10 +963,10 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           }}
         >
           <div className="card" style={{ width: '100%', maxWidth: '520px', borderRadius: '24px', padding: '24px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '16px' }}>Registrar Nuevo Oficio (RF-01, RF-03)</h3>
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '16px' }}>Registrar Nuevo Oficio</h3>
             <form onSubmit={handleAddService} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Categoría de Oficio (RF-02, RF-03)</label>
+                <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Categoría de Oficio</label>
                 <select
                   className="input-base"
                   value={newTrade}
@@ -999,7 +999,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Tarifa / Hora (COP) (RF-05)</label>
+                  <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Tarifa / Hora (COP)</label>
                   <input
                     type="number"
                     className="input-base"
@@ -1021,7 +1021,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
               </div>
 
               <div>
-                <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Zonas de Cobertura en Bogotá (RF-04)</label>
+                <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Zonas de Cobertura en Bogotá</label>
                 <input
                   type="text"
                   className="input-base"
@@ -1035,7 +1035,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
               {/* RF-09: Equipamiento y Marcas */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Equipos / Herramientas (RF-09)</label>
+                  <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Equipos / Herramientas</label>
                   <input
                     type="text"
                     className="input-base"
@@ -1045,7 +1045,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Marcas atendidas (RF-09)</label>
+                  <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Marcas atendidas</label>
                   <input
                     type="text"
                     className="input-base"
@@ -1058,7 +1058,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
 
               {/* RF-67: Especializaciones */}
               <div>
-                <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Especializaciones registradas (RF-67)</label>
+                <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Especializaciones registradas</label>
                 <input
                   type="text"
                   className="input-base"
