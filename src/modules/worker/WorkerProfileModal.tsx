@@ -19,6 +19,7 @@ import {
   Tag,
   Flag
 } from 'lucide-react';
+import './Worker.css';
 
 interface WorkerProfileModalProps {
   worker: Worker;
@@ -69,141 +70,83 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
     setReportReasonText('');
   };
 
+  const canBook = worker.available && !worker.isPaused;
+  const primaryRep = worker.ratingByTrade?.[worker.trade];
+
+  const tabs: { id: typeof activeTab; label: string }[] = [
+    { id: 'info', label: 'Detalles & Horarios' },
+    { id: 'oficios', label: 'Oficios & Reputación' },
+    { id: 'resenas', label: `Reseñas (${worker.reviews.length})` },
+    { id: 'galeria', label: `Portafolio (${worker.gallery.length})` }
+  ];
+
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0, 0, 0, 0.65)',
-        backdropFilter: 'blur(6px)',
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px'
-      }}
-    >
+    <div className="oy-modal-backdrop">
       <div
-        className="card"
-        style={{
-          width: '100%',
-          maxWidth: '720px',
-          maxHeight: '92vh',
-          overflowY: 'auto',
-          padding: '0',
-          borderRadius: '24px',
-          position: 'relative'
-        }}
+        className="oy-modal wk-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="wk-name"
       >
-        {/* Header con Portada y Botón Cerrar */}
-        <div
-          style={{
-            height: '110px',
-            background: `linear-gradient(135deg, ${worker.avatarColor} 0%, #1E3A8A 100%)`,
-            position: 'relative',
-            padding: '16px'
-          }}
-        >
-          <button
-            onClick={onClose}
-            style={{
-              position: 'absolute',
-              top: '16px',
-              right: '16px',
-              background: 'rgba(0,0,0,0.4)',
-              color: '#FFFFFF',
-              borderRadius: '50%',
-              width: '32px',
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            title="Cerrar ventana"
-          >
-            <X size={18} />
-          </button>
-        </div>
+        {/* Banda de cabecera con lavado y foto en círculo */}
+        <div className="oy-modal__head wk-head">
+          <div className="wk-head__id">
+            <div
+              className="wk-avatar"
+              style={{ '--wk-avatar-bg': worker.avatarColor } as React.CSSProperties}
+              aria-hidden="true"
+            >
+              {worker.initials}
+            </div>
 
-        {/* Información Principal del Profesional */}
-        <div style={{ padding: '0 24px 24px', marginTop: '-40px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '16px' }}>
-              <div
-                style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '24px',
-                  background: worker.avatarColor,
-                  color: '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 900,
-                  fontSize: '28px',
-                  border: '4px solid var(--color-surface)',
-                  boxShadow: 'var(--shadow-md)'
-                }}
-              >
-                {worker.initials}
-              </div>
-
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <h2 style={{ fontSize: '1.4rem' }}>{worker.name}</h2>
-                  {worker.verified && (
-                    <span className="badge badge-verified" title="Identidad validada con documento">
-                      <ShieldCheck size={14} /> Verificado
-                    </span>
-                  )}
-                  {worker.referrals?.isCommunityReferrer && (
-                    <span
-                      className="badge"
-                      style={{ background: 'var(--color-warm-soft)', color: 'var(--color-accent-text)', border: '1px solid #F59E0B' }}
-                      title="Referente Comunitario Verificado: referidos activos en >= 3 oficios"
-                    >
-                      <Award size={13} /> Referente Comunitario
-                    </span>
-                  )}
-                </div>
-                <span style={{ fontSize: '14px', color: 'var(--color-text-muted)', fontWeight: 600 }}>
-                  {worker.tradeLabel}
+            <div className="wk-head__text">
+              <span className="wk-trade-label">{worker.tradeLabel}</span>
+              <h2 id="wk-name" className="oy-display wk-name">{worker.name}</h2>
+              <div className="wk-badges">
+                {worker.verified && (
+                  <span className="badge badge-verified wk-sticker wk-sticker--tilt-l" title="Identidad validada con documento">
+                    <ShieldCheck size={14} aria-hidden="true" /> Verificado
+                  </span>
+                )}
+                {worker.referrals?.isCommunityReferrer && (
+                  <span
+                    className="badge wk-sticker wk-sticker--almendra wk-sticker--tilt-r"
+                    title="Referente Comunitario Verificado: referidos activos en >= 3 oficios"
+                  >
+                    <Award size={13} aria-hidden="true" /> Referente Comunitario
+                  </span>
+                )}
+                <span className={`badge wk-sticker ${canBook ? 'badge-available' : 'wk-sticker--off'}`}>
+                  {worker.isPaused ? 'Pausado' : worker.available ? 'Disponible Ahora' : 'Fuera de línea'}
                 </span>
               </div>
             </div>
-
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <span className={`badge ${worker.available && !worker.isPaused ? 'badge-available' : 'badge-danger'}`} style={{ fontSize: '13px', padding: '6px 14px' }}>
-                {worker.isPaused ? 'Pausado' : worker.available ? 'Disponible Ahora' : 'Fuera de línea'}
-              </span>
-              <button
-                onClick={() => onOpenReport(worker)}
-                className="btn btn-secondary"
-                style={{ padding: '6px 10px', color: 'var(--color-danger)', fontSize: '12px' }}
-                title="Reportar anomalía o queja ante administración"
-              >
-                <AlertTriangle size={14} /> Reportar
-              </button>
-            </div>
           </div>
 
+          <div className="wk-head__tools">
+            <button
+              onClick={onClose}
+              className="oy-icon-btn"
+              title="Cerrar ventana"
+              aria-label="Cerrar ventana"
+            >
+              <X size={18} />
+            </button>
+            <button
+              onClick={() => onOpenReport(worker)}
+              className="btn btn-secondary wk-report-btn"
+              title="Reportar anomalía o queja ante administración"
+            >
+              <AlertTriangle size={14} aria-hidden="true" /> Reportar
+            </button>
+          </div>
+        </div>
+
+        <div className="oy-modal__body wk-body">
           {/* Banner de Pausa Automática por Bajas Calificaciones (RF-39) */}
           {worker.isPaused && (
-            <div
-              style={{
-                background: '#FEF2F2',
-                border: '1.5px solid var(--color-danger)',
-                borderRadius: '14px',
-                padding: '12px 16px',
-                marginBottom: '16px',
-                color: '#991B1B',
-                fontSize: '13px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}
-            >
-              <AlertTriangle size={20} color="var(--color-danger)" />
+            <div className="wk-alert" role="status">
+              <AlertTriangle size={20} aria-hidden="true" />
               <div>
                 <strong>Perfil suspendido automáticamente:</strong> {worker.pauseReason || 'Promedio menor a 3.0 estrellas en sus últimas 5 reseñas. Se han bloqueado nuevas solicitudes.'}
               </div>
@@ -211,418 +154,302 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
           )}
 
           {/* Calificación y Métricas Clave (RF-08, RF-10) */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-              gap: '12px',
-              background: 'var(--color-surface-hover)',
-              padding: '14px',
-              borderRadius: 'var(--radius-md)',
-              marginBottom: '20px'
-            }}
-          >
-            <div>
-              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Calificación</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 800, fontSize: '15px' }}>
-                <Star size={16} fill="var(--color-star)" color="var(--color-star)" /> {worker.rating.toFixed(1)}
-                <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--color-text-muted)' }}>({worker.reviewCount})</span>
-              </div>
-            </div>
-
-            <div>
-              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Trabajos Completados</span>
-              <span style={{ fontWeight: 800, fontSize: '15px', color: 'var(--color-success)' }}>
-                {worker.completedJobsCount} servicios
+          <div className="wk-stats">
+            <div className="oy-stat wk-stat--amarillo">
+              <span className="oy-stat__label">Calificación</span>
+              <span className="oy-stat__value wk-stat__row">
+                <Star size={22} fill="var(--color-star)" color="var(--stroke-ink)" aria-hidden="true" /> {worker.rating.toFixed(1)}
+                <span className="wk-stat__aside">({worker.reviewCount})</span>
               </span>
             </div>
 
-            <div>
-              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Tarifa Aprox.</span>
-              <span style={{ fontWeight: 800, fontSize: '15px' }}>${worker.hourlyRate.toLocaleString()} COP /h</span>
+            <div className="oy-stat wk-stat--esmeralda">
+              <span className="oy-stat__label">Trabajos Completados</span>
+              <span className="oy-stat__value">{worker.completedJobsCount}</span>
+              <span className="wk-stat__aside">servicios</span>
             </div>
 
-            <div>
-              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Zona</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700, fontSize: '13px' }}>
-                <MapPin size={14} color="var(--role-primary)" /> {worker.location.zoneName}
-              </div>
+            <div className="oy-stat wk-stat--marino">
+              <span className="oy-stat__label">Tarifa Aprox.</span>
+              <span className="oy-stat__value wk-stat__value--sm">${worker.hourlyRate.toLocaleString()}</span>
+              <span className="wk-stat__aside">COP /h</span>
+            </div>
+
+            <div className="oy-stat">
+              <span className="oy-stat__label">Zona</span>
+              <span className="wk-stat__zone">
+                <MapPin size={15} aria-hidden="true" /> {worker.location.zoneName}
+              </span>
             </div>
           </div>
 
           {/* Selector de Pestañas Internas */}
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--color-border)', marginBottom: '16px', overflowX: 'auto' }}>
-            <button
-              onClick={() => setActiveTab('info')}
-              style={{
-                padding: '10px 16px',
-                fontSize: '13px',
-                fontWeight: 700,
-                borderBottom: activeTab === 'info' ? '2px solid var(--role-primary)' : '2px solid transparent',
-                color: activeTab === 'info' ? 'var(--role-primary)' : 'var(--color-text-muted)',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              Detalles & Horarios
-            </button>
-            <button
-              onClick={() => setActiveTab('oficios')}
-              style={{
-                padding: '10px 16px',
-                fontSize: '13px',
-                fontWeight: 700,
-                borderBottom: activeTab === 'oficios' ? '2px solid var(--role-primary)' : '2px solid transparent',
-                color: activeTab === 'oficios' ? 'var(--role-primary)' : 'var(--color-text-muted)',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              Oficios & Reputación
-            </button>
-            <button
-              onClick={() => setActiveTab('resenas')}
-              style={{
-                padding: '10px 16px',
-                fontSize: '13px',
-                fontWeight: 700,
-                borderBottom: activeTab === 'resenas' ? '2px solid var(--role-primary)' : '2px solid transparent',
-                color: activeTab === 'resenas' ? 'var(--role-primary)' : 'var(--color-text-muted)',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              Reseñas ({worker.reviews.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('galeria')}
-              style={{
-                padding: '10px 16px',
-                fontSize: '13px',
-                fontWeight: 700,
-                borderBottom: activeTab === 'galeria' ? '2px solid var(--role-primary)' : '2px solid transparent',
-                color: activeTab === 'galeria' ? 'var(--role-primary)' : 'var(--color-text-muted)',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              Portafolio ({worker.gallery.length})
-            </button>
+          <div className="wk-tabs" role="group" aria-label="Secciones del perfil">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                className="oy-chip"
+                aria-pressed={activeTab === tab.id}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
           {/* Contenido Pestaña 1: Detalles & Horarios (RF-04, RF-06, RF-09, RF-60) */}
           {activeTab === 'info' && (
-            <div>
-              <div style={{ marginBottom: '18px' }}>
-                <h4 style={{ fontSize: '14px', marginBottom: '6px' }}>Biografía y Experiencia</h4>
-                <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
-                  {worker.bio}
-                </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                  <Phone size={13} /> {worker.phone}
-                </div>
-              </div>
+            <div className="wk-pane">
+              <section className="wk-block">
+                <h3 className="wk-block__title">Biografía y Experiencia</h3>
+                <p className="wk-text">{worker.bio}</p>
+                <span className="wk-chip-line">
+                  <Phone size={13} aria-hidden="true" /> {worker.phone}
+                </span>
+              </section>
 
               {/* RF-60: Métodos de Pago Aceptados */}
-              <div style={{ marginBottom: '18px', background: 'var(--color-surface-hover)', padding: '12px 16px', borderRadius: '12px' }}>
-                <h4 style={{ fontSize: '13px', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <CreditCard size={15} color="var(--role-primary)" /> Métodos de Pago Aceptados
-                </h4>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              <section className="wk-card wk-card--almendra">
+                <h3 className="wk-block__title wk-block__title--icon">
+                  <CreditCard size={16} aria-hidden="true" /> Métodos de Pago Aceptados
+                </h3>
+                <div className="wk-tags">
                   {(worker.acceptedPaymentMethods || ['efectivo', 'nequi', 'daviplata']).map(method => (
-                    <span
-                      key={method}
-                      style={{
-                        padding: '4px 10px',
-                        background: 'var(--color-surface)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: '999px',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        textTransform: 'uppercase'
-                      }}
-                    >
+                    <span key={method} className="wk-tag wk-tag--upper">
                       ✓ {method}
                     </span>
                   ))}
                 </div>
-              </div>
+              </section>
 
               {/* RF-09: Equipamiento, Marcas y Especies */}
               {(worker.equipment || worker.brands || worker.species) && (
-                <div style={{ marginBottom: '18px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                <div className="wk-grid">
                   {worker.equipment && (
-                    <div style={{ background: 'var(--color-surface-hover)', padding: '12px', borderRadius: '12px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                        <Wrench size={13} /> Equipo & Herramientas
-                      </span>
-                      <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '12px', color: 'var(--color-text-muted)' }}>
+                    <section className="wk-card">
+                      <h3 className="wk-block__title wk-block__title--icon">
+                        <Wrench size={14} aria-hidden="true" /> Equipo & Herramientas
+                      </h3>
+                      <ul className="wk-list">
                         {worker.equipment.map((eq, i) => (
                           <li key={i}>{eq}</li>
                         ))}
                       </ul>
-                    </div>
+                    </section>
                   )}
 
                   {worker.brands && (
-                    <div style={{ background: 'var(--color-surface-hover)', padding: '12px', borderRadius: '12px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                        <Tag size={13} /> Marcas Atendidas
-                      </span>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                    <section className="wk-card">
+                      <h3 className="wk-block__title wk-block__title--icon">
+                        <Tag size={14} aria-hidden="true" /> Marcas Atendidas
+                      </h3>
+                      <div className="wk-tags">
                         {worker.brands.map((b, i) => (
-                          <span key={i} style={{ background: 'var(--color-surface)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>
-                            {b}
-                          </span>
+                          <span key={i} className="wk-tag">{b}</span>
                         ))}
                       </div>
-                    </div>
+                    </section>
                   )}
 
                   {worker.species && (
-                    <div style={{ background: 'var(--color-surface-hover)', padding: '12px', borderRadius: '12px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
-                        🐾 Especies Atendidas
-                      </span>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                    <section className="wk-card">
+                      <h3 className="wk-block__title">🐾 Especies Atendidas</h3>
+                      <div className="wk-tags">
                         {worker.species.map((sp, i) => (
-                          <span key={i} style={{ background: 'var(--color-surface)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>
-                            {sp}
-                          </span>
+                          <span key={i} className="wk-tag">{sp}</span>
                         ))}
                       </div>
-                    </div>
+                    </section>
                   )}
                 </div>
               )}
 
               {/* Slots de Disponibilidad Semanal (RF-06) */}
-              <div style={{ marginBottom: '20px' }}>
-                <h4 style={{ fontSize: '14px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Calendar size={16} /> Horarios y Disponibilidad Semanal
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <section className="wk-block">
+                <h3 className="wk-block__title wk-block__title--icon">
+                  <Calendar size={16} aria-hidden="true" /> Horarios y Disponibilidad Semanal
+                </h3>
+                <ul className="wk-schedule">
                   {worker.schedule.map((item, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '8px 12px',
-                        background: 'var(--color-surface-hover)',
-                        borderRadius: '8px',
-                        fontSize: '12px'
-                      }}
-                    >
-                      <span style={{ fontWeight: 700 }}>{item.day}</span>
-                      <span style={{ color: 'var(--color-text-muted)' }}>{item.slots.join(' | ')}</span>
-                    </div>
+                    <li key={idx} className="wk-schedule__row">
+                      <span className="wk-schedule__day">{item.day}</span>
+                      <span className="wk-schedule__slots">{item.slots.join(' | ')}</span>
+                    </li>
                   ))}
-                </div>
-              </div>
+                </ul>
+              </section>
             </div>
           )}
 
           {/* Contenido Pestaña 2: Oficios & Reputación Diferenciada (RF-02, RF-03, RF-56, RF-66, RF-71, RF-74) */}
           {activeTab === 'oficios' && (
-            <div>
-              <div style={{ marginBottom: '16px' }}>
-                <h4 style={{ fontSize: '14px', marginBottom: '4px' }}>Reputación Diferenciada por Oficio</h4>
-                <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
+            <div className="wk-pane">
+              <div className="wk-block">
+                <h3 className="wk-block__title">Reputación Diferenciada por Oficio</h3>
+                <p className="wk-text">
                   Las calificaciones y trabajos no se promedian entre oficios distintos para proteger la reputación especializada.
                 </p>
               </div>
 
-              {/* Desglose por oficio */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-                {/* Oficio Principal (RF-02) */}
-                <div style={{ border: '1.5px solid var(--role-primary)', borderRadius: '14px', padding: '14px', background: 'var(--color-surface)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <div>
-                      <span className="badge badge-verified" style={{ marginBottom: '4px' }}>OFICIO PRINCIPAL</span>
-                      <h4 style={{ fontSize: '15px', fontWeight: 800 }}>{worker.tradeLabel}</h4>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <span style={{ fontSize: '1.2rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-accent-text)' }}>
-                        <Star size={18} fill="var(--color-star)" color="var(--color-star)" />
-                        {worker.ratingByTrade?.[worker.trade]?.rating || worker.rating}
-                      </span>
-                      <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
-                        {worker.ratingByTrade?.[worker.trade]?.reviewCount || worker.reviewCount} reseñas
-                      </span>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--color-text-muted)', borderTop: '1px solid var(--color-border)', paddingTop: '8px' }}>
-                    <span><strong>{worker.ratingByTrade?.[worker.trade]?.completedJobs || worker.completedJobsCount}</strong> trabajos completados</span>
-                    <span>Tarifa: <strong>${worker.hourlyRate.toLocaleString()} COP/h</strong></span>
-                  </div>
-
-                  {/* Especializaciones (RF-66) */}
-                  {worker.specializations && worker.specializations.length > 0 && (
-                    <div style={{ marginTop: '10px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>
-                        Especializaciones registradas:
-                      </span>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                        {worker.specializations.map((spec, i) => (
-                          <span key={i} style={{ background: 'var(--role-primary-light)', color: 'var(--role-primary)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>
-                            * {spec}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+              {/* Oficio Principal (RF-02) */}
+              <section className="wk-trade wk-trade--primary">
+                <div className="wk-trade__head">
+                  <span className="oy-sticker oy-sticker--pill oy-sticker--amarillo wk-trade__pill">Oficio principal</span>
+                  <h4 className="oy-display wk-trade__name">{worker.tradeLabel}</h4>
                 </div>
 
-                {/* Oficios Secundarios (RF-03) */}
-                {worker.secondaryTrades && worker.secondaryTrades.length > 0 && worker.secondaryTrades.map(secTrade => {
-                  const secRep = worker.ratingByTrade?.[secTrade] || { rating: 4.8, reviewCount: 6, completedJobs: 6 };
-                  return (
-                    <div key={secTrade} style={{ border: '1px solid var(--color-border)', borderRadius: '14px', padding: '14px', background: 'var(--color-surface)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                        <div>
-                          <span className="badge" style={{ background: 'var(--color-surface-hover)', marginBottom: '4px' }}>OFICIO SECUNDARIO</span>
-                          <h4 style={{ fontSize: '15px', fontWeight: 800, textTransform: 'capitalize' }}>{secTrade}</h4>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <span style={{ fontSize: '1.2rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-accent-text)' }}>
-                            <Star size={18} fill="var(--color-star)" color="var(--color-star)" /> {secRep.rating}
-                          </span>
-                          <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{secRep.reviewCount} reseñas</span>
-                        </div>
-                      </div>
+                <div className="wk-trade__stats">
+                  <div className="oy-stat wk-stat--amarillo">
+                    <span className="oy-stat__label">Calificación</span>
+                    <span className="oy-stat__value wk-stat__row">
+                      <Star size={20} fill="var(--color-star)" color="var(--stroke-ink)" aria-hidden="true" />
+                      {primaryRep?.rating || worker.rating}
+                    </span>
+                    <span className="wk-stat__aside">{primaryRep?.reviewCount || worker.reviewCount} reseñas</span>
+                  </div>
+                  <div className="oy-stat wk-stat--esmeralda">
+                    <span className="oy-stat__label">Trabajos completados</span>
+                    <span className="oy-stat__value">{primaryRep?.completedJobs || worker.completedJobsCount}</span>
+                  </div>
+                  <div className="oy-stat wk-stat--marino">
+                    <span className="oy-stat__label">Tarifa</span>
+                    <span className="oy-stat__value wk-stat__value--sm">${worker.hourlyRate.toLocaleString()}</span>
+                    <span className="wk-stat__aside">COP/h</span>
+                  </div>
+                </div>
 
-                      <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--color-text-muted)', borderTop: '1px solid var(--color-border)', paddingTop: '8px' }}>
-                        <span><strong>{secRep.completedJobs}</strong> trabajos completados</span>
+                {/* Especializaciones (RF-66) */}
+                {worker.specializations && worker.specializations.length > 0 && (
+                  <div className="wk-specs">
+                    <span className="oy-label wk-specs__label">Especializaciones registradas</span>
+                    <div className="wk-tags">
+                      {worker.specializations.map((spec, i) => (
+                        <span key={i} className="wk-tag wk-tag--role">{spec}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+
+              {/* Oficios Secundarios (RF-03) */}
+              {worker.secondaryTrades && worker.secondaryTrades.length > 0 && worker.secondaryTrades.map(secTrade => {
+                const secRep = worker.ratingByTrade?.[secTrade] || { rating: 4.8, reviewCount: 6, completedJobs: 6 };
+                return (
+                  <section key={secTrade} className="wk-trade">
+                    <div className="wk-trade__head">
+                      <span className="oy-sticker oy-sticker--pill oy-sticker--blanco wk-trade__pill">Oficio secundario</span>
+                      <h4 className="oy-display wk-trade__name wk-trade__name--cap">{secTrade}</h4>
+                    </div>
+                    <div className="wk-trade__stats">
+                      <div className="oy-stat wk-stat--amarillo">
+                        <span className="oy-stat__label">Calificación</span>
+                        <span className="oy-stat__value wk-stat__row">
+                          <Star size={20} fill="var(--color-star)" color="var(--stroke-ink)" aria-hidden="true" /> {secRep.rating}
+                        </span>
+                        <span className="wk-stat__aside">{secRep.reviewCount} reseñas</span>
+                      </div>
+                      <div className="oy-stat wk-stat--esmeralda">
+                        <span className="oy-stat__label">Trabajos completados</span>
+                        <span className="oy-stat__value">{secRep.completedJobs}</span>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                  </section>
+                );
+              })}
 
               {/* Referente Comunitario Verificado (RF-68, RF-69) */}
               {worker.referrals && (
-                <div style={{ background: 'var(--color-warm-soft)', border: '1px solid var(--color-star)', borderRadius: '14px', padding: '14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                    <Award size={18} color="var(--color-accent-text)" />
-                    <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'var(--color-accent-text)' }}>
-                      Crecimiento Comunitario & Referidos
-                    </h4>
-                  </div>
-                  <p style={{ fontSize: '12px', color: 'var(--color-accent-text)', margin: '0 0 8px' }}>
+                <section className="wk-card wk-card--amarillo">
+                  <h3 className="wk-block__title wk-block__title--icon">
+                    <Award size={18} aria-hidden="true" /> Crecimiento Comunitario & Referidos
+                  </h3>
+                  <p className="wk-text wk-text--main">
                     Código de referente: <strong>{worker.referrals.code}</strong>. Ha referido a {worker.referrals.count} colegas técnicos en {worker.referrals.distinctTradesCount} oficios distintos.
                   </p>
                   {worker.referrals.isCommunityReferrer && (
-                    <span className="badge" style={{ background: '#F59E0B', color: '#FFF' }}>
-                      Insignia Permanente: Referente Comunitario Verificado
+                    <span className="oy-sticker oy-sticker--pill oy-sticker--amarillo wk-badge-perm">
+                      <Award size={14} aria-hidden="true" /> Insignia Permanente: Referente Comunitario Verificado
                     </span>
                   )}
-                </div>
+                </section>
               )}
             </div>
           )}
 
           {/* Contenido Pestaña 3: Reseñas & Reporte de Falsas (RF-36, RF-38) */}
           {activeTab === 'resenas' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+            <div className="wk-pane">
               {worker.reviews.length === 0 ? (
-                <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', textAlign: 'center', padding: '20px' }}>
-                  Aún no tiene reseñas registradas. ¡Sé el primero en calificarlo!
-                </p>
+                <div className="oy-empty wk-empty">
+                  <p className="oy-empty__title">Sin reseñas todavía</p>
+                  <p className="oy-empty__text">Aún no tiene reseñas registradas. ¡Sé el primero en calificarlo!</p>
+                </div>
               ) : (
                 worker.reviews.map(rev => {
                   const isReported = reportedReviews[rev.id] || rev.isReported;
                   return (
-                    <div
-                      key={rev.id}
-                      style={{
-                        padding: '14px',
-                        background: 'var(--color-surface-hover)',
-                        borderRadius: '12px',
-                        fontSize: '13px',
-                        position: 'relative'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontWeight: 700 }}>{rev.author}</span>
+                    <article key={rev.id} className="wk-review">
+                      <div className="wk-review__head">
+                        <div className="wk-review__who">
+                          <span className="wk-review__author">{rev.author}</span>
                           {rev.verifiedWork && (
-                            <span style={{ fontSize: '10px', color: '#10B981', display: 'flex', alignItems: 'center', gap: '2px', fontWeight: 600 }}>
-                              <CheckCircle2 size={11} /> Trabajo Verificado
+                            <span className="wk-review__verified">
+                              <CheckCircle2 size={12} aria-hidden="true" /> Trabajo Verificado
                             </span>
                           )}
                           {rev.tradeCategory && (
-                            <span style={{ fontSize: '10px', background: 'var(--color-surface)', padding: '1px 6px', borderRadius: '4px', textTransform: 'capitalize' }}>
-                              {rev.tradeCategory}
-                            </span>
+                            <span className="wk-tag wk-tag--sm wk-tag--cap">{rev.tradeCategory}</span>
                           )}
                         </div>
-                        <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{rev.date}</span>
+                        <span className="wk-review__date">{rev.date}</span>
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <div className="wk-review__rating">
                         <PeekRating value={rev.rating} readOnly size={13} />
 
                         {/* Botón Reportar Reseña Falsa (RF-38) */}
                         {isReported ? (
-                          <span style={{ fontSize: '11px', color: 'var(--color-danger)', fontWeight: 600 }}>
-                            Reseña reportada para moderación
-                          </span>
+                          <span className="wk-review__reported">Reseña reportada para moderación</span>
                         ) : (
                           <button
                             onClick={() => setReportingReviewId(reportingReviewId === rev.id ? null : rev.id)}
-                            style={{
-                              background: 'transparent',
-                              border: 'none',
-                              color: 'var(--color-text-muted)',
-                              fontSize: '11px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
+                            className="wk-link-btn"
                             title="Reportar reseña potencialmente falsa ante el administrador"
+                            aria-expanded={reportingReviewId === rev.id}
                           >
-                            <Flag size={11} /> Reportar sospechosa
+                            <Flag size={12} aria-hidden="true" /> Reportar sospechosa
                           </button>
                         )}
                       </div>
 
-                      <p style={{ color: 'var(--color-text-muted)', lineHeight: 1.4, margin: 0 }}>
-                        "{rev.comment}"
-                      </p>
+                      <p className="wk-review__comment">"{rev.comment}"</p>
 
                       {/* Formulario desplegable para reportar reseña falsa */}
                       {reportingReviewId === rev.id && (
-                        <div style={{ marginTop: '10px', padding: '10px', background: 'var(--color-surface)', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                          <span style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                        <div className="wk-report-form">
+                          <label className="wk-report-form__label" htmlFor={`wk-report-${rev.id}`}>
                             Motivo del reporte (lo revisa nuestro equipo; no se borra automáticamente):
-                          </span>
+                          </label>
                           <input
+                            id={`wk-report-${rev.id}`}
                             type="text"
-                            className="input-base"
+                            className="input-base wk-report-form__input"
                             placeholder="Ej. Reseña fraudulenta, conflicto de interés o suplantación"
                             value={reportReasonText}
                             onChange={e => setReportReasonText(e.target.value)}
-                            style={{ fontSize: '12px', height: '34px', marginBottom: '6px' }}
                           />
-                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                            <button
-                              onClick={() => setReportingReviewId(null)}
-                              className="btn btn-secondary"
-                              style={{ fontSize: '11px', padding: '4px 8px' }}
-                            >
+                          <div className="wk-report-form__actions">
+                            <button onClick={() => setReportingReviewId(null)} className="btn btn-secondary wk-btn-sm">
                               Cancelar
                             </button>
-                            <button
-                              onClick={() => handleReportFakeReview(rev)}
-                              className="btn btn-primary"
-                              style={{ fontSize: '11px', padding: '4px 10px', background: 'var(--color-danger)' }}
-                            >
+                            <button onClick={() => handleReportFakeReview(rev)} className="btn btn-danger wk-btn-sm wk-btn-danger">
                               Enviar Reporte
                             </button>
                           </div>
                         </div>
                       )}
-                    </div>
+                    </article>
                   );
                 })
               )}
@@ -631,50 +458,31 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
 
           {/* Contenido Pestaña 4: Portafolio de Trabajos (RF-07, RF-65) */}
           {activeTab === 'galeria' && <WorkerGallery images={worker.gallery} />}
+        </div>
 
-          {/* Barra de Acciones: Chat, Enviar Petición, Contratar / No disponible */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '10px',
-              borderTop: '1px solid var(--color-border)',
-              paddingTop: '16px',
-              flexWrap: 'wrap'
-            }}
+        {/* Barra de Acciones: Chat, Enviar Petición, Contratar / No disponible */}
+        <div className="wk-actions">
+          <button onClick={() => onOpenChat(worker)} className="btn btn-secondary wk-actions__btn">
+            <MessageCircle size={16} aria-hidden="true" /> Chatear
+          </button>
+
+          <button
+            onClick={() => onOpenSendRequest(worker)}
+            className="btn btn-secondary wk-actions__btn"
+            disabled={worker.isPaused}
           >
-            <button
-              onClick={() => onOpenChat(worker)}
-              className="btn btn-secondary"
-              style={{ flex: 1, minWidth: '110px' }}
-            >
-              <MessageCircle size={16} /> Chatear
-            </button>
+            <Send size={16} aria-hidden="true" /> Enviar petición
+          </button>
 
-            <button
-              onClick={() => onOpenSendRequest(worker)}
-              className="btn btn-secondary"
-              disabled={worker.isPaused}
-              style={{ flex: 1, minWidth: '130px', opacity: worker.isPaused ? 0.5 : 1 }}
-            >
-              <Send size={16} /> Enviar petición
-            </button>
-
-            <button
-              onClick={() => {
-                if (worker.available && !worker.isPaused) onOpenBooking(worker);
-              }}
-              disabled={!worker.available || worker.isPaused}
-              className="btn btn-primary"
-              style={{
-                flex: 1.5,
-                minWidth: '150px',
-                opacity: worker.available && !worker.isPaused ? 1 : 0.6,
-                cursor: worker.available && !worker.isPaused ? 'pointer' : 'not-allowed'
-              }}
-            >
-              <Calendar size={16} /> {worker.isPaused ? 'Pausado' : worker.available ? 'Contratar Servicio' : 'No disponible'}
-            </button>
-          </div>
+          <button
+            onClick={() => {
+              if (worker.available && !worker.isPaused) onOpenBooking(worker);
+            }}
+            disabled={!canBook}
+            className="btn btn-primary wk-actions__btn wk-actions__btn--main"
+          >
+            <Calendar size={16} aria-hidden="true" /> {worker.isPaused ? 'Pausado' : worker.available ? 'Contratar Servicio' : 'No disponible'}
+          </button>
         </div>
       </div>
     </div>
@@ -689,9 +497,9 @@ const WorkerGallery: React.FC<{ images: string[] }> = ({ images }) => {
 
   if (images.length === 0) {
     return (
-      <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--color-text-muted)', marginBottom: '20px' }}>
-        <ImageIcon size={28} style={{ marginBottom: '8px' }} aria-hidden="true" />
-        <p style={{ margin: 0 }}>Este trabajador aún no ha subido evidencias de trabajo.</p>
+      <div className="oy-empty wk-empty">
+        <ImageIcon size={28} aria-hidden="true" />
+        <p className="oy-empty__text">Este trabajador aún no ha subido evidencias de trabajo.</p>
       </div>
     );
   }
@@ -703,8 +511,8 @@ const WorkerGallery: React.FC<{ images: string[] }> = ({ images }) => {
   }));
 
   return (
-    <div style={{ marginBottom: '20px' }}>
-      <div style={{ height: '320px' }}>
+    <div className="wk-gallery">
+      <div className="wk-gallery__stage">
         <CircularCarousel
           items={items}
           preset="cylinder"
@@ -716,10 +524,7 @@ const WorkerGallery: React.FC<{ images: string[] }> = ({ images }) => {
           onChange={(i) => setCurrent(i % images.length)}
         />
       </div>
-      <p
-        aria-live="polite"
-        style={{ margin: '8px 0 0', textAlign: 'center', fontSize: 'var(--text-small)', color: 'var(--color-text-muted)', fontVariantNumeric: 'tabular-nums' }}
-      >
+      <p aria-live="polite" className="wk-gallery__counter">
         Trabajo {current + 1} de {images.length} · arrastra o usa las flechas
       </p>
     </div>
