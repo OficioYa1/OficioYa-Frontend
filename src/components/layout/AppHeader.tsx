@@ -3,24 +3,21 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { UserRole } from '../../types';
 import {
-  Sun,
-  Moon,
   MapPin,
   CheckCircle2,
   Home,
   User,
-  LogOut,
   Navigation,
   Search,
   FileText,
   MessageCircle,
   Bell,
-  Settings,
   ChevronDown,
   Briefcase,
   Inbox
 } from 'lucide-react';
 import { Logo } from '../ui';
+import { AppMenu } from './AppMenu';
 
 interface AppHeaderProps {
   onOpenLanding: () => void;
@@ -56,7 +53,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
   const handleRoleChange = (newRole: UserRole) => {
     switchRole(newRole);
-    setShowRoleDropdown(false);
   };
 
   return (
@@ -142,7 +138,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               onClick={() => setShowRoleDropdown(!showRoleDropdown)}
               className="btn btn-secondary"
               style={{ padding: '6px 12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, background: 'var(--color-surface)' }}
-              title="Cambiar rol o configuración"
+              title="Menú"
+              aria-haspopup="true"
+              aria-expanded={showRoleDropdown}
+              aria-controls="app-menu"
             >
               <User size={16} />
               <span className="hide-on-mobile">{role === 'seeker' ? 'Contratante' : 'Profesional'}</span>
@@ -150,52 +149,21 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </button>
 
             {showRoleDropdown && (
-              <div style={{
-                position: 'absolute', top: '100%', right: 0, marginTop: '8px',
-                background: 'var(--color-surface)', border: '1px solid var(--color-border)',
-                borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                padding: '8px', minWidth: '180px', display: 'flex', flexDirection: 'column', gap: '4px', zIndex: 200
-              }}>
-                <button
-                  onClick={() => handleRoleChange('seeker')}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', border: 'none', background: role === 'seeker' ? 'var(--color-surface-hover)' : 'transparent', color: 'var(--color-text-main)', cursor: 'pointer', textAlign: 'left', fontWeight: role === 'seeker' ? 700 : 500, fontSize: '13px' }}
-                >
-                  Contratante {role === 'seeker' && <CheckCircle2 size={14} color="var(--role-primary)" />}
-                </button>
-                <button
-                  onClick={() => handleRoleChange('provider')}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', border: 'none', background: role === 'provider' ? 'var(--color-surface-hover)' : 'transparent', color: 'var(--color-text-main)', cursor: 'pointer', textAlign: 'left', fontWeight: role === 'provider' ? 700 : 500, fontSize: '13px' }}
-                >
-                  Profesional {role === 'provider' && <CheckCircle2 size={14} color="var(--role-primary)" />}
-                </button>
-                <div style={{ height: '1px', background: 'var(--color-border)', margin: '4px 0' }} />
-                <button
-                  onClick={() => { onSelectTab('perfil'); setShowRoleDropdown(false); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '8px', border: 'none', background: 'transparent', color: 'var(--color-text-main)', cursor: 'pointer', textAlign: 'left', fontSize: '13px' }}
-                >
-                  <User size={14} /> Mi perfil
-                </button>
-                <button
-                  onClick={() => { onOpenSettings(); setShowRoleDropdown(false); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '8px', border: 'none', background: 'transparent', color: 'var(--color-text-main)', cursor: 'pointer', textAlign: 'left', fontSize: '13px' }}
-                >
-                  <Settings size={14} /> Configuración
-                </button>
-                <button
-                  onClick={toggleTheme}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '8px', border: 'none', background: 'transparent', color: 'var(--color-text-main)', cursor: 'pointer', textAlign: 'left', fontSize: '13px' }}
-                >
-                  {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />} 
-                  Modo {theme === 'light' ? 'Oscuro' : 'Claro'}
-                </button>
-                <div style={{ height: '1px', background: 'var(--color-border)', margin: '4px 0' }} />
-                <button
-                  onClick={logout}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '8px', border: 'none', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer', textAlign: 'left', fontSize: '13px', fontWeight: 600 }}
-                >
-                  <LogOut size={14} /> Cerrar sesión
-                </button>
-              </div>
+              <AppMenu
+                role={role}
+                theme={theme}
+                currentTab={currentTab}
+                unreadCount={unreadCount}
+                notificationCount={notificationCount}
+                onClose={() => setShowRoleDropdown(false)}
+                onSwitchRole={handleRoleChange}
+                onSelectTab={onSelectTab}
+                onToggleChat={onToggleChat}
+                onOpenSettings={onOpenSettings}
+                onOpenNotifications={onOpenNotifications}
+                onToggleTheme={toggleTheme}
+                onLogout={logout}
+              />
             )}
           </div>
         </div>

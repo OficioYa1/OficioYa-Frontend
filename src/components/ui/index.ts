@@ -15,3 +15,5 @@ export type {
 } from './CircularCarousel';
 export { Shredder } from './Shredder';
 export type { ShredderItem, ShredderProps } from './Shredder';
+export { BranchedMenu } from './BranchedMenu';
+export type { BranchedMenuItem, BranchedMenuChild, BranchedMenuProps } from './BranchedMenu';
