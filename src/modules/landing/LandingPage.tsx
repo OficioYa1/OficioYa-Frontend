@@ -42,9 +42,13 @@ const FAQS = [
 
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  // Sin IntersectionObserver o con movimiento reducido, el contenido se muestra de una vez.
+  const [visible, setVisible] = useState(
+    () => typeof IntersectionObserver === 'undefined' ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
   useEffect(() => {
-    const el = ref.current; if (!el) return;
+    const el = ref.current; if (!el || visible) return;
     const obs = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
       { threshold: 0.12 }
