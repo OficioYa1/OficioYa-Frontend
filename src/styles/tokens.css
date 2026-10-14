@@ -67,6 +67,13 @@
   --color-error-soft:       var(--oy-rojo-suave);
   --color-focus-ring:       var(--oy-azul-marino);
 
+  /* Lenguaje "sticker" (docs/STYLE_REFERENCE.md): contorno Cacao y píldoras */
+  --stroke-ink:             var(--oy-cacao-profundo);
+  --stroke-w:               1.5px;
+  --radius-card-lg:         40px;
+  --wash-marino:            #E4EAF6;
+  --wash-esmeralda:         #DDF5EA;
+
   /* Fondo animado (MicroSlats): Almendra con brillos Amarillo Canario */
   --bg-slats-color:         var(--oy-almendra-claro);
   --bg-slats-glint:         var(--oy-amarillo-canario);
@@ -140,6 +147,10 @@ html.theme-dark {
   --color-warm-soft:     rgba(248, 216, 168, 0.12);
   --color-error-soft:    rgba(220, 38, 38, 0.15);
   --color-focus-ring:    var(--oy-amarillo-canario);
+
+  --stroke-ink:          rgba(248, 216, 168, 0.32);
+  --wash-marino:         rgba(30, 58, 138, 0.28);
+  --wash-esmeralda:      rgba(16, 185, 129, 0.14);
 
   /* Fondo animado: Azul Marino con brillos Ámbar, más tenue de noche */
   --bg-slats-color:      var(--oy-azul-marino);

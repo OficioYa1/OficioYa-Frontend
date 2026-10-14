@@ -6,6 +6,7 @@ import {
   CheckCircle2, TrendingUp, Plus, Minus,
 } from 'lucide-react';
 import './LandingPage.css';
+import './LandingSticker.css';
 import { AppFooter } from '../../components/layout/AppFooter';
 import { TrueFocus } from '../../components/ui/TrueFocus';
 import { BRAND_ASSETS } from '../../utils/assets';
@@ -84,43 +85,15 @@ function HoverText({ children, hoverColor = '#FFC72C', style = {} }: {
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{
-      borderBottom: '1px solid rgba(255,255,255,0.08)',
-      overflow: 'hidden',
-    }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{
-          width: '100%', display: 'flex', justifyContent: 'space-between',
-          alignItems: 'center', padding: '20px 0', background: 'none',
-          border: 'none', cursor: 'pointer', textAlign: 'left', gap: '16px',
-        }}
-      >
-        <span style={{
-          fontFamily: 'var(--font-heading)', fontSize: '17px', fontWeight: 600,
-          color: open ? '#FFC72C' : '#fff', transition: 'color 0.22s ease',
-        }}>
-          {q}
-        </span>
-        <span style={{
-          flexShrink: 0, color: open ? '#FFC72C' : 'rgba(255,255,255,0.4)',
-          transition: 'all 0.3s ease', transform: open ? 'rotate(0deg)' : 'rotate(0deg)',
-        }}>
-          {open ? <Minus size={18} /> : <Plus size={18} />}
-        </span>
+    <div className="lp-faq-item" data-open={open ? '' : undefined}>
+      <button type="button" className="lp-faq-q" aria-expanded={open} onClick={() => setOpen(o => !o)}>
+        <span>{q}</span>
+        <span className="lp-faq-icon" aria-hidden="true">{open ? <Minus size={18} /> : <Plus size={18} />}</span>
       </button>
-      <div style={{
-        maxHeight: open ? '200px' : '0',
-        overflow: 'hidden',
-        transition: 'max-height 0.4s cubic-bezier(0.4,0,0.2,1)',
-      }}>
-        <p style={{
-          fontFamily: 'var(--font-body)', fontSize: '15px',
-          color: 'rgba(255,255,255,0.6)', lineHeight: 1.7,
-          paddingBottom: '20px', margin: 0,
-        }}>
-          {a}
-        </p>
+      <div className="lp-faq-fold">
+        <div className="lp-faq-fold-inner">
+          <p className="lp-faq-a">{a}</p>
+        </div>
       </div>
     </div>
   );
@@ -155,6 +128,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
   return (
     <div className="lp-root">
 
+      {/* ── MARQUESINA (único movimiento continuo, estilo sticker) ── */}
+      <div className="lp-marquee" aria-hidden="true">
+        <div className="lp-marquee-track">
+          {[0, 1].map(copy => (
+            <span key={copy} className="lp-marquee-run">
+              {['Plomería', 'Electricidad', 'Pintura', 'Cerrajería', 'Electrodomésticos', 'Clases', 'Reputación verificada', 'Pago directo'].map(w => (
+                <span key={w} className="lp-marquee-item">{w}<span className="lp-marquee-dot">✦</span></span>
+              ))}
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* ── NAV ── */}
       <nav className="lp-nav">
         <div className="lp-wrap lp-nav-inner">
@@ -167,14 +153,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
           </div>
 
           {/* Nav links con hover de color — sin recuadros */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
-            <HoverText hoverColor="#FFC72C" style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 500, color: 'var(--color-text-muted)' }}>
+          <div className="lp-nav-actions">
+            <HoverText hoverColor="#C2410C" style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 500, color: 'var(--color-text-muted)' }}>
               <span onClick={handleStartAsSeeker}>Buscar</span>
             </HoverText>
-            <HoverText hoverColor="#FFC72C" style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 500, color: 'var(--color-text-muted)' }}>
+            <HoverText hoverColor="#C2410C" style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 500, color: 'var(--color-text-muted)' }}>
               <span onClick={() => document.getElementById('faq-section')?.scrollIntoView({ behavior: 'smooth' })}>Preguntas</span>
             </HoverText>
-            <HoverText hoverColor="#FFC72C" style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 500, color: 'var(--color-text-muted)' }}>
+            <HoverText hoverColor="#C2410C" style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 500, color: 'var(--color-text-muted)' }}>
               <span onClick={handleStartAsProvider}>Para trabajadores</span>
             </HoverText>
             <button onClick={handleStartAsSeeker} className="lp-btn-cta">
@@ -188,46 +174,47 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
       <section
         className={`lp-hero ${heroVisible ? 'lp-hero--in' : ''}`}
         style={{
-          background: 'linear-gradient(160deg, #1E3A8A 0%, #172E6E 50%, #10224F 100%)',
-          color: '#fff', textAlign: 'center', display: 'flex', flexDirection: 'column',
+          background: 'var(--color-warm-soft)', borderBottom: 'var(--stroke-w) solid var(--stroke-ink)',
+          color: 'var(--color-text-main)', textAlign: 'center', display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center', minHeight: '92vh',
           padding: '60px 24px 40px', position: 'relative', overflow: 'hidden',
         }}
       >
-        {/* Fondo decorativo */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(245,158,11,0.12) 0%, transparent 70%)' }} />
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.4), transparent)' }} />
+        {/* Stickers decorativos con la paleta del manual (estáticos, rotados) */}
+        <div className="lp-stickers" aria-hidden="true">
+          <span className="lp-sticker lp-sticker--amarillo" style={{ top: '14%', left: '12%', rotate: '-12deg' }}><Wrench size={28} /></span>
+          <span className="lp-sticker lp-sticker--esmeralda" style={{ top: '22%', right: '13%', rotate: '9deg' }}><UserCheck size={26} /></span>
+          <span className="lp-sticker lp-sticker--fuego" style={{ top: '48%', left: '7%', rotate: '8deg' }}><Zap size={26} /></span>
+          <span className="lp-sticker lp-sticker--marino" style={{ top: '55%', right: '8%', rotate: '-10deg' }}><Award size={26} /></span>
+          <span className="lp-sticker lp-sticker--almendra lp-sticker--pill" style={{ top: '8%', right: '30%', rotate: '-6deg' }}>★ 4.9</span>
+        </div>
 
         {/* Badge ciudad — texto suelto, sin recuadro opaco */}
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '28px',
-          fontFamily: 'var(--font-ui)', fontSize: '13px', fontWeight: 500, color: 'rgba(255,255,255,0.5)',
-          letterSpacing: '0.3px',
+          fontFamily: 'var(--font-ui)', fontSize: '12px', fontWeight: 700, color: 'var(--color-text-muted)',
+          letterSpacing: 'var(--tracking-label)', textTransform: 'uppercase',
         }}>
           <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981', animation: 'many-status-pulse 2s infinite', flexShrink: 0 }} />
           Bogotá D.C.
         </div>
 
         {/* Wordmark */}
-        <h1 style={{
-          fontFamily: 'var(--font-heading)', fontSize: 'clamp(4rem, 9vw, 7.5rem)',
-          fontWeight: 900, letterSpacing: '-3px', lineHeight: 0.92, marginBottom: '20px',
-          background: 'linear-gradient(135deg, #FFFFFF 0%, #FFC72C 55%, #F59E0B 100%)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-        }}>
-          OficioYa
+        <h1 className="oy-display lp-wordmark" aria-label="OficioYa">
+          <span className="lp-wordmark-oficio">Oficio</span>
+          <span className="lp-wordmark-ya">Ya</span>
         </h1>
 
         {/* Eslogan */}
         <div style={{
           fontFamily: 'var(--font-body)', fontSize: 'clamp(1.15rem, 2.5vw, 1.5rem)',
-          fontWeight: 400, color: 'rgba(255,255,255,0.7)', marginBottom: '16px',
+          fontWeight: 500, color: 'var(--color-text-main)', marginBottom: '16px',
           maxWidth: '540px', lineHeight: 1.55, letterSpacing: '-0.2px',
         }}>
           <TrueFocus
             sentence="El talento de tu zona a un click de distancia"
             blurAmount={3}
-            borderColor="#FFC72C"
+            borderColor="#3E1F14"
             animationDuration={0.4}
           />
         </div>
@@ -235,10 +222,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
         {/* Texto descriptivo — sin recuadro, flotante */}
         <p style={{
           fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 400,
-          color: 'rgba(255,255,255,0.38)', marginBottom: '48px', maxWidth: '400px',
+          color: 'var(--color-text-muted)', marginBottom: '40px', maxWidth: '400px',
         }}>
           Plomeros, electricistas, pintores y más — con{' '}
-          <HoverText hoverColor="#FFC72C" style={{ fontWeight: 600 }}>reputación verificada</HoverText>
+          <HoverText hoverColor="#C2410C" style={{ fontWeight: 600 }}>reputación verificada</HoverText>
           {' '}y geolocalización en tiempo real.
         </p>
 
@@ -260,12 +247,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
 
         {/* Many mascot */}
         <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-          <div style={{
-            position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)',
-            width: '280px', height: '280px', borderRadius: '50%',
-            background: `radial-gradient(circle, ${currentTrade.color}30 0%, transparent 70%)`,
-            transition: 'background 0.5s ease', pointerEvents: 'none',
-          }} />
 
           {selectedTrade === 'plomeria' ? (
             <img src={BRAND_ASSETS.manyPlomero} alt="Many Plomero"
@@ -283,7 +264,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
 
           {/* Tagline del oficio — texto suelto */}
           <p style={{
-            fontFamily: 'var(--font-body)', fontSize: '13px', color: 'rgba(255,255,255,0.4)',
+            fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--color-text-muted)',
             fontStyle: 'italic', maxWidth: '320px', textAlign: 'center', margin: 0,
           }}>
             {currentTrade.tagline}
@@ -295,19 +276,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
               <button
                 key={t.key}
                 onClick={() => handleTradeSelect(t.key)}
-                style={{
-                  background: selectedTrade === t.key ? t.color : 'transparent',
-                  color: selectedTrade === t.key
-                    ? '#3E1F14'
-                    : 'rgba(255,255,255,0.78)',
-                  border: selectedTrade === t.key ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '999px', padding: '7px 16px',
-                  fontSize: '12px', fontWeight: selectedTrade === t.key ? 700 : 400,
-                  cursor: 'pointer', fontFamily: 'var(--font-ui)',
-                  display: 'flex', alignItems: 'center', gap: '5px',
-                  transition: 'all 0.25s ease',
-                  boxShadow: selectedTrade === t.key ? `0 4px 14px ${t.color}45` : 'none',
-                }}
+                className="lp-trade-chip"
+                aria-pressed={selectedTrade === t.key}
+                style={{ background: selectedTrade === t.key ? t.color : undefined }}
               >
                 {t.icon} {t.label}
               </button>
@@ -409,42 +380,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
       </section>
 
       {/* ── FAQ DESPLEGABLE ── */}
-      <section
-        id="faq-section"
-        ref={faqReveal.ref}
-        style={{
-          padding: '80px 0',
-          background: 'linear-gradient(160deg, #1E3A8A 0%, #10224F 100%)',
-        }}
-      >
-        <div className="lp-wrap" style={{ maxWidth: '720px' }}>
-          {/* Títulos sueltos sobre fondo oscuro */}
-          <p style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#FFC72C', marginBottom: '12px' }}>
-            Preguntas frecuentes
-          </p>
-          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(1.8rem, 3vw, 2.4rem)', fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', marginBottom: '48px' }}>
-            Todo lo que necesitas saber.
-          </h2>
+      <section id="faq-section" ref={faqReveal.ref} className="lp-faq">
+        <div className="lp-wrap" style={{ maxWidth: '760px' }}>
+          <span className="lp-sticker lp-sticker--amarillo lp-sticker--pill">Preguntas frecuentes</span>
+          <h2 className="oy-display lp-faq-title">Todo lo que necesitas saber.</h2>
 
-          <div style={{
-            opacity: faqReveal.visible ? 1 : 0,
-            transform: faqReveal.visible ? 'translateY(0)' : 'translateY(24px)',
-            transition: 'all 0.5s ease',
-          }}>
+          <div className={`lp-faq-list ${faqReveal.visible ? 'lp-faq-list--in' : ''}`}>
             {FAQS.map((faq, i) => (
               <FaqItem key={i} q={faq.q} a={faq.a} />
             ))}
           </div>
 
-          {/* Texto CTA suelto, sin recuadro */}
-          <p style={{
-            fontFamily: 'var(--font-body)', fontSize: '14px',
-            color: 'rgba(255,255,255,0.4)', marginTop: '40px', textAlign: 'center',
-          }}>
+          <p className="lp-faq-more">
             ¿Tienes otra pregunta?{' '}
-            <HoverText hoverColor="#FFC72C" style={{ fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>
-              <span onClick={handleStartAsSeeker}>Contáctanos desde la app</span>
-            </HoverText>
+            <button type="button" className="lp-faq-link" onClick={handleStartAsSeeker}>
+              Contáctanos desde la app
+            </button>
           </p>
         </div>
       </section>

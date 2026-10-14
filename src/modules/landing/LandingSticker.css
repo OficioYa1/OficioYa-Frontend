@@ -1,0 +1,377 @@
+/* ============================================================
+   Landing · capa "sticker" (docs/STYLE_REFERENCE.md)
+   Va después de LandingPage.css y la reemplaza donde choca:
+   sin degradados ni sombras, contorno Cacao, píldoras, display
+   aplastado y stickers con la paleta del manual.
+   ============================================================ */
+
+/* ── Marquesina Cacao / Almendra ── */
+.lp-marquee {
+  overflow: hidden;
+  background: var(--oy-cacao-profundo);
+  color: var(--oy-almendra-claro);
+  border-bottom: var(--stroke-w) solid var(--oy-cacao-profundo);
+}
+
+.lp-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: lp-marquee 38s linear infinite;
+}
+
+.lp-marquee-run { display: flex; }
+
+.lp-marquee-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  padding: 9px 0 9px 18px;
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.lp-marquee-dot { color: var(--oy-amarillo-canario); }
+
+@keyframes lp-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ── Nav: CTA en píldora con contorno ── */
+.lp-nav { border-bottom: var(--stroke-w) solid var(--stroke-ink); }
+
+.lp-btn-cta,
+.lp-hero-btn-primary,
+.lp-hero-btn-ghost,
+.lp-cta-primary,
+.lp-cta-secondary {
+  border: var(--stroke-w) solid var(--stroke-ink);
+  box-shadow: none;
+  letter-spacing: var(--tracking-label);
+  backdrop-filter: none;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms var(--ease-out);
+}
+
+.lp-btn-cta::before,
+.lp-cta-primary::before { display: none; }
+
+.lp-btn-cta {
+  background: var(--color-energy);
+  color: var(--color-on-energy);
+}
+
+/* CTA principal: Azul Marino (confianza) con contorno Cacao */
+.lp-hero-btn-primary {
+  background: var(--oy-azul-marino);
+  color: #FFFFFF;
+}
+
+.lp-hero-btn-ghost {
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  font-weight: 700;
+}
+
+.lp-cta-primary,
+.lp-cta-amber {
+  background: var(--color-energy);
+  color: var(--color-on-energy);
+}
+
+.lp-btn-cta:active,
+.lp-hero-btn-primary:active,
+.lp-hero-btn-ghost:active,
+.lp-cta-primary:active,
+.lp-cta-secondary:active {
+  transform: scale(0.97);
+  box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .lp-btn-cta:hover,
+  .lp-cta-primary:hover,
+  .lp-cta-amber:hover {
+    background: var(--oy-ambar-calido);
+    transform: none;
+    box-shadow: none;
+  }
+  .lp-hero-btn-primary:hover {
+    background: #172E6E;
+    transform: none;
+    box-shadow: none;
+  }
+  .lp-hero-btn-ghost:hover {
+    background: var(--color-surface-hover);
+    border-color: var(--stroke-ink);
+    transform: none;
+  }
+}
+
+/* ── Wordmark display aplastado ── */
+.lp-wordmark {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 0.08em;
+  margin: 0 0 24px;
+  font-size: clamp(4.5rem, 13vw, 11rem);
+  color: var(--oy-azul-marino);
+}
+
+/* "Ya" como sticker Amarillo con texto Cacao (9.5:1) */
+.lp-wordmark-ya {
+  display: inline-block;
+  padding: 0.04em 0.12em 0.1em;
+  border: calc(var(--stroke-w) * 2) solid var(--oy-cacao-profundo);
+  border-radius: 0.22em;
+  background: var(--oy-amarillo-canario);
+  color: var(--oy-cacao-profundo);
+  rotate: -4deg;
+  translate: 0 -0.04em;
+}
+
+html.theme-dark .lp-wordmark { color: #A9BCF0; }
+
+/* ── Stickers decorativos ── */
+.lp-stickers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.lp-sticker {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: 20px;
+  color: var(--oy-cacao-profundo);
+}
+
+.lp-sticker--pill {
+  width: auto;
+  height: auto;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.lp-sticker--amarillo { background: var(--oy-amarillo-canario); }
+.lp-sticker--esmeralda { background: var(--oy-verde-esmeralda); }
+.lp-sticker--fuego { background: var(--oy-naranja-fuego); color: #FFFFFF; }
+.lp-sticker--marino { background: var(--oy-azul-marino); color: #FFFFFF; }
+.lp-sticker--almendra { background: var(--oy-almendra-claro); }
+
+@media (max-width: 760px) {
+  .lp-sticker { width: 46px; height: 46px; border-radius: 16px; }
+  .lp-sticker svg { width: 20px; height: 20px; }
+  .lp-sticker--pill { width: auto; height: auto; font-size: 14px; }
+  .lp-sticker--fuego,
+  .lp-sticker--marino { display: none; }
+}
+
+/* ── Chips de oficio en píldora ── */
+.lp-trade-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 16px;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms var(--ease-out);
+}
+
+.lp-trade-chip[aria-pressed='true'] {
+  color: var(--oy-cacao-profundo);
+  font-weight: 700;
+}
+
+.lp-trade-chip:active { transform: scale(0.97); }
+
+@media (hover: hover) and (pointer: fine) {
+  .lp-trade-chip:not([aria-pressed='true']):hover { background: var(--color-surface-hover); }
+}
+
+/* ── Tarjetas de la landing: recorte con contorno, sin sombra ── */
+.lp-testimon-card,
+.lp-faq-item {
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card);
+  box-shadow: none;
+}
+
+/* CTA para trabajadores: tarjeta grande Azul Marino plana */
+.lp-cta-card,
+html.theme-dark .lp-cta-card {
+  background: var(--oy-azul-marino);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card-lg);
+  box-shadow: none;
+}
+
+.lp-cta-glow { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-marquee-track { animation: none; }
+}
+
+/* ── Navegación: en móvil solo queda el CTA ── */
+.lp-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+@media (max-width: 600px) {
+  .lp-nav-actions > :not(.lp-btn-cta) { display: none; }
+}
+
+/* ── Preguntas frecuentes: lavado Azul Marino plano y tarjetas con contorno ── */
+.lp-faq {
+  padding: 96px 0;
+  background: var(--wash-marino);
+  border-top: var(--stroke-w) solid var(--stroke-ink);
+  border-bottom: var(--stroke-w) solid var(--stroke-ink);
+}
+
+.lp-faq .lp-sticker {
+  position: static;
+  display: inline-flex;
+  font-size: 13px;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.lp-faq-title {
+  margin: 20px 0 40px;
+  color: var(--color-trust);
+  font-size: clamp(2.4rem, 6vw, 4rem);
+}
+
+.lp-faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 500ms var(--ease-out), transform 500ms var(--ease-out);
+}
+
+.lp-faq-list--in {
+  opacity: 1;
+  transform: none;
+}
+
+.lp-faq-item {
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+}
+
+.lp-faq-q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: var(--tap-target);
+  padding: 18px 22px;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  color: var(--color-text-main);
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lp-faq-q:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; }
+
+.lp-faq-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  transition: background-color 200ms ease;
+}
+
+.lp-faq-item[data-open] .lp-faq-icon {
+  background: var(--oy-amarillo-canario);
+  color: var(--oy-cacao-profundo);
+}
+
+.lp-faq-fold {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 280ms var(--ease-out);
+}
+
+.lp-faq-item[data-open] .lp-faq-fold { grid-template-rows: 1fr; }
+
+.lp-faq-fold-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.lp-faq-a {
+  margin: 0;
+  padding: 0 22px 20px;
+  color: var(--color-text-muted);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.lp-faq-more {
+  margin-top: 36px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.lp-faq-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-trust);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .lp-faq-q:hover .lp-faq-icon { background: var(--color-warm-soft); }
+  .lp-faq-item[data-open] .lp-faq-q:hover .lp-faq-icon { background: var(--oy-amarillo-canario); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-faq-list,
+  .lp-faq-fold { transition: none; }
+}
+
+/* En móvil los stickers se van a las esquinas para no tapar el titular */
+@media (max-width: 600px) {
+  .lp-sticker--almendra { display: none; }
+  .lp-sticker--amarillo { top: 3% !important; left: 5% !important; }
+  .lp-sticker--esmeralda { top: 3% !important; right: 5% !important; }
+}

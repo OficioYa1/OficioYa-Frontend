@@ -1,0 +1,121 @@
+/* ============================================================
+   Capa "sticker" (ver docs/STYLE_REFERENCE.md)
+   Lenguaje de Slush con la paleta del manual: contorno Cacao
+   recortado, píldoras, sin sombras ni degradados en controles.
+   ============================================================ */
+
+/* ── Botones: píldora con contorno ── */
+.btn {
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  box-shadow: none;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease,
+    transform 160ms var(--ease-out);
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--role-primary);
+  box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover {
+    background: var(--role-primary-hover);
+    box-shadow: none;
+  }
+  .btn-secondary:hover {
+    background: var(--color-surface-hover);
+    transform: none;
+  }
+  .btn-accent:hover { transform: none; }
+}
+
+.btn-primary:active {
+  filter: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  border: var(--stroke-w) solid var(--stroke-ink);
+}
+
+.btn-accent {
+  background: var(--color-energy);
+  box-shadow: none;
+}
+
+.btn-danger { border-color: var(--stroke-ink); }
+
+/* ── Tarjetas: recorte con contorno, elevación sin sombra ── */
+.card {
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card);
+  box-shadow: none;
+  transition: transform 200ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: none;
+  }
+}
+
+.card:active {
+  transform: scale(0.995);
+  box-shadow: none;
+}
+
+html.theme-dark .card,
+html.theme-dark .card:hover { box-shadow: none; }
+
+/* ── Insignias: stickers ── */
+.badge-verified,
+.badge-available {
+  border: 1px solid var(--stroke-ink);
+}
+
+/* ── Inputs con contorno suave ── */
+.input-base {
+  border: var(--stroke-w) solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.input-base:focus {
+  border-color: var(--stroke-ink);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+  transform: none;
+}
+
+/* ── Paneles flotantes propios ── */
+.inbox-panel,
+.app-menu {
+  border: var(--stroke-w) solid var(--stroke-ink);
+  box-shadow: none;
+}
+
+.inbox-card {
+  border: var(--stroke-w) solid var(--stroke-ink);
+  box-shadow: none;
+}
+
+/* ── Tipografía display aplastada (DM Sans 800 del manual) ── */
+.oy-display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 0.82;
+  letter-spacing: -0.04em;
+}
+
+.oy-label {
+  font-family: var(--font-text, var(--font-ui));
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
