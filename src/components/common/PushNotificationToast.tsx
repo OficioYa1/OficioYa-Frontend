@@ -37,7 +37,7 @@ export const PushNotificationToast: React.FC<PushNotificationToastProps> = ({
       case 'acceptance':
         return <CheckCircle2 size={18} color="#10B981" />;
       case 'message':
-        return <MessageSquare size={18} color="#2563EB" />;
+        return <MessageSquare size={18} color="var(--color-trust)" />;
       default:
         return <AlertCircle size={18} color="#6366F1" />;
     }

@@ -583,8 +583,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '4px',
-                  background: '#FEF3C7',
-                  color: '#B45309',
+                  background: 'var(--color-warm-soft)',
+                  color: 'var(--color-accent-text)',
                   fontSize: '12px',
                   fontWeight: 700,
                   padding: '3px 10px',
@@ -603,7 +603,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
                   alignItems: 'center',
                   gap: '4px',
                   background: 'var(--color-success-bg)',
-                  color: '#065F46',
+                  color: 'var(--color-status-text)',
                   fontSize: '12px',
                   fontWeight: 700,
                   padding: '3px 10px',
@@ -639,8 +639,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
         {isRadiusExpanded && (
           <div
             style={{
-              background: '#EFF6FF',
-              border: '1px solid #3B82F6',
+              background: 'var(--color-trust-soft)',
+              border: '1px solid var(--color-trust)',
               borderRadius: '14px',
               padding: '12px 18px',
               marginBottom: '20px',
@@ -651,7 +651,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
               fontSize: '13px'
             }}
           >
-            <AlertCircle size={20} color="#2563EB" />
+            <AlertCircle size={20} color="var(--color-trust)" />
             <div>
               <strong>Zona de búsqueda ampliada automáticamente:</strong> No encontramos profesionales en tu radio inicial de {originalRadius} km.
               Ampliamos la cobertura a 25 km en Bogotá D.C. para mostrarte {filteredWorkers.length} candidatos compatibles.
@@ -760,17 +760,17 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
                   }}>
                     {/* Nombre y Disponibilidad */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontWeight: 800, fontSize: '18px', color: 'var(--color-text)', letterSpacing: '-0.3px' }}>
+                      <span style={{ fontWeight: 800, fontSize: '18px', color: 'var(--color-text-main)', letterSpacing: '-0.3px' }}>
                         {worker.name}
                       </span>
                       <div 
-                        style={{ width: 8, height: 8, borderRadius: '50%', background: worker.available ? '#10B981' : '#EF4444' }} 
+                        style={{ width: 8, height: 8, borderRadius: '50%', background: worker.available ? '#10B981' : 'var(--color-danger)' }} 
                         title={worker.available ? 'Disponible' : 'Ocupado'}
                       />
                     </div>
 
                     {/* Oficio con color de marca suave */}
-                    <span style={{ fontSize: '15px', color: worker.avatarColor, fontWeight: 700, letterSpacing: '0.2px' }}>
+                    <span style={{ fontSize: '15px', color: 'var(--color-trust)', fontWeight: 700, letterSpacing: '0.2px' }}>
                       {worker.tradeLabel}
                     </span>
 
@@ -783,8 +783,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
                       color: 'var(--color-text-muted)',
                       marginTop: '2px'
                     }}>
-                      <Star size={13} fill="#FBBF24" color="#FBBF24" style={{ marginTop: '-2px' }} />
-                      <span style={{ fontWeight: 700, color: 'var(--color-text)' }}>{worker.rating.toFixed(1)}</span>
+                      <Star size={13} fill="var(--color-star)" color="var(--color-star)" style={{ marginTop: '-2px' }} />
+                      <span style={{ fontWeight: 700, color: 'var(--color-text-main)' }}>{worker.rating.toFixed(1)}</span>
                       <span style={{ opacity: 0.4 }}>•</span>
                       <span>{formatDistance(worker.distanceKm || 0)}</span>
                     </div>
@@ -793,8 +793,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
                       <div style={{
                         background: 'var(--color-surface)',
-                        border: `1.5px solid ${worker.avatarColor}`,
-                        color: worker.avatarColor,
+                        border: '1.5px solid var(--color-energy)',
+                        color: 'var(--color-text-main)',
                         padding: '4px 10px',
                         borderRadius: tagRadius,
                         fontWeight: 800,
@@ -973,8 +973,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
                       borderRadius: '8px',
                       fontSize: '12px',
                       fontWeight: 700,
-                      background: minRating === rating ? '#FEF3C7' : 'var(--color-surface)',
-                      color: minRating === rating ? '#B45309' : 'var(--color-text-main)',
+                      background: minRating === rating ? 'var(--color-warm-soft)' : 'var(--color-surface)',
+                      color: minRating === rating ? 'var(--color-accent-text)' : 'var(--color-text-main)',
                       border: minRating === rating ? '1.5px solid #F59E0B' : '1px solid var(--color-border)'
                     }}
                   >

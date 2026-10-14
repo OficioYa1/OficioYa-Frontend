@@ -131,7 +131,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
 
               <div style={{ background: 'var(--color-surface-hover)', padding: '14px', borderRadius: '12px' }}>
                 <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Garantía Digital</span>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#3B82F6', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-trust)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                   <ShieldCheck size={16} /> 100% Protegida
                 </span>
               </div>

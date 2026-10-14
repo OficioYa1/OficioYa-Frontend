@@ -36,7 +36,7 @@ export const AppFooter: React.FC = () => {
             </div>
             <p style={{
               fontSize: '15px',
-              color: 'var(--color-text)',
+              color: 'var(--color-text-main)',
               fontWeight: 600,
               margin: 0,
               lineHeight: 1.4
@@ -50,7 +50,7 @@ export const AppFooter: React.FC = () => {
 
           {/* Links: Oficio Ya */}
           <div>
-            <h4 style={{ color: 'var(--color-text)', fontWeight: 800, fontSize: '14px', marginBottom: '20px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+            <h4 style={{ color: 'var(--color-text-main)', fontWeight: 800, fontSize: '14px', marginBottom: '20px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
               Oficio Ya
             </h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '14px' }}>
@@ -63,7 +63,7 @@ export const AppFooter: React.FC = () => {
 
           {/* Links: Para clientes */}
           <div>
-            <h4 style={{ color: 'var(--color-text)', fontWeight: 800, fontSize: '14px', marginBottom: '20px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+            <h4 style={{ color: 'var(--color-text-main)', fontWeight: 800, fontSize: '14px', marginBottom: '20px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
               Para clientes
             </h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '14px' }}>
@@ -76,7 +76,7 @@ export const AppFooter: React.FC = () => {
 
           {/* Links: Para profesionales */}
           <div>
-            <h4 style={{ color: 'var(--color-text)', fontWeight: 800, fontSize: '14px', marginBottom: '20px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+            <h4 style={{ color: 'var(--color-text-main)', fontWeight: 800, fontSize: '14px', marginBottom: '20px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
               Para profesionales
             </h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '14px' }}>
@@ -89,7 +89,7 @@ export const AppFooter: React.FC = () => {
 
           {/* Links: Información */}
           <div>
-            <h4 style={{ color: 'var(--color-text)', fontWeight: 800, fontSize: '14px', marginBottom: '20px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+            <h4 style={{ color: 'var(--color-text-main)', fontWeight: 800, fontSize: '14px', marginBottom: '20px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
               Información
             </h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '14px' }}>
@@ -113,11 +113,11 @@ export const AppFooter: React.FC = () => {
           width: 'fit-content',
           marginBottom: '48px',
         }}>
-          <div style={{ width: '48px', height: '48px', flexShrink: 0, overflow: 'hidden', borderRadius: '50%', background: '#E0F2FE' }}>
+          <div style={{ width: '48px', height: '48px', flexShrink: 0, overflow: 'hidden', borderRadius: '50%', background: 'var(--color-trust-soft)' }}>
             <MascotAvatar size="sm" animate="idle" forceImage="wave" />
           </div>
           <div>
-            <span style={{ display: 'block', fontWeight: 800, fontSize: '16px', color: 'var(--color-text)', letterSpacing: '-0.3px', marginBottom: '2px' }}>
+            <span style={{ display: 'block', fontWeight: 800, fontSize: '16px', color: 'var(--color-text-main)', letterSpacing: '-0.3px', marginBottom: '2px' }}>
               ¿Necesitas una mano?
             </span>
             <span style={{ fontSize: '14px', opacity: 0.8 }}>
@@ -139,7 +139,7 @@ export const AppFooter: React.FC = () => {
           fontSize: '13px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <span style={{ fontWeight: 600, color: 'var(--color-text)' }}>© 2026 Oficio Ya</span>
+            <span style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>© 2026 Oficio Ya</span>
             <span style={{ opacity: 0.4 }}>•</span>
             <a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Privacidad</a>
             <span style={{ opacity: 0.4 }}>•</span>

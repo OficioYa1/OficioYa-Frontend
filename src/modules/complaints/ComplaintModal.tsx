@@ -145,12 +145,12 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
                 display: 'flex',
                 gap: '10px',
                 background: 'var(--color-warning-bg)',
-                border: '1px solid #FDE68A',
+                border: '1px solid var(--color-warm-soft)',
                 borderRadius: '12px',
                 padding: '10px 14px',
                 marginBottom: '16px',
                 fontSize: '12px',
-                color: '#92400E'
+                color: 'var(--color-accent-text)'
               }}
             >
               <ShieldAlert size={18} style={{ flexShrink: 0 }} />
@@ -264,9 +264,9 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
                         fontWeight: 600
                       }}
                     >
-                      {file.type.includes('image') && <ImageIcon size={12} color="#3B82F6" />}
+                      {file.type.includes('image') && <ImageIcon size={12} color="var(--color-trust)" />}
                       {file.type.includes('video') && <Film size={12} color="#8B5CF6" />}
-                      {file.type.includes('pdf') && <FileCheck size={12} color="#EF4444" />}
+                      {file.type.includes('pdf') && <FileCheck size={12} color="var(--color-danger)" />}
                       <span>{file.name}</span>
                       <X size={12} style={{ cursor: 'pointer', color: 'var(--color-text-muted)' }} onClick={() => removeAttachment(idx)} />
                     </span>
@@ -301,7 +301,7 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
               <MascotAvatar size="sm" />
             </div>
 
-            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#ECFDF5', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--color-status-soft)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
               <CheckCircle2 size={28} />
             </div>
 

@@ -265,13 +265,13 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '18px' }}>
           {filteredServices.map(srv => {
-            let stripeColor = '#2563EB';
+            let stripeColor = 'var(--color-trust)';
             let statusLabel = 'En progreso';
             if (srv.status === 'finalizado') {
               stripeColor = '#10B981';
               statusLabel = 'Completado';
             } else if (srv.status === 'cancelado') {
-              stripeColor = '#EF4444';
+              stripeColor = 'var(--color-danger)';
               statusLabel = 'Cancelado';
             }
 
@@ -326,13 +326,13 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
 
                   {/* Evidencia fotográfica de finalización (RF-62) */}
                   {srv.completionEvidence && srv.completionEvidence.length > 0 && (
-                    <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', background: '#ECFDF5', padding: '6px 10px', borderRadius: '8px' }}>
+                    <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--color-status-soft)', padding: '6px 10px', borderRadius: '8px' }}>
                       <img
                         src={srv.completionEvidence[0]}
                         alt="Trabajo terminado"
                         style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }}
                       />
-                      <span style={{ fontSize: '11px', color: '#065F46', fontWeight: 600 }}>
+                      <span style={{ fontSize: '11px', color: 'var(--color-status-text)', fontWeight: 600 }}>
                         ✓ Evidencia fotográfica del arreglo terminado
                       </span>
                     </div>
@@ -442,7 +442,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
         >
           <div className="card" style={{ width: '100%', maxWidth: '480px', borderRadius: '24px', padding: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#ECFDF5', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--color-status-soft)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Camera size={22} />
               </div>
               <div>
@@ -577,7 +577,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                       onClick={() => setReviewRating(star)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
                     >
-                      <Star size={28} fill={star <= reviewRating ? '#FBBF24' : 'none'} color="#FBBF24" />
+                      <Star size={28} fill={star <= reviewRating ? 'var(--color-star)' : 'none'} color="var(--color-star)" />
                     </button>
                   ))}
                 </div>
@@ -644,7 +644,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                   onClick={() => setClientRatingValue(star)}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
                 >
-                  <Star size={28} fill={star <= clientRatingValue ? '#FBBF24' : 'none'} color="#FBBF24" />
+                  <Star size={28} fill={star <= clientRatingValue ? 'var(--color-star)' : 'none'} color="var(--color-star)" />
                 </button>
               ))}
             </div>

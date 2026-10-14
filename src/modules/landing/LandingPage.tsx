@@ -19,18 +19,18 @@ interface TradeOption {
 
 const TRADES: TradeOption[] = [
   { key: 'electricidad',    label: 'Electricidad',    icon: <Zap size={15} />,        tagline: 'Instalaciones eléctricas, cableado y circuitos seguros.',            color: '#FFC72C' },
-  { key: 'plomeria',        label: 'Plomería',        icon: <Wrench size={15} />,      tagline: 'Destapes, fugas y redes hidráulicas con garantía de trabajo.',        color: '#3B82F6' },
-  { key: 'pintura',         label: 'Pintura',         icon: <PaintBucket size={15} />, tagline: 'Acabados finos y pintura arquitectónica para tu hogar.',                color: '#8B5CF6' },
-  { key: 'cerrajeria',      label: 'Cerrajería',      icon: <KeyRound size={15} />,    tagline: 'Aperturas de emergencia 24 horas, sin daño a tus cerraduras.',         color: '#10B981' },
-  { key: 'electrodomesticos', label: 'Electrodomésticos', icon: <Tv2 size={15} />,    tagline: 'Reparación de lavadoras, neveras y aires acondicionados.',             color: '#F97316' },
-  { key: 'clases',          label: 'Clases',          icon: <BookOpen size={15} />,    tagline: 'Profesores particulares verificados para todas las materias.',          color: '#EC4899' },
+  { key: 'plomeria',        label: 'Plomería',        icon: <Wrench size={15} />,      tagline: 'Destapes, fugas y redes hidráulicas con garantía de trabajo.',        color: '#FFC72C' },
+  { key: 'pintura',         label: 'Pintura',         icon: <PaintBucket size={15} />, tagline: 'Acabados finos y pintura arquitectónica para tu hogar.',                color: '#FFC72C' },
+  { key: 'cerrajeria',      label: 'Cerrajería',      icon: <KeyRound size={15} />,    tagline: 'Aperturas de emergencia 24 horas, sin daño a tus cerraduras.',         color: '#FFC72C' },
+  { key: 'electrodomesticos', label: 'Electrodomésticos', icon: <Tv2 size={15} />,    tagline: 'Reparación de lavadoras, neveras y aires acondicionados.',             color: '#FFC72C' },
+  { key: 'clases',          label: 'Clases',          icon: <BookOpen size={15} />,    tagline: 'Profesores particulares verificados para todas las materias.',          color: '#FFC72C' },
 ];
 
 const STATS = [
-  { label: 'Profesionales activos',  value: '2.400+',  icon: <UserCheck size={22} />,    color: '#3B82F6' },
-  { label: 'Servicios completados',  value: '18.000+', icon: <CheckCircle2 size={22} />, color: '#10B981' },
-  { label: 'Calificación promedio',  value: '4.8 / 5', icon: <Star size={22} />,         color: '#FBBF24' },
-  { label: 'Tiempo de respuesta',    value: '< 20 min',icon: <TrendingUp size={22} />,   color: '#F97316' },
+  { label: 'Profesionales activos',  value: '2.400+',  icon: <UserCheck size={22} />,    color: 'var(--color-trust)' },
+  { label: 'Servicios completados',  value: '18.000+', icon: <CheckCircle2 size={22} />, color: 'var(--color-status-text)' },
+  { label: 'Calificación promedio',  value: '4.8 / 5', icon: <Star size={22} />,         color: 'var(--color-accent-text)' },
+  { label: 'Tiempo de respuesta',    value: '< 20 min',icon: <TrendingUp size={22} />,   color: 'var(--color-action-strong)' },
 ];
 
 const FAQS = [
@@ -188,7 +188,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
       <section
         className={`lp-hero ${heroVisible ? 'lp-hero--in' : ''}`}
         style={{
-          background: 'linear-gradient(160deg, #0A1628 0%, #0F2040 45%, #131A2E 100%)',
+          background: 'linear-gradient(160deg, #1E3A8A 0%, #172E6E 50%, #10224F 100%)',
           color: '#fff', textAlign: 'center', display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center', minHeight: '92vh',
           padding: '60px 24px 40px', position: 'relative', overflow: 'hidden',
@@ -227,7 +227,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
           <TrueFocus
             sentence="El talento de tu zona a un click de distancia"
             blurAmount={3}
-            borderColor="#2F6BFF"
+            borderColor="#FFC72C"
             animationDuration={0.4}
           />
         </div>
@@ -298,8 +298,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
                 style={{
                   background: selectedTrade === t.key ? t.color : 'transparent',
                   color: selectedTrade === t.key
-                    ? (t.key === 'electricidad' ? '#0A1628' : '#fff')
-                    : 'rgba(255,255,255,0.45)',
+                    ? '#3E1F14'
+                    : 'rgba(255,255,255,0.78)',
                   border: selectedTrade === t.key ? 'none' : '1px solid rgba(255,255,255,0.1)',
                   borderRadius: '999px', padding: '7px 16px',
                   fontSize: '12px', fontWeight: selectedTrade === t.key ? 700 : 400,
@@ -362,9 +362,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '32px' }}>
             {[
-              { n: '01', icon: <MapPin size={22} />, color: '#3B82F6', title: 'Búsqueda hiperlocal', desc: 'Activa tu GPS o selecciona tu localidad. Ves en tiempo real quién está disponible a menos de 2 km.' },
-              { n: '02', icon: <Award size={22} />, color: '#F59E0B', title: 'Reputación verificada', desc: 'Calificaciones reales de vecinos, fotos de trabajos terminados y antecedentes validados.' },
-              { n: '03', icon: <UserCheck size={22} />, color: '#10B981', title: 'Trato directo', desc: 'Contactas, acordás la tarifa y pagás en efectivo, transferencia o Bre-B. Sin intermediarios.' },
+              { n: '01', icon: <MapPin size={22} />, color: '#1E3A8A', title: 'Búsqueda hiperlocal', desc: 'Activa tu GPS o selecciona tu localidad. Ves en tiempo real quién está disponible a menos de 2 km.' },
+              { n: '02', icon: <Award size={22} />, color: '#B45309', title: 'Reputación verificada', desc: 'Calificaciones reales de vecinos, fotos de trabajos terminados y antecedentes validados.' },
+              { n: '03', icon: <UserCheck size={22} />, color: '#047857', title: 'Trato directo', desc: 'Contactas, acordás la tarifa y pagás en efectivo, transferencia o Bre-B. Sin intermediarios.' },
             ].map((s, i) => (
               <div
                 key={s.n}
@@ -414,7 +414,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
         ref={faqReveal.ref}
         style={{
           padding: '80px 0',
-          background: 'linear-gradient(160deg, #0A1628 0%, #0F2040 100%)',
+          background: 'linear-gradient(160deg, #1E3A8A 0%, #10224F 100%)',
         }}
       >
         <div className="lp-wrap" style={{ maxWidth: '720px' }}>
@@ -457,7 +457,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
               <div className="lp-cta-glow" />
               <img src={BRAND_ASSETS.manyWave} alt="Many" className="lp-cta-mascot-img" />
               <div className="lp-cta-badge-pill">
-                <CheckCircle2 size={14} color="#22C55E" />
+                <CheckCircle2 size={14} color="#10B981" />
                 <span>100% de tus ingresos son tuyos</span>
               </div>
             </div>

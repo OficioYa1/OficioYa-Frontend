@@ -90,7 +90,7 @@
   flex: 1;
   height: 38px;
   background-color: rgba(245, 158, 11, 0.08);
-  color: #B45309;
+  color: var(--color-accent-text);
   border: 1px solid rgba(245, 158, 11, 0.15);
   border-radius: 10px;
   font-size: 13.5px;
@@ -110,7 +110,7 @@
 /* Modo oscuro para botón primario (opcional, si hay soporte) */
 html[data-theme="dark"] .btn-provider-interest {
   background-color: rgba(245, 158, 11, 0.12);
-  color: #FBBF24;
+  color: var(--color-star);
 }
 
 .btn-provider-recommend {

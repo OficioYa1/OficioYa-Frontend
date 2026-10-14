@@ -199,8 +199,8 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
                           <span
                             className="badge"
                             style={{
-                              background: ticket.type === 'Reseña Falsa' ? '#FEF3C7' : '#FEE2E2',
-                              color: ticket.type === 'Reseña Falsa' ? '#B45309' : '#DC2626',
+                              background: ticket.type === 'Reseña Falsa' ? 'var(--color-warm-soft)' : '#FEE2E2',
+                              color: ticket.type === 'Reseña Falsa' ? 'var(--color-accent-text)' : '#DC2626',
                               fontSize: '11px'
                             }}
                           >
@@ -273,7 +273,7 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
                         padding: '12px 16px',
                         background: 'var(--color-surface-hover)',
                         borderRadius: '12px',
-                        border: isPaused ? '1.5px solid #EF4444' : '1px solid var(--color-border)'
+                        border: isPaused ? '1.5px solid var(--color-danger)' : '1px solid var(--color-border)'
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

@@ -321,7 +321,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                         {isMe && (
                           <span title={msg.status === 'read' ? 'Leído' : 'Enviado'}>
                             {msg.status === 'read' ? (
-                              <CheckCheck size={13} color="#3B82F6" />
+                              <CheckCheck size={13} color="var(--color-trust)" />
                             ) : (
                               <Check size={13} />
                             )}

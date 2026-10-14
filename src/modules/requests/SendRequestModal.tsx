@@ -403,7 +403,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
               </div>
 
               {/* Aviso de expiración a los 30 min (RF-28) */}
-              <div style={{ background: '#FEF3C7', padding: '8px 12px', borderRadius: '8px', fontSize: '11px', color: '#92400E', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ background: 'var(--color-warm-soft)', padding: '8px 12px', borderRadius: '8px', fontSize: '11px', color: 'var(--color-accent-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Clock size={14} />
                 <span>
                   <strong>Plazo de respuesta:</strong> Los trabajadores recibirán una alerta push con un plazo de 30 minutos para responder antes de que la invitación expire.
@@ -423,7 +423,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
         ) : (
           <div style={{ textAlign: 'center', padding: '24px 8px' }}>
             <MascotAvatar trade="plomeria" size="md" />
-            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#ECFDF5', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '14px auto 10px' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--color-status-soft)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '14px auto 10px' }}>
               <CheckCircle2 size={28} />
             </div>
             <h3 style={{ fontSize: '1.3rem', marginBottom: '6px' }}>¡Solicitud enviada con éxito!</h3>

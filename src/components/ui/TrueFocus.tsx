@@ -11,7 +11,7 @@ interface TrueFocusProps {
 export const TrueFocus: React.FC<TrueFocusProps> = ({
   sentence,
   blurAmount = 3,
-  borderColor = '#2F6BFF',
+  borderColor = 'var(--color-trust)',
   animationDuration = 0.5
 }) => {
   const words = sentence.split(' ');

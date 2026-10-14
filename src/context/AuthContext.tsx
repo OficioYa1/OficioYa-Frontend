@@ -21,7 +21,7 @@ const DEFAULT_USER: User = {
   role: 'seeker',
   phone: '+57 300 123 4567',
   city: 'Bogotá',
-  avatarColor: '#2563EB'
+  avatarColor: 'var(--oy-azul-marino)'
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -87,7 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: initialRole,
       phone: '+57 300 000 0000',
       city: 'Bogotá',
-      avatarColor: initialRole === 'seeker' ? '#2563EB' : '#EA580C'
+      avatarColor: initialRole === 'seeker' ? 'var(--oy-azul-marino)' : 'var(--oy-naranja-fuego-aa)'
     };
 
     const newToken = await signJWT({

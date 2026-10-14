@@ -237,7 +237,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               <MascotAvatar size="md" />
             </div>
 
-            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#ECFDF5', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--color-status-soft)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
               <CheckCircle2 size={28} />
             </div>
 

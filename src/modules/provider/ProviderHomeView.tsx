@@ -75,12 +75,12 @@ export const ProviderHomeView: React.FC<ProviderHomeViewProps> = ({ onRecommend 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <h3 style={{ fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-muted)', marginBottom: '4px' }}>Alertas y oportunidades</h3>
         
-        <div style={{ background: '#EFF6FF', borderLeft: '4px solid #3B82F6', padding: '16px', borderRadius: '0 12px 12px 0', fontSize: '15px', color: '#1E3A8A', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Info size={18} color="#3B82F6" />
+        <div style={{ background: 'var(--color-trust-soft)', borderLeft: '4px solid var(--color-trust)', padding: '16px', borderRadius: '0 12px 12px 0', fontSize: '15px', color: '#1E3A8A', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Info size={18} color="var(--color-trust)" />
           <span>Nueva solicitud de <strong>Plomería</strong> a 1.2 km de ti.</span>
         </div>
         
-        <div style={{ background: '#ECFDF5', borderLeft: '4px solid #10B981', padding: '16px', borderRadius: '0 12px 12px 0', fontSize: '15px', color: '#065F46', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ background: 'var(--color-status-soft)', borderLeft: '4px solid #10B981', padding: '16px', borderRadius: '0 12px 12px 0', fontSize: '15px', color: 'var(--color-status-text)', display: 'flex', alignItems: 'center', gap: '12px' }}>
           <CheckCircle size={18} color="#10B981" />
           <span>Un colega te recomendó para una solicitud de Electricidad.</span>
         </div>

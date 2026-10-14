@@ -158,7 +158,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                   {worker.referrals?.isCommunityReferrer && (
                     <span
                       className="badge"
-                      style={{ background: '#FEF3C7', color: '#B45309', border: '1px solid #F59E0B' }}
+                      style={{ background: 'var(--color-warm-soft)', color: 'var(--color-accent-text)', border: '1px solid #F59E0B' }}
                       title="Referente Comunitario Verificado: referidos activos en >= 3 oficios"
                     >
                       <Award size={13} /> Referente Comunitario
@@ -191,7 +191,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
             <div
               style={{
                 background: '#FEF2F2',
-                border: '1.5px solid #EF4444',
+                border: '1.5px solid var(--color-danger)',
                 borderRadius: '14px',
                 padding: '12px 16px',
                 marginBottom: '16px',
@@ -202,7 +202,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                 gap: '10px'
               }}
             >
-              <AlertTriangle size={20} color="#EF4444" />
+              <AlertTriangle size={20} color="var(--color-danger)" />
               <div>
                 <strong>Perfil suspendido automáticamente:</strong> {worker.pauseReason || 'Promedio menor a 3.0 estrellas en sus últimas 5 reseñas. Se han bloqueado nuevas solicitudes.'}
               </div>
@@ -224,7 +224,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
             <div>
               <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Calificación</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 800, fontSize: '15px' }}>
-                <Star size={16} fill="#FBBF24" color="#FBBF24" /> {worker.rating.toFixed(1)}
+                <Star size={16} fill="var(--color-star)" color="var(--color-star)" /> {worker.rating.toFixed(1)}
                 <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--color-text-muted)' }}>({worker.reviewCount})</span>
               </div>
             </div>
@@ -439,8 +439,8 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                       <h4 style={{ fontSize: '15px', fontWeight: 800 }}>{worker.tradeLabel}</h4>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <span style={{ fontSize: '1.2rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', color: '#D97706' }}>
-                        <Star size={18} fill="#FBBF24" color="#FBBF24" />
+                      <span style={{ fontSize: '1.2rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-accent-text)' }}>
+                        <Star size={18} fill="var(--color-star)" color="var(--color-star)" />
                         {worker.ratingByTrade?.[worker.trade]?.rating || worker.rating}
                       </span>
                       <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
@@ -482,8 +482,8 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                           <h4 style={{ fontSize: '15px', fontWeight: 800, textTransform: 'capitalize' }}>{secTrade}</h4>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                          <span style={{ fontSize: '1.2rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', color: '#D97706' }}>
-                            <Star size={18} fill="#FBBF24" color="#FBBF24" /> {secRep.rating}
+                          <span style={{ fontSize: '1.2rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-accent-text)' }}>
+                            <Star size={18} fill="var(--color-star)" color="var(--color-star)" /> {secRep.rating}
                           </span>
                           <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{secRep.reviewCount} reseñas</span>
                         </div>
@@ -499,14 +499,14 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
 
               {/* Referente Comunitario Verificado (RF-68, RF-69) */}
               {worker.referrals && (
-                <div style={{ background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: '14px', padding: '14px' }}>
+                <div style={{ background: 'var(--color-warm-soft)', border: '1px solid var(--color-star)', borderRadius: '14px', padding: '14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                    <Award size={18} color="#D97706" />
-                    <h4 style={{ fontSize: '13px', fontWeight: 800, color: '#B45309' }}>
+                    <Award size={18} color="var(--color-accent-text)" />
+                    <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'var(--color-accent-text)' }}>
                       Crecimiento Comunitario & Referidos
                     </h4>
                   </div>
-                  <p style={{ fontSize: '12px', color: '#78350F', margin: '0 0 8px' }}>
+                  <p style={{ fontSize: '12px', color: 'var(--color-accent-text)', margin: '0 0 8px' }}>
                     Código de referente: <strong>{worker.referrals.code}</strong>. Ha referido a {worker.referrals.count} colegas técnicos en {worker.referrals.distinctTradesCount} oficios distintos.
                   </p>
                   {worker.referrals.isCommunityReferrer && (
@@ -563,8 +563,8 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                             <Star
                               key={star}
                               size={12}
-                              fill={star <= rev.rating ? '#FBBF24' : 'none'}
-                              color="#FBBF24"
+                              fill={star <= rev.rating ? 'var(--color-star)' : 'none'}
+                              color="var(--color-star)"
                             />
                           ))}
                         </div>

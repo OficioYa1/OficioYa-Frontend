@@ -220,7 +220,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                 </span>
               )}
               {isCommunityReferrer && (
-                <span className="badge" style={{ background: '#FEF3C7', color: '#B45309', border: '1px solid #F59E0B' }}>
+                <span className="badge" style={{ background: 'var(--color-warm-soft)', color: 'var(--color-accent-text)', border: '1px solid #F59E0B' }}>
                   <Award size={13} /> Referente Comunitario
                 </span>
               )}
@@ -295,7 +295,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
       {/* Tarjetas de Estadísticas del Proveedor (RF-08, RF-10, RF-45) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '32px' }}>
         <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#ECFDF5', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--color-status-soft)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <CheckCircle2 size={24} />
           </div>
           <div>
@@ -305,8 +305,8 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
         </div>
 
         <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#FEF3C7', color: '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Star size={24} fill="#FBBF24" color="#FBBF24" />
+          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--color-warm-soft)', color: 'var(--color-accent-text)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Star size={24} fill="var(--color-star)" color="var(--color-star)" />
           </div>
           <div>
             <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block' }}>Calificación Promedio</span>
@@ -325,7 +325,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
         </div>
 
         <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--color-trust-soft)', color: 'var(--color-trust)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <BellRing size={24} />
           </div>
           <div>
@@ -370,7 +370,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                           setSelectedClientForProfile({
                             id: req.clientId,
                             name: req.clientName,
-                            avatarColor: '#2563EB',
+                            avatarColor: 'var(--oy-azul-marino)',
                             rating: 4.9,
                             reviewCount: 12,
                             completedServicesCount: 15,
@@ -433,8 +433,8 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   {/* Contador Regresivo de Expiración (RF-28) */}
                   <div
                     style={{
-                      background: isUrgentExpiration ? '#FEE2E2' : '#EFF6FF',
-                      color: isUrgentExpiration ? '#991B1B' : '#1E40AF',
+                      background: isUrgentExpiration ? '#FEE2E2' : 'var(--color-trust-soft)',
+                      color: isUrgentExpiration ? '#991B1B' : 'var(--color-trust)',
                       padding: '6px 10px',
                       borderRadius: '8px',
                       fontSize: '11px',
@@ -758,8 +758,8 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
               <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>
                 Reputación histórica como contratante:
               </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '1.4rem', fontWeight: 900, color: '#D97706' }}>
-                <Star size={22} fill="#FBBF24" color="#FBBF24" /> {selectedClientForProfile.rating}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '1.4rem', fontWeight: 900, color: 'var(--color-accent-text)' }}>
+                <Star size={22} fill="var(--color-star)" color="var(--color-star)" /> {selectedClientForProfile.rating}
                 <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontWeight: 400 }}>
                   ({selectedClientForProfile.reviewCount} calificaciones de otros profesionales)
                 </span>

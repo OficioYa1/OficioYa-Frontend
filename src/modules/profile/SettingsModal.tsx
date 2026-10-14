@@ -300,8 +300,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                   <span
                     className="badge"
                     style={{
-                      background: ticket.status === 'Resuelto' ? '#ECFDF5' : '#EFF6FF',
-                      color: ticket.status === 'Resuelto' ? '#065F46' : '#1E40AF',
+                      background: ticket.status === 'Resuelto' ? 'var(--color-status-soft)' : 'var(--color-trust-soft)',
+                      color: ticket.status === 'Resuelto' ? 'var(--color-status-text)' : 'var(--color-trust)',
                       border: '1px solid currentColor'
                     }}
                   >
