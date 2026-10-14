@@ -19,3 +19,5 @@ export { BranchedMenu } from './BranchedMenu';
 export type { BranchedMenuItem, BranchedMenuChild, BranchedMenuProps } from './BranchedMenu';
 export { PeekRating, RATING_LABELS } from './PeekRating';
 export type { PeekRatingProps, PeekRatingShape } from './PeekRating';
+export { SquishSwitch } from './SquishSwitch';
+export type { SquishSwitchProps } from './SquishSwitch';

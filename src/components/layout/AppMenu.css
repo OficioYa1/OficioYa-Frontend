@@ -86,6 +86,25 @@
 }
 
 .app-menu-action:active { transform: scale(0.98); }
+.app-menu-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+}
+
+.app-menu-switch-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-main);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+/* El rojo de error no llega a AA sobre la superficie oscura */
+html.theme-dark .app-menu-action--danger { color: #F87171; }
 
 .app-menu-role:focus-visible,
 .app-menu-action:focus-visible {

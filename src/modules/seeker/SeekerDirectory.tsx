@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 import { OptionWheel } from '../../components/ui/OptionWheel';
+import { SquishSwitch } from '../../components/ui/SquishSwitch';
 
 interface SeekerDirectoryProps {
   workers: Worker[];
@@ -990,11 +991,11 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
                 <span style={{ fontSize: '13px', fontWeight: 700, display: 'block' }}>Disponible ahora</span>
                 <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Excluir profesionales que estén fuera de línea</span>
               </div>
-              <input
-                type="checkbox"
+              <SquishSwitch
                 checked={onlyAvailable}
-                onChange={e => setOnlyAvailable(e.target.checked)}
-                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                onChange={setOnlyAvailable}
+                ariaLabel="Solo profesionales disponibles ahora"
+                trackOnColor="var(--oy-verde-esmeralda)"
               />
             </div>
 

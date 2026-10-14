@@ -24,6 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
+import { SquishSwitch } from '../../components/ui/SquishSwitch';
 
 interface ProviderDashboardProps {
   incomingRequests: ServiceRequest[];
@@ -262,33 +263,15 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
             </span>
           </div>
 
-          <button
-            onClick={() => setIsAvailableNow(!isAvailableNow)}
-            style={{
-              width: '52px',
-              height: '28px',
-              borderRadius: '999px',
-              background: isAvailableNow ? '#10B981' : 'var(--color-border)',
-              position: 'relative',
-              transition: 'background 0.2s',
-              cursor: 'pointer',
-              border: 'none'
-            }}
-          >
-            <div
-              style={{
-                width: '22px',
-                height: '22px',
-                borderRadius: '50%',
-                background: '#FFFFFF',
-                position: 'absolute',
-                top: '3px',
-                left: isAvailableNow ? '26px' : '4px',
-                transition: 'left 0.2s',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-              }}
-            />
-          </button>
+          <SquishSwitch
+            checked={isAvailableNow}
+            onChange={setIsAvailableNow}
+            ariaLabel="Disponible Ya"
+            trackOnColor="var(--oy-verde-esmeralda)"
+            width={60}
+            height={34}
+            radius={17}
+          />
         </div>
       </div>
 

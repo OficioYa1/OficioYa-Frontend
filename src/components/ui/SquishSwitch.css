@@ -1,0 +1,93 @@
+/* ============================================================
+   SquishSwitch · interruptor que se estira al deslizar
+   Lenguaje sticker del manual: pista y perilla con contorno
+   Cacao, encendido en el color del rol (o Esmeralda para
+   disponibilidad) y perilla blanca.
+   ============================================================ */
+
+.ss {
+  --ss-track-off: var(--oy-gris-200);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+html.theme-dark .ss { --ss-track-off: #334155; }
+
+.ss-btn {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ss-r);
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* Área táctil de al menos 44 px sin agrandar el dibujo */
+.ss-btn::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+
+.ss-btn[data-held] { cursor: grabbing; }
+
+.ss-btn[aria-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.ss-btn:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 5px var(--color-focus-ring);
+}
+
+.ss-track {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: var(--ss-w);
+  height: var(--ss-h);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--ss-r);
+  background: var(--ss-track);
+  transition: background-color var(--ss-fade) ease;
+}
+
+.ss-btn[data-on] .ss-track { background: var(--ss-track-on); }
+
+.ss-thumb {
+  position: absolute;
+  top: calc(var(--ss-inset) - var(--stroke-w));
+  left: calc(-1 * var(--stroke-w));
+  box-sizing: border-box;
+  width: var(--ss-thumb);
+  height: var(--ss-thumb);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--ss-thumb-r);
+  background: var(--ss-thumb-color);
+  transition: background-color var(--ss-fade) ease;
+}
+
+.ss-btn[data-on] .ss-thumb { background: var(--ss-thumb-on); }
+
+.ss-label {
+  color: var(--color-text-main);
+  font-size: var(--text-small);
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-track,
+  .ss-thumb { transition-duration: 1ms; }
+}

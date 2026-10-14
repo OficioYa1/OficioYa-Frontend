@@ -9,12 +9,11 @@ import {
   User,
   Settings,
   Bell,
-  Sun,
   Moon,
   LogOut
 } from 'lucide-react';
 import type { UserRole } from '../../types';
-import { BranchedMenu, type BranchedMenuItem } from '../ui';
+import { BranchedMenu, SquishSwitch, type BranchedMenuItem } from '../ui';
 import './AppMenu.css';
 
 interface AppMenuProps {
@@ -131,10 +130,20 @@ export const AppMenu: React.FC<AppMenuProps> = ({
         />
 
         <div className="app-menu-foot">
-          <button type="button" className="app-menu-action" onClick={onToggleTheme}>
-            {theme === 'light' ? <Moon size={15} /> : <Sun size={15} />}
-            Modo {theme === 'light' ? 'oscuro' : 'claro'}
-          </button>
+          <div className="app-menu-switch">
+            <label htmlFor="app-menu-theme" className="app-menu-switch-label">
+              <Moon size={15} aria-hidden="true" />
+              Modo oscuro
+            </label>
+            <SquishSwitch
+              id="app-menu-theme"
+              checked={theme === 'dark'}
+              onChange={onToggleTheme}
+              width={44}
+              height={26}
+              radius={13}
+            />
+          </div>
           <button type="button" className="app-menu-action app-menu-action--danger" onClick={onLogout}>
             <LogOut size={15} />
             Cerrar sesión

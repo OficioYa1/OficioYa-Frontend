@@ -6,8 +6,6 @@ import {
   X,
   Phone,
   MapPin,
-  Moon,
-  Sun,
   LogOut,
   Save,
   CheckCircle2,
@@ -18,6 +16,7 @@ import {
   AlertTriangle,
   FileText,
 } from 'lucide-react';
+import { SquishSwitch } from '../../components/ui/SquishSwitch';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -319,20 +318,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <div>
-              <span style={{ fontSize: '13px', fontWeight: 700, display: 'block' }}>Tema Visual</span>
+              <span style={{ fontSize: '13px', fontWeight: 700, display: 'block' }}>Modo oscuro</span>
               <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
                 Modo actual: {theme === 'light' ? 'Claro' : 'Oscuro'}
               </span>
             </div>
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="btn btn-secondary"
-              style={{ padding: '8px 14px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              {theme === 'light' ? <Moon size={15} /> : <Sun size={15} />}
-              <span>{theme === 'light' ? 'Activar Oscuro' : 'Activar Claro'}</span>
-            </button>
+            <SquishSwitch
+              checked={theme === 'dark'}
+              onChange={toggleTheme}
+              ariaLabel="Modo oscuro"
+            />
           </div>
 
           <div>
