@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { MascotExpression, TradeCategory } from '../../types';
+import { BRAND_ASSETS } from '../../utils/assets';
 
 interface MascotAvatarProps {
   expression?: MascotExpression;
@@ -26,25 +27,25 @@ interface ImgConfig {
 const CONFIGS: Record<string, ImgConfig> = {
   // Many 3D saludando con cinturón de herramientas
   wave: {
-    src: '/assets/mascot/many-wave.png',
+    src: BRAND_ASSETS.manyWave,
     objectPosition: 'center 10%',
     scale: 1.1,
   },
   // Base character
   base: {
-    src: '/assets/mascot/many-wave.png',
+    src: BRAND_ASSETS.manyWave,
     objectPosition: 'center 10%',
     scale: 1.1,
   },
   // Electricista
   electricista: {
-    src: '/assets/mascot/many-electricista.png',
+    src: BRAND_ASSETS.manyElectricista,
     objectPosition: 'center 15%',
     scale: 1.15,
   },
   // Plomero
   plomero: {
-    src: '/assets/mascot/many-plomero.png',
+    src: BRAND_ASSETS.manyPlomero,
     objectPosition: 'center 15%',
     scale: 1.15,
   },

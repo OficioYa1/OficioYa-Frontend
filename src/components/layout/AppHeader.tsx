@@ -19,6 +19,7 @@ import {
   ChevronDown,
   Briefcase
 } from 'lucide-react';
+import { BRAND_ASSETS } from '../../utils/assets';
 
 interface AppHeaderProps {
   onOpenLanding: () => void;
@@ -71,7 +72,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             onClick={onOpenLanding}
             style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            <img src="/assets/mascot/logo1.0.png" alt="OficioYa" style={{ width: '34px', height: '34px', borderRadius: '9px' }} />
+            <img src={BRAND_ASSETS.logo} alt="OficioYa" style={{ width: '34px', height: '34px', borderRadius: '9px' }} />
             <span style={{
               fontFamily: 'var(--font-heading)',
               fontSize: '20px',

@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import type { UserRole } from '../../types';
 import { Eye, EyeOff, ArrowRight, Zap } from 'lucide-react';
 import './AuthPage.css';
+import { BRAND_ASSETS } from '../../utils/assets';
 
 interface AuthPageProps {
   onAuthSuccess: () => void;
@@ -24,8 +25,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialRole =
 
   const mascotImg =
     selectedRole === 'provider'
-      ? '/assets/mascot/many-electricista.png'
-      : '/assets/mascot/many-wave.png';
+      ? BRAND_ASSETS.manyElectricista
+      : BRAND_ASSETS.manyWave;
 
   const handleFocus = () => setMascotPose('wave');
   const handleBlur  = () => setMascotPose('float');
@@ -73,7 +74,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialRole =
 
         {/* Marca */}
         <div className="auth-brand">
-          <img src="/assets/mascot/logo1.0.png" alt="OficioYa" className="auth-brand-logo" />
+          <img src={BRAND_ASSETS.logo} alt="OficioYa" className="auth-brand-logo" />
           <div>
             <span className="auth-brand-name">
               Oficio<span className="auth-brand-ya">Ya</span>

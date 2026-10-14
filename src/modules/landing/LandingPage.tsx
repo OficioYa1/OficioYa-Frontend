@@ -8,6 +8,7 @@ import {
 import './LandingPage.css';
 import { AppFooter } from '../../components/layout/AppFooter';
 import { TrueFocus } from '../../components/ui/TrueFocus';
+import { BRAND_ASSETS } from '../../utils/assets';
 
 interface LandingPageProps { onEnterApp: (role?: 'seeker' | 'provider') => void; }
 
@@ -154,7 +155,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
       <nav className="lp-nav">
         <div className="lp-wrap lp-nav-inner">
           <div className="lp-brand">
-            <img src="/assets/mascot/logo1.0.png" alt="OficioYa" className="lp-brand-logo" />
+            <img src={BRAND_ASSETS.logo} alt="OficioYa" className="lp-brand-logo" />
             <div>
               <span className="lp-brand-name">Oficio<span className="lp-brand-ya">Ya</span></span>
               <span className="lp-brand-tagline">Directorio Inteligente</span>
@@ -263,15 +264,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
           }} />
 
           {selectedTrade === 'plomeria' ? (
-            <img src="/assets/mascot/many-plomero.png" alt="Many Plomero"
+            <img src={BRAND_ASSETS.manyPlomero} alt="Many Plomero"
               className={`lp-many-hero-img ${manyAnimate === 'wave' ? 'lp-many-waving' : ''}`}
               onClick={triggerWave} style={{ height: '300px', objectFit: 'contain', cursor: 'pointer', position: 'relative' }} />
           ) : selectedTrade === 'electricidad' ? (
-            <img src="/assets/mascot/many-electricista.png" alt="Many Electricista"
+            <img src={BRAND_ASSETS.manyElectricista} alt="Many Electricista"
               className={`lp-many-hero-img ${manyAnimate === 'wave' ? 'lp-many-waving' : ''}`}
               onClick={triggerWave} style={{ height: '300px', objectFit: 'contain', cursor: 'pointer', position: 'relative' }} />
           ) : (
-            <img src="/assets/mascot/many-wave.png" alt="Many OficioYa"
+            <img src={BRAND_ASSETS.manyWave} alt="Many OficioYa"
               className={`lp-many-hero-img ${manyAnimate === 'wave' ? 'lp-many-waving' : ''}`}
               onClick={triggerWave} style={{ height: '300px', objectFit: 'contain', cursor: 'pointer', position: 'relative' }} />
           )}
@@ -450,7 +451,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
           <div className="lp-cta-card">
             <div className="lp-cta-mascot-col">
               <div className="lp-cta-glow" />
-              <img src="/assets/mascot/many-wave.png" alt="Many" className="lp-cta-mascot-img" />
+              <img src={BRAND_ASSETS.manyWave} alt="Many" className="lp-cta-mascot-img" />
               <div className="lp-cta-badge-pill">
                 <CheckCircle2 size={14} color="#22C55E" />
                 <span>100% de tus ingresos son tuyos</span>
