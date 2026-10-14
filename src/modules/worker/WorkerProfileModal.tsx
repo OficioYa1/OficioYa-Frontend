@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Worker, Review } from '../../types';
-import { CircularCarousel } from '../../components/ui';
+import { CircularCarousel, PeekRating } from '../../components/ui';
 import {
   X,
   Star,
@@ -559,16 +559,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <div style={{ display: 'flex', gap: '2px' }}>
-                          {[1, 2, 3, 4, 5].map(star => (
-                            <Star
-                              key={star}
-                              size={12}
-                              fill={star <= rev.rating ? 'var(--color-star)' : 'none'}
-                              color="var(--color-star)"
-                            />
-                          ))}
-                        </div>
+                        <PeekRating value={rev.rating} readOnly size={13} />
 
                         {/* Botón Reportar Reseña Falsa (RF-38) */}
                         {isReported ? (

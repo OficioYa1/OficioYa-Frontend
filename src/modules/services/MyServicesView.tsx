@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { ServiceRequest, ServiceStatus } from '../../types';
+import { PeekRating } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import {
   Wrench,
@@ -570,16 +571,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                 </span>
 
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '16px' }}>
-                  {[1, 2, 3, 4, 5].map(star => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setReviewRating(star)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
-                    >
-                      <Star size={28} fill={star <= reviewRating ? 'var(--color-star)' : 'none'} color="var(--color-star)" />
-                    </button>
-                  ))}
+                  <PeekRating value={reviewRating} onChange={v => setReviewRating(v || 1)} allowClear={false} size={34} ariaLabel="Calificación del profesional" />
                 </div>
 
                 <textarea
@@ -637,16 +629,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
             </span>
 
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '16px' }}>
-              {[1, 2, 3, 4, 5].map(star => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setClientRatingValue(star)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
-                >
-                  <Star size={28} fill={star <= clientRatingValue ? 'var(--color-star)' : 'none'} color="var(--color-star)" />
-                </button>
-              ))}
+              <PeekRating value={clientRatingValue} onChange={v => setClientRatingValue(v || 1)} allowClear={false} size={34} ariaLabel="Calificación del contratante" />
             </div>
 
             <textarea
