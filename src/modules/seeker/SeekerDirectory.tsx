@@ -6,7 +6,6 @@ import {
   Search,
   Star,
   MapPin,
-  ChevronRight,
   Zap,
   Wrench,
   Paintbrush,
@@ -26,14 +25,37 @@ import {
   DollarSign,
   AlertCircle,
   SlidersHorizontal,
-  BadgeCheck,
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 import { SquishSwitch } from '../../components/ui/SquishSwitch';
+import { GlassIcons } from '../../components/ui/GlassIcons';
+import type { GlassIconsColor } from '../../components/ui/GlassIcons';
+import { ProfileCard } from '../../components/ui/ProfileCard';
 import { PageHero } from '../../components/layout/PageHero';
 import './Seeker.css';
 
 type SortKey = 'distancia' | 'reputacion' | 'precio' | 'trabajos';
+
+const FEATURED_TRADES: { id: TradeCategory; color: GlassIconsColor }[] = [
+  { id: 'electricidad', color: 'amarillo' },
+  { id: 'plomeria', color: 'marino' },
+  { id: 'pintura', color: 'fuego' },
+  { id: 'cerrajeria', color: 'many' },
+  { id: 'hogar', color: 'esmeralda' },
+  { id: 'aseo', color: 'almendra' }
+];
+
+const useWideLayout = () => {
+  const query = '(min-width: 768px)';
+  const [wide, setWide] = useState(() => typeof window !== 'undefined' && window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const onChange = () => setWide(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return wide;
+};
 
 interface SeekerDirectoryProps {
   workers: Worker[];
@@ -229,6 +251,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
   onChangeTradeCategory,
   showHero = true
 }) => {
+  const wideLayout = useWideLayout();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<TradeCategory | null>(null);
   const [selectedZone, setSelectedZone] = useState<string>('Todas las zonas');
@@ -535,6 +558,20 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
         </div>
       )}
 
+      {/* Oficios más buscados (RF-12) */}
+      <section className="seeker-featured" aria-labelledby="seeker-featured-title">
+        <h2 id="seeker-featured-title" className="seeker-featured__title">Oficios más buscados</h2>
+        <GlassIcons
+          ariaLabel="Oficios más buscados"
+          columns={wideLayout ? 6 : 3}
+          gap={wideLayout ? 48 : 28}
+          items={FEATURED_TRADES.map(({ id, color }) => {
+            const category = CATEGORIES.find(c => c.id === id)!;
+            return { icon: category.icon, label: category.label, color, onClick: () => handleCategoryChange(id) };
+          })}
+        />
+      </section>
+
       {/* Oficios en chips (RF-12) */}
       <div className="seeker-chip-row" role="group" aria-label="Filtrar por oficio">
         <button
@@ -664,58 +701,33 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
       ) : (
         <ul className="seeker-directory-grid">
           {filteredWorkers.map(worker => {
-            const category = CATEGORIES.find(c => c.id === worker.trade);
             return (
               <li key={worker.id}>
-                <button
-                  type="button"
-                  onClick={() => onSelectWorker(worker)}
-                  className="seeker-worker-row"
-                  aria-label={`Ver perfil de ${worker.name}, ${worker.tradeLabel}, ${worker.rating.toFixed(1)} estrellas, ${worker.available ? 'disponible' : 'ocupado'}`}
-                >
-                  <span className="seeker-worker-photo">
-                    <img
-                      src={`https://i.pravatar.cc/150?u=${worker.id}`}
-                      alt=""
-                      className="seeker-worker-img"
-                      loading="lazy"
-                    />
-                    <span className="seeker-worker-trade" aria-hidden="true">{category?.icon}</span>
-                  </span>
-
-                  <span className="seeker-worker-info">
-                    <span className="seeker-worker-badges">
-                      <span className={`seeker-status ${worker.available ? 'seeker-status--on' : 'seeker-status--off'}`}>
-                        <span className="seeker-status__dot" aria-hidden="true" />
-                        {worker.available ? 'Disponible' : 'Ocupado'}
-                      </span>
-                      {worker.verified && (
-                        <span className="seeker-status seeker-status--verified">
-                          <BadgeCheck size={12} aria-hidden="true" /> Verificado
-                        </span>
-                      )}
-                    </span>
-
-                    <span className="seeker-worker-name">{worker.name}</span>
-                    <span className="seeker-worker-tradelabel">{worker.tradeLabel}</span>
-
-                    <span className="seeker-worker-meta">
+                <ProfileCard
+                  name={worker.name}
+                  title={worker.tradeLabel}
+                  avatarUrl={`https://i.pravatar.cc/300?u=${worker.id}`}
+                  initials={worker.initials}
+                  avatarColor={worker.avatarColor}
+                  available={worker.available}
+                  status={worker.available ? 'Disponible' : 'Ocupado'}
+                  verified={worker.verified}
+                  meta={
+                    <span className="seeker-card-meta">
                       <Star size={13} fill="var(--color-star)" color="var(--color-star)" aria-hidden="true" />
                       <strong>{worker.rating.toFixed(1)}</strong>
                       <span aria-hidden="true">·</span>
                       <span>{formatDistance(worker.distanceKm || 0)}</span>
                       <span aria-hidden="true">·</span>
-                      <span className="seeker-worker-zone">{worker.location.zoneName}</span>
+                      <strong>${worker.hourlyRate.toLocaleString()}/h</strong>
                     </span>
-
-                    <span className="seeker-worker-foot">
-                      <span className="seeker-worker-price">${worker.hourlyRate.toLocaleString()}/h</span>
-                      <span className="seeker-worker-action" aria-hidden="true">
-                        <ChevronRight size={18} />
-                      </span>
-                    </span>
-                  </span>
-                </button>
+                  }
+                  contactText="Ver perfil"
+                  onContactClick={() => onSelectWorker(worker)}
+                  headingLevel={3}
+                  frame="almendra"
+                  className="seeker-profile-card"
+                />
               </li>
             );
           })}

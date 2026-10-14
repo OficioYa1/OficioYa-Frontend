@@ -54,6 +54,7 @@
   text-decoration: none;
   cursor: pointer;
   outline: none;
+  overflow: visible;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }

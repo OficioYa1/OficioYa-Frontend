@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
+import { memo, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { BadgeCheck, MessageCircle } from 'lucide-react';
 import './ProfileCard.css';
 
@@ -168,6 +168,7 @@ const ProfileCardBase = ({
 
   const Heading = `h${headingLevel}` as 'h2' | 'h3' | 'h4';
   const statusText = status ?? (available ? 'Disponible' : 'No disponible');
+  const [photoFailed, setPhotoFailed] = useState(false);
   const monogram = (initials ?? name.split(/\s+/).map(w => w[0]).join('').slice(0, 2)).toUpperCase();
 
   return (
@@ -184,8 +185,15 @@ const ProfileCardBase = ({
     >
       <div className="oy-pcard__body">
         <div className="oy-pcard__tile">
-          {avatarUrl ? (
-            <img className="oy-pcard__photo" src={avatarUrl} alt={`Foto de ${name}`} loading="lazy" draggable={false} />
+          {avatarUrl && !photoFailed ? (
+            <img
+              className="oy-pcard__photo"
+              src={avatarUrl}
+              alt={`Foto de ${name}`}
+              loading="lazy"
+              draggable={false}
+              onError={() => setPhotoFailed(true)}
+            />
           ) : (
             <span className="oy-pcard__monogram" aria-hidden="true">{monogram}</span>
           )}

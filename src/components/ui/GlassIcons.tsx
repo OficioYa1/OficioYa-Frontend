@@ -479,7 +479,7 @@ export const GlassIcons = ({
   const labelMode = LABELS.includes(labels) ? labels : 'always';
   const colors = items.map(item => (item.color && GRADIENTS[item.color]) || item.color || GRADIENTS.marino);
   const flat = reduced || gpu === false;
-  const pad = Math.round(tile * 0.32);
+  const pad = Math.round(tile * 0.42);
 
   const settings: Settings = {
     count: items.length,

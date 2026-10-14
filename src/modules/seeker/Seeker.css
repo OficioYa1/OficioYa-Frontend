@@ -314,195 +314,58 @@
 
 .seeker-results-head { margin-top: var(--space-6); }
 
-/* ── Tarjetas de trabajador ── */
+/* ── Oficios más buscados (GlassIcons) ── */
+.seeker-featured {
+  margin: var(--space-6) 0 var(--space-4);
+  padding: var(--space-5) var(--space-4);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card-lg);
+  background: var(--wash-almendra);
+}
+
+.seeker-featured__title {
+  margin: 0 0 var(--space-4);
+  font-size: clamp(1.4rem, 1.2rem + 1vw, 1.9rem);
+  text-align: center;
+  color: var(--color-text-main);
+}
+
+.seeker-featured .oy-glass-icons { margin-inline: auto; }
+
+@media (max-width: 520px) {
+  .seeker-featured { padding-inline: var(--space-1); }
+}
+
+/* ── Tarjetas de trabajador (ProfileCard) ── */
 .seeker-directory-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  justify-items: center;
+  gap: var(--space-5);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-@media (min-width: 800px) {
-  .seeker-directory-grid { grid-template-columns: repeat(2, 1fr); gap: var(--space-5); }
+.seeker-directory-grid > li { width: 100%; max-width: 340px; }
+
+.seeker-profile-card { width: 100%; }
+
+@media (max-width: 520px) {
+  .seeker-profile-card .oy-pcard__tile { aspect-ratio: 4 / 3; }
 }
 
-.seeker-worker-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-5);
-  width: 100%;
-  height: 100%;
-  padding: var(--space-5);
-  border: var(--stroke-w) solid var(--stroke-ink);
-  border-radius: var(--radius-card-lg);
-  background: var(--color-surface);
-  color: var(--color-text-main);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 180ms ease, transform 200ms var(--ease-out);
-}
-
-.seeker-worker-row:active { transform: scale(0.985); }
-
-.seeker-worker-row:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 4px var(--color-focus-ring);
-}
-
-.seeker-worker-photo {
-  position: relative;
-  flex: none;
-}
-
-.seeker-worker-img {
-  display: block;
-  width: 104px;
-  height: 104px;
-  border: var(--stroke-w) solid var(--stroke-ink);
-  border-radius: 28px;
-  object-fit: cover;
-  background: var(--wash-almendra);
-}
-
-.seeker-worker-trade {
-  position: absolute;
-  right: -8px;
-  bottom: -6px;
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border: var(--stroke-w) solid var(--oy-cacao-profundo);
-  border-radius: 12px;
-  background: var(--oy-amarillo-canario);
-  color: var(--oy-cacao-profundo);
-  transform: rotate(-8deg);
-}
-
-.seeker-worker-info {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  min-width: 0;
-}
-
-.seeker-worker-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 2px;
-}
-
-.seeker-status {
+.seeker-card-meta {
   display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 9px;
-  border: 1px solid var(--stroke-ink);
-  border-radius: var(--radius-pill);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-}
-
-.seeker-status__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.seeker-status--on { background: var(--wash-esmeralda); color: var(--color-status-text); }
-.seeker-status--off { background: var(--wash-gris); color: var(--color-text-muted); }
-.seeker-status--verified { background: var(--wash-marino); color: var(--color-trust); }
-
-.seeker-worker-name {
-  max-width: 100%;
-  overflow: hidden;
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.seeker-worker-tradelabel {
-  color: var(--color-trust);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.seeker-worker-meta {
-  display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  max-width: 100%;
+  justify-content: center;
+  gap: 5px;
   color: var(--color-text-muted);
   font-size: 13px;
 }
 
-.seeker-worker-meta strong { color: var(--color-text-main); }
-
-.seeker-worker-zone {
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.seeker-worker-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  width: 100%;
-  margin-top: 8px;
-}
-
-.seeker-worker-price {
-  display: inline-block;
-  padding: 4px 12px;
-  border: var(--stroke-w) solid var(--oy-cacao-profundo);
-  border-radius: var(--radius-pill);
-  background: var(--oy-amarillo-canario);
-  color: var(--oy-cacao-profundo);
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.seeker-worker-action {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border: var(--stroke-w) solid var(--stroke-ink);
-  border-radius: 50%;
-  background: var(--role-primary);
-  color: var(--role-on-primary);
-  transition: transform 200ms var(--ease-out);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .seeker-worker-row:hover { background: var(--color-surface-hover); transform: translateY(-2px); }
-  .seeker-worker-row:hover .seeker-worker-action { transform: translateX(3px); }
-}
-
-@media (max-width: 420px) {
-  .seeker-worker-row { gap: var(--space-4); padding: var(--space-4); border-radius: 28px; }
-  .seeker-worker-img { width: 80px; height: 80px; border-radius: 22px; }
-  .seeker-worker-trade { width: 30px; height: 30px; border-radius: 10px; }
-}
+.seeker-card-meta strong { color: var(--color-text-main); }
 
 /* ── Modales ── */
 .seeker-modal--filters { --oy-modal-w: 540px; }
@@ -676,8 +539,6 @@
 .seeker-catalog-card__cta { color: var(--color-trust); }
 
 @media (prefers-reduced-motion: reduce) {
-  .seeker-worker-row,
-  .seeker-worker-action,
   .seeker-catalog-card,
   .seeker-tag { transition: none; }
 }
