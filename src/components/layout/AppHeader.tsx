@@ -16,7 +16,8 @@ import {
   Briefcase,
   Inbox
 } from 'lucide-react';
-import { Logo } from '../ui';
+import { Logo, StaggeredMenu } from '../ui';
+import type { StaggeredMenuItem } from '../ui';
 import { AppMenu } from './AppMenu';
 
 interface AppHeaderProps {
@@ -54,6 +55,36 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const handleRoleChange = (newRole: UserRole) => {
     switchRole(newRole);
   };
+
+  // Pestañas del rol actual: las comparten el nav de iconos (escritorio) y el StaggeredMenu (móvil).
+  const navTabs: { id: string; label: string; icon: StaggeredMenuItem['icon']; badge?: number }[] =
+    role === 'seeker'
+      ? [
+          { id: 'inicio_seeker', label: 'Inicio', icon: Home },
+          { id: 'buscar', label: 'Buscar profesionales', icon: Search },
+          { id: 'solicitudes', label: 'Mis solicitudes', icon: FileText },
+          { id: 'mensajes', label: 'Mensajes', icon: MessageCircle, badge: unreadCount }
+        ]
+      : [
+          { id: 'inicio_pro', label: 'Inicio', icon: Home },
+          { id: 'oportunidades', label: 'Oportunidades', icon: Search },
+          { id: 'clientes', label: 'Mis clientes', icon: Briefcase },
+          { id: 'alertas', label: 'Alertas', icon: Inbox },
+          { id: 'mensajes', label: 'Mensajes', icon: MessageCircle, badge: unreadCount }
+        ];
+
+  const handleNavSelect = (id: string) => {
+    if (id === 'mensajes') onToggleChat?.();
+    else onSelectTab(id);
+  };
+
+  const menuItems: StaggeredMenuItem[] = navTabs.map(tab => ({
+    id: tab.id,
+    label: tab.label,
+    icon: tab.icon,
+    badge: tab.badge,
+    active: tab.id === 'mensajes' ? !!isChatOpen : currentTab === tab.id
+  }));
 
   return (
     <header
@@ -95,24 +126,19 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </button>
         </div>
 
-        {/* Navegación Principal Minimalista (Iconos) */}
-        <nav className="hide-on-mobile" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {role === 'seeker' ? (
-            <>
-              <TabButton id="inicio_seeker" label="Inicio" icon={Home} current={currentTab} onSelect={onSelectTab} />
-              <TabButton id="buscar" label="Buscar profesionales" icon={Search} current={currentTab} onSelect={onSelectTab} />
-              <TabButton id="solicitudes" label="Mis solicitudes" icon={FileText} current={currentTab} onSelect={onSelectTab} />
-              <TabButton id="mensajes" label="Mensajes" icon={MessageCircle} current={isChatOpen ? 'mensajes' : ''} onSelect={() => onToggleChat && onToggleChat()} badge={unreadCount} />
-            </>
-          ) : (
-            <>
-              <TabButton id="inicio_pro" label="Inicio" icon={Home} current={currentTab} onSelect={onSelectTab} />
-              <TabButton id="oportunidades" label="Oportunidades" icon={Search} current={currentTab} onSelect={onSelectTab} />
-              <TabButton id="clientes" label="Mis clientes" icon={Briefcase} current={currentTab} onSelect={onSelectTab} />
-              <TabButton id="alertas" label="Alertas" icon={Inbox} current={currentTab} onSelect={onSelectTab} />
-              <TabButton id="mensajes" label="Mensajes" icon={MessageCircle} current={isChatOpen ? 'mensajes' : ''} onSelect={() => onToggleChat && onToggleChat()} badge={unreadCount} />
-            </>
-          )}
+        {/* Navegación Principal Minimalista (Iconos) — escritorio */}
+        <nav className="hide-on-mobile" aria-label="Navegación principal" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {navTabs.map(tab => (
+            <TabButton
+              key={tab.id}
+              id={tab.id}
+              label={tab.label}
+              icon={tab.icon}
+              current={tab.id === 'mensajes' ? (isChatOpen ? 'mensajes' : '') : currentTab}
+              onSelect={handleNavSelect}
+              badge={tab.badge}
+            />
+          ))}
         </nav>
 
         {/* Espaciador flexible para empujar el resto a la derecha si es necesario, 
@@ -121,6 +147,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         {/* Herramientas de Accesibilidad, Moderación y Usuario */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {/* Menú principal en móvil (≤ 767 px); en escritorio queda el nav de iconos */}
+          <StaggeredMenu
+            items={menuItems}
+            onSelect={handleNavSelect}
+            mobileOnly
+            title={role === 'seeker' ? 'Navegación · Contratante' : 'Navegación · Profesional'}
+          />
           {onOpenNotifications && (
             <TabButton
               id="notificaciones"

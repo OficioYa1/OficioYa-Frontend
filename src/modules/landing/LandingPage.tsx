@@ -11,6 +11,9 @@ import { AppFooter } from '../../components/layout/AppFooter';
 import { TrueFocus } from '../../components/ui/TrueFocus';
 import { BRAND_ASSETS } from '../../utils/assets';
 import { PixelSwap } from '../../components/ui/PixelSwap';
+import { StrokeText, BorderGlow, DriftWall } from '../../components/ui';
+import type { DriftWallItem } from '../../components/ui';
+import { INITIAL_WORKERS } from '../../services/mockData';
 
 const PlasmaWarp = React.lazy(() => import('../../components/background/PlasmaWarp'));
 
@@ -43,6 +46,18 @@ const FAQS = [
   { q: '¿Puedo contratar para hoy mismo?', a: 'Sí. El filtro de disponibilidad te muestra únicamente quienes están activos en este momento y pueden atenderte hoy.' },
   { q: '¿En qué zonas de Bogotá funciona?', a: 'Actualmente operamos en todas las localidades de Bogotá D.C. y municipios del área metropolitana como Chía, Soacha y Cota.' },
 ];
+
+// Fotos de portafolio de los trabajadores semilla (sin repetir URL).
+const PORTFOLIO: DriftWallItem[] = (() => {
+  const seen = new Set<string>();
+  const out: DriftWallItem[] = [];
+  INITIAL_WORKERS.forEach(w => w.gallery.forEach(url => {
+    if (seen.has(url)) return;
+    seen.add(url);
+    out.push({ image: url, title: `${w.tradeLabel}: trabajo de ${w.name}` });
+  }));
+  return out;
+})();
 
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
@@ -276,12 +291,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
 
         {/* CTAs */}
         <div style={{ display: 'flex', gap: '12px', marginBottom: '72px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <button
-            onClick={handleStartAsSeeker}
-            className="lp-hero-btn-primary"
-          >
-            Buscar expertos
-          </button>
+          <BorderGlow animated>
+            <button
+              onClick={handleStartAsSeeker}
+              className="lp-hero-btn-primary"
+            >
+              Buscar expertos
+            </button>
+          </BorderGlow>
           <button
             onClick={handleStartAsProvider}
             className="lp-hero-btn-ghost"
@@ -361,8 +378,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
             <p style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--brand-amber)', marginBottom: '12px' }}>
               Simple y transparente
             </p>
-            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 800, letterSpacing: '-1px', color: 'var(--color-text-main)', marginBottom: '12px', maxWidth: '480px' }}>
-              Tres pasos, cero intermediarios.
+            <h2 className="lp-stroke-title" style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 800, letterSpacing: '-1px', color: 'var(--color-text-main)', marginBottom: '12px' }}>
+              <StrokeText text="Tres pasos," trigger="scroll" fontSize={56} />{' '}
+              <StrokeText text="cero intermediarios." trigger="scroll" fontSize={56} />
             </h2>
             <p style={{ fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--color-text-muted)', maxWidth: '400px', lineHeight: 1.65 }}>
               Sin comisiones ocultas, sin grupos de WhatsApp incómodos.
@@ -417,11 +435,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
         </div>
       </section>
 
+      {/* ── TRABAJOS REALES: muro de portafolio ── */}
+      <section className="lp-work" aria-labelledby="lp-work-title">
+        <div className="lp-wrap lp-work-head">
+          <span className="lp-sticker lp-sticker--esmeralda lp-sticker--pill">Portafolio verificado</span>
+          <h2 id="lp-work-title" className="oy-display lp-work-title">Trabajos reales en Bogotá</h2>
+          <p className="lp-work-sub">
+            Fotos de obras terminadas por los profesionales de OficioYa. Pasa el puntero para detener el muro o elige una para buscar expertos.
+          </p>
+        </div>
+        <div className="lp-wrap">
+          <div className="lp-work-wall">
+            <DriftWall
+              items={PORTFOLIO}
+              ariaLabel="Fotos de trabajos realizados"
+              onItemClick={handleStartAsSeeker}
+            />
+          </div>
+        </div>
+      </section>
+
       {/* ── FAQ DESPLEGABLE ── */}
       <section id="faq-section" ref={faqReveal.ref} className="lp-faq">
         <div className="lp-wrap" style={{ maxWidth: '760px' }}>
           <span className="lp-sticker lp-sticker--amarillo lp-sticker--pill">Preguntas frecuentes</span>
-          <h2 className="oy-display lp-faq-title">Todo lo que necesitas saber.</h2>
+          <h2 className="oy-display lp-faq-title">
+            <StrokeText text="Todo lo que" tone="cacao" trigger="scroll" fontSize={64} />{' '}
+            <StrokeText text="necesitas saber." tone="cacao" trigger="scroll" fontSize={64} />
+          </h2>
 
           <div className={`lp-faq-list ${faqReveal.visible ? 'lp-faq-list--in' : ''}`}>
             {FAQS.map((faq, i) => (
@@ -481,9 +522,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-                <button onClick={handleStartAsProvider} className="lp-cta-primary lp-cta-amber">
-                  Empezar gratis <ArrowRight size={16} />
-                </button>
+                <BorderGlow>
+                  <button onClick={handleStartAsProvider} className="lp-cta-primary lp-cta-amber">
+                    Empezar gratis <ArrowRight size={16} />
+                  </button>
+                </BorderGlow>
                 <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'rgba(255,255,255,0.82)', fontWeight: 400 }}>
                   Sin tarjeta de crédito
                 </span>

@@ -1,0 +1,85 @@
+/* ============================================================
+   BorderGlow · contorno que brilla con Amarillo Canario, Ámbar y
+   Naranja Fuego siguiendo al puntero. Sin sombras: un arco de color
+   detrás del botón (su fondo opaco tapa el centro) y un halo tenue.
+   ============================================================ */
+
+.oy-glow {
+  --bg-angle: 45deg;
+  --bg-ring: 0;
+  --bg-glow: 0;
+  position: relative;
+  display: inline-grid;
+  isolation: isolate;
+  border-radius: var(--bg-radius);
+}
+
+.oy-glow--block { display: grid; width: 100%; }
+
+.oy-glow__content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  border-radius: inherit;
+}
+
+.oy-glow__ring,
+.oy-glow__halo {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: calc(var(--bg-radius) + var(--bg-ring-w));
+  /* Malla plana de los tres colores de acción */
+  background:
+    radial-gradient(at 80% 55%, var(--bg-c1) 0, transparent 55%),
+    radial-gradient(at 8% 6%, var(--bg-c2) 0, transparent 55%),
+    radial-gradient(at 50% 100%, var(--bg-c3) 0, transparent 60%),
+    radial-gradient(at 86% 10%, var(--bg-c3) 0, transparent 50%),
+    var(--bg-c1);
+  transition: opacity 200ms ease-out;
+}
+
+.oy-glow__ring {
+  inset: calc(var(--bg-ring-w) * -1);
+  opacity: var(--bg-ring);
+  -webkit-mask-image: conic-gradient(
+    from var(--bg-angle) at center,
+    #000 var(--bg-spread),
+    transparent calc(var(--bg-spread) + 15%),
+    transparent calc(85% - var(--bg-spread)),
+    #000 calc(100% - var(--bg-spread))
+  );
+  mask-image: conic-gradient(
+    from var(--bg-angle) at center,
+    #000 var(--bg-spread),
+    transparent calc(var(--bg-spread) + 15%),
+    transparent calc(85% - var(--bg-spread)),
+    #000 calc(100% - var(--bg-spread))
+  );
+}
+
+.oy-glow__halo {
+  inset: calc(var(--bg-glow-r) * -1);
+  border-radius: calc(var(--bg-radius) + var(--bg-glow-r));
+  opacity: var(--bg-glow);
+  filter: blur(calc(var(--bg-glow-r) * 0.6));
+  -webkit-mask-image: conic-gradient(from var(--bg-angle) at center, #000 3%, transparent 12%, transparent 88%, #000 97%);
+  mask-image: conic-gradient(from var(--bg-angle) at center, #000 3%, transparent 12%, transparent 88%, #000 97%);
+}
+
+.oy-glow[data-active='false'] .oy-glow__ring,
+.oy-glow[data-active='false'] .oy-glow__halo {
+  transition-duration: 600ms;
+}
+
+/* Teclado: el contorno completo se enciende al enfocar el botón */
+.oy-glow:has(:focus-visible) .oy-glow__ring {
+  opacity: 1;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oy-glow__ring,
+  .oy-glow__halo { transition: none; }
+}

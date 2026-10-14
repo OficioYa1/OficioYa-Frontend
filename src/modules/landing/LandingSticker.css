@@ -404,3 +404,52 @@ html.theme-dark .lp-cta-card {
   height: 100%;
   object-fit: contain;
 }
+
+/* ── Titulares dibujados (StrokeText) ── */
+.lp-stroke-title { max-width: 640px; }
+
+.lp-faq-title .oy-stroke-text + .oy-stroke-text,
+.lp-stroke-title .oy-stroke-text + .oy-stroke-text { margin-top: 0.08em; }
+
+/* ── Trabajos reales en Bogotá: muro de portafolio (DriftWall) ── */
+.lp-work {
+  padding: 96px 0;
+  border-top: var(--stroke-w) solid var(--stroke-ink);
+  background: var(--wash-almendra);
+}
+
+.lp-work .lp-sticker {
+  position: static;
+  display: inline-flex;
+  font-size: 13px;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.lp-work-title {
+  margin: 20px 0 16px;
+  color: var(--color-trust);
+  font-size: clamp(2.4rem, 6vw, 4rem);
+}
+
+.lp-work-sub {
+  max-width: 520px;
+  margin: 0 0 40px;
+  color: var(--color-text-muted);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.lp-work-wall {
+  position: relative;
+  height: clamp(380px, 52vw, 560px);
+  overflow: hidden;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card-lg);
+  background: var(--color-surface);
+}
+
+@media (max-width: 600px) {
+  .lp-work { padding: 64px 0; }
+  .lp-work-wall { border-radius: var(--radius-frame); }
+}
