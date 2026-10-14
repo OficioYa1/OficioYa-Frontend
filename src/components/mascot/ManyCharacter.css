@@ -1,0 +1,74 @@
+/* ================================================================
+   ManyCharacter — SVG animado con brazo independiente
+   El brazo derecho se anima por separado via CSS transform-origin
+   ================================================================ */
+
+/* ── Wrapper flotante ── */
+.many-svg-root {
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  filter:
+    drop-shadow(0 22px 36px rgba(180, 100, 30, 0.45))
+    drop-shadow(0  6px 12px rgba(0, 0, 0, 0.18));
+  transition: filter 0.3s ease;
+}
+
+.many-svg-root:hover {
+  filter:
+    drop-shadow(0 30px 50px rgba(180, 100, 30, 0.6))
+    drop-shadow(0 10px 20px rgba(0, 0, 0, 0.22));
+}
+
+/* ── Animaciones del cuerpo completo ── */
+.many-svg-float  { animation: many-float  3.2s ease-in-out infinite; }
+.many-svg-bounce { animation: many-bounce 0.9s cubic-bezier(0.34,1.56,0.64,1) infinite; }
+.many-svg-idle   { animation: many-idle   4.5s ease-in-out infinite; }
+.many-svg-wave   { animation: many-wave   0.65s cubic-bezier(0.34,1.56,0.64,1) 1 forwards; }
+
+/* ── BRAZO DERECHO — animación independiente ──────────────────
+   Se aplica al <g id="arm-right"> con transform-box: fill-box
+   y transform-origin apuntando al hombro (esquina superior)
+   ─────────────────────────────────────────────────────────── */
+.many-arm-right {
+  transform-box: fill-box;
+  transform-origin: 15% 5%;  /* hombro: esquina sup-izq del grupo */
+  animation: arm-wave 1.8s ease-in-out infinite;
+}
+
+@keyframes arm-wave {
+  0%,  100% { transform: rotate(0deg); }
+  20%        { transform: rotate(-30deg); }
+  40%        { transform: rotate(-8deg); }
+  65%        { transform: rotate(-36deg); }
+  85%        { transform: rotate(-14deg); }
+}
+
+/* Parpadeo ocasional de los ojos */
+.many-eye-left,
+.many-eye-right {
+  animation: eye-blink 5s ease-in-out infinite;
+}
+.many-eye-right {
+  animation-delay: 0.08s;
+}
+
+@keyframes eye-blink {
+  0%, 88%, 100% { transform: scaleY(1); }
+  92%            { transform: scaleY(0.08); }
+}
+
+/* Movimiento sutil de las orejas */
+.many-ear-left,
+.many-ear-right {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+.many-ear-left  { animation: ear-wiggle 6s ease-in-out infinite; }
+.many-ear-right { animation: ear-wiggle 6s ease-in-out infinite 0.3s; }
+
+@keyframes ear-wiggle {
+  0%, 85%, 100% { transform: rotate(0deg); }
+  90%            { transform: rotate(-6deg); }
+  95%            { transform: rotate(4deg); }
+}
