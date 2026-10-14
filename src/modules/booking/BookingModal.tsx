@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import type { Worker, PaymentMethod, ServiceRequest } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -15,6 +15,8 @@ import {
   Sparkles
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
+import { useFlowModal } from '../requests/useFlowModal';
+import '../requests/Flows.css';
 
 interface BookingModalProps {
   worker: Worker;
@@ -22,12 +24,21 @@ interface BookingModalProps {
   onSuccess: (newService: ServiceRequest) => void;
 }
 
+const PAYMENT_OPTIONS: { id: PaymentMethod; label: string; icon: React.ReactNode }[] = [
+  { id: 'bre_b', label: 'Bre-B 🔑', icon: <KeyRound size={18} aria-hidden="true" /> },
+  { id: 'transferencia', label: 'Nequi / Davi', icon: <Smartphone size={18} aria-hidden="true" /> },
+  { id: 'efectivo', label: 'Efectivo', icon: <Banknote size={18} aria-hidden="true" /> },
+  { id: 'tarjeta', label: 'Tarjeta', icon: <CreditCard size={18} aria-hidden="true" /> }
+];
+
 export const BookingModal: React.FC<BookingModalProps> = ({
   worker,
   onClose,
   onSuccess
 }) => {
   const { user } = useAuth();
+  const uid = useId();
+  const dialogRef = useFlowModal(onClose);
 
   const [date, setDate] = useState('2026-10-05');
   const [time, setTime] = useState('10:00 AM');
@@ -67,229 +78,188 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     onSuccess(newService);
   };
 
+  const titleId = `${uid}-title`;
+
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0, 0, 0, 0.65)',
-        backdropFilter: 'blur(6px)',
-        zIndex: 1050,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px'
-      }}
-    >
+    <div className="oy-modal-backdrop oy-flow-layer--base">
       <div
-        className="card"
-        style={{
-          width: '100%',
-          maxWidth: '560px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          padding: '24px',
-          borderRadius: '24px',
-          position: 'relative'
-        }}
+        ref={dialogRef}
+        className="oy-modal oy-flow"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
       >
-        <button
-          onClick={onClose}
-          style={{ position: 'absolute', top: '18px', right: '18px', color: 'var(--color-text-muted)' }}
-        >
-          <X size={20} />
-        </button>
-
-        {!isSubmitted ? (
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-              <div
-                style={{
-                  width: '46px',
-                  height: '46px',
-                  borderRadius: '14px',
-                  background: worker.avatarColor,
-                  color: '#FFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800
-                }}
-              >
-                {worker.initials}
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1.2rem' }}>Reserva con {worker.name}</h3>
-                <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
-                  {worker.tradeLabel} • ${worker.hourlyRate.toLocaleString()} COP/h
-                </span>
-              </div>
+        <header className={`oy-modal__head oy-flow-head ${isSubmitted ? 'oy-flow-head--esmeralda' : 'oy-flow-head--marino'}`}>
+          <div className="oy-flow-head__main">
+            <div className="oy-flow-avatar" style={{ background: worker.avatarColor }} aria-hidden="true">
+              {worker.initials}
             </div>
+            <div className="oy-flow-head__text">
+              <span className="oy-eyebrow oy-flow-kicker">{isSubmitted ? 'Reserva lista' : 'Reservar cita'}</span>
+              <h2 id={titleId} className="oy-modal__title oy-display">
+                {isSubmitted ? '¡Reserva confirmada!' : `Reserva con ${worker.name}`}
+              </h2>
+              <p className="oy-flow-head__sub">
+                {worker.tradeLabel} • ${worker.hourlyRate.toLocaleString()} COP/h
+              </p>
+            </div>
+          </div>
+          <button type="button" className="oy-icon-btn" onClick={onClose} aria-label="Cerrar">
+            <X size={20} aria-hidden="true" />
+          </button>
+        </header>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                    <Calendar size={14} /> Fecha del servicio
-                  </label>
-                  <input
-                    type="date"
-                    className="input-base"
-                    value={date}
-                    onChange={e => setDate(e.target.value)}
-                    required
-                  />
+        <div className="oy-modal__body">
+          {!isSubmitted ? (
+            <form onSubmit={handleSubmit} className="oy-flow-form">
+              <ol className="oy-flow-steps" aria-label="Pasos de la reserva">
+                <li><span className="oy-flow-num">1</span>Cuándo</li>
+                <li><span className="oy-flow-num">2</span>Dónde y qué</li>
+                <li><span className="oy-flow-num">3</span>Pago</li>
+              </ol>
+
+              <section className="oy-flow-section" aria-labelledby={`${uid}-s1`}>
+                <h3 id={`${uid}-s1`} className="oy-flow-section__title">
+                  <span className="oy-flow-num">1</span> Fecha y hora
+                </h3>
+                <div className="oy-flow-grid2">
+                  <div className="oy-flow-field">
+                    <label className="oy-flow-label" htmlFor={`${uid}-date`}>
+                      <Calendar size={14} aria-hidden="true" /> Fecha del servicio
+                    </label>
+                    <input
+                      id={`${uid}-date`}
+                      type="date"
+                      className="input-base"
+                      value={date}
+                      onChange={e => setDate(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="oy-flow-field">
+                    <label className="oy-flow-label" htmlFor={`${uid}-time`}>
+                      <Clock size={14} aria-hidden="true" /> Hora preferida
+                    </label>
+                    <input
+                      id={`${uid}-time`}
+                      type="text"
+                      className="input-base"
+                      value={time}
+                      onChange={e => setTime(e.target.value)}
+                      placeholder="Ej. 10:00 AM"
+                      required
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label style={{ fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                    <Clock size={14} /> Hora preferida
+              </section>
+
+              <section className="oy-flow-section oy-flow-section--ruled" aria-labelledby={`${uid}-s2`}>
+                <h3 id={`${uid}-s2`} className="oy-flow-section__title">
+                  <span className="oy-flow-num">2</span> Lugar y necesidad
+                </h3>
+                <div className="oy-flow-field">
+                  <label className="oy-flow-label" htmlFor={`${uid}-address`}>
+                    <MapPin size={14} aria-hidden="true" /> Dirección de atención (Bogotá D.C.)
                   </label>
                   <input
+                    id={`${uid}-address`}
                     type="text"
                     className="input-base"
-                    value={time}
-                    onChange={e => setTime(e.target.value)}
-                    placeholder="Ej. 10:00 AM"
+                    value={address}
+                    onChange={e => setAddress(e.target.value)}
+                    placeholder="Calle, carrera, barrio o unidad residencial"
                     required
                   />
                 </div>
-              </div>
+                <div className="oy-flow-field">
+                  <label className="oy-flow-label" htmlFor={`${uid}-desc`}>
+                    <FileText size={14} aria-hidden="true" /> Descripción del problema o requerimiento
+                  </label>
+                  <textarea
+                    id={`${uid}-desc`}
+                    className="input-base"
+                    rows={3}
+                    value={problemDescription}
+                    onChange={e => setProblemDescription(e.target.value)}
+                    placeholder="Describe qué necesitas: fuga de agua, cambio de tacos eléctricos, pintura de habitación..."
+                    required
+                  />
+                </div>
+              </section>
 
-              <div>
-                <label style={{ fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                  <MapPin size={14} /> Dirección de atención (Bogotá D.C.)
-                </label>
-                <input
-                  type="text"
-                  className="input-base"
-                  value={address}
-                  onChange={e => setAddress(e.target.value)}
-                  placeholder="Calle, carrera, barrio o unidad residencial"
-                  required
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                  <FileText size={14} /> Descripción del problema o requerimiento
-                </label>
-                <textarea
-                  className="input-base"
-                  rows={3}
-                  value={problemDescription}
-                  onChange={e => setProblemDescription(e.target.value)}
-                  placeholder="Describe qué necesitas: fuga de agua, cambio de tacos eléctricos, pintura de habitación..."
-                  required
-                />
-              </div>
-
-              {/* Métodos de Pago: Efectivo, Tarjeta, Transferencia (Nequi/Daviplata), Bre-B 🔑 */}
-              <div>
-                <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-                  Método de pago preferido (Se paga contra entrega del trabajo)
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '8px' }}>
-                  {[
-                    { id: 'bre_b', label: 'Bre-B 🔑', icon: <KeyRound size={16} /> },
-                    { id: 'transferencia', label: 'Nequi / Davi', icon: <Smartphone size={16} /> },
-                    { id: 'efectivo', label: 'Efectivo', icon: <Banknote size={16} /> },
-                    { id: 'tarjeta', label: 'Tarjeta', icon: <CreditCard size={16} /> }
-                  ].map(method => (
+              {/* Métodos de Pago: Efectivo, Tarjeta, Transferencia (Nequi/Daviplata), Bre-B */}
+              <section className="oy-flow-section oy-flow-section--ruled" aria-labelledby={`${uid}-s3`}>
+                <div className="oy-flow-section__head">
+                  <h3 id={`${uid}-s3`} className="oy-flow-section__title">
+                    <span className="oy-flow-num">3</span> Método de pago preferido
+                  </h3>
+                  <p className="oy-flow-section__hint">Se paga contra entrega del trabajo</p>
+                </div>
+                <div className="oy-flow-choices oy-flow-choices--grid" role="group" aria-labelledby={`${uid}-s3`}>
+                  {PAYMENT_OPTIONS.map(method => (
                     <button
                       key={method.id}
                       type="button"
-                      onClick={() => setPaymentMethod(method.id as PaymentMethod)}
-                      style={{
-                        padding: '10px 8px',
-                        borderRadius: '12px',
-                        border: paymentMethod === method.id ? '2px solid var(--role-primary)' : '1px solid var(--color-border)',
-                        background: paymentMethod === method.id ? 'var(--role-primary-light)' : 'var(--color-surface)',
-                        color: paymentMethod === method.id ? 'var(--role-primary)' : 'var(--color-text-main)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '4px',
-                        fontSize: '12px',
-                        fontWeight: 700
-                      }}
+                      className="oy-chip oy-flow-chip--stack"
+                      aria-pressed={paymentMethod === method.id}
+                      onClick={() => setPaymentMethod(method.id)}
                     >
                       {method.icon}
                       <span>{method.label}</span>
                     </button>
                   ))}
                 </div>
-              </div>
+              </section>
 
-              {/* Botón de Confirmación */}
-              <button
-                type="submit"
-                className="btn btn-primary"
-                style={{ padding: '14px', fontSize: '15px', borderRadius: '14px', marginTop: '8px' }}
-              >
+              <button type="submit" className="btn btn-primary oy-flow-cta">
                 Confirmar y Reservar Cita
               </button>
             </form>
-          </div>
-        ) : (
-          /* Pantalla de Confirmación con Resumen */
-          <div style={{ textAlign: 'center', padding: '12px 0' }}>
-            <div style={{ margin: '0 auto 16px', display: 'inline-block' }}>
-              <MascotAvatar size="md" />
+          ) : (
+            /* Pantalla de Confirmación con Resumen */
+            <div className="oy-flow-success" role="status">
+              <div className="oy-flow-success__mascot">
+                <MascotAvatar size="md" />
+                <span className="oy-flow-success__check" aria-hidden="true">
+                  <CheckCircle2 size={24} />
+                </span>
+              </div>
+
+              <h3 className="oy-flow-success__title oy-display">¡Reserva Confirmada con Éxito!</h3>
+              <p className="oy-flow-success__text">
+                Many le avisó a <strong>{worker.name}</strong>. Podrás ver el estado en tu pestaña de servicios.
+              </p>
+
+              <dl className="oy-flow-summary">
+                <div className="oy-flow-summary__row">
+                  <dt>Profesional:</dt>
+                  <dd>{createdService?.workerName}</dd>
+                </div>
+                <div className="oy-flow-summary__row">
+                  <dt>Fecha & Hora:</dt>
+                  <dd>{createdService?.date} a las {createdService?.time}</dd>
+                </div>
+                <div className="oy-flow-summary__row">
+                  <dt>Dirección:</dt>
+                  <dd>{createdService?.address}</dd>
+                </div>
+                <div className="oy-flow-summary__row">
+                  <dt>Método de Pago:</dt>
+                  <dd style={{ textTransform: 'capitalize' }}>{createdService?.paymentMethod}</dd>
+                </div>
+                <div className="oy-flow-summary__row oy-flow-summary__row--total">
+                  <dt>Presupuesto estimado:</dt>
+                  <dd>${createdService?.amount.toLocaleString()} COP</dd>
+                </div>
+              </dl>
+
+              <button type="button" onClick={onClose} className="btn btn-primary oy-flow-cta">
+                <Sparkles size={16} aria-hidden="true" /> Entendido, ir a mis servicios
+              </button>
             </div>
-
-            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--color-status-soft)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-              <CheckCircle2 size={28} />
-            </div>
-
-            <h3 style={{ fontSize: '1.4rem', marginBottom: '6px' }}>¡Reserva Confirmada con Éxito!</h3>
-            <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '20px' }}>
-              Many le avisó a <strong>{worker.name}</strong>. Podrás ver el estado en tu pestaña de servicios.
-            </p>
-
-            <div
-              style={{
-                background: 'var(--color-surface-hover)',
-                borderRadius: '16px',
-                padding: '16px',
-                textAlign: 'left',
-                fontSize: '13px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                marginBottom: '24px'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Profesional:</span>
-                <span style={{ fontWeight: 700 }}>{createdService?.workerName}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Fecha & Hora:</span>
-                <span style={{ fontWeight: 700 }}>{createdService?.date} a las {createdService?.time}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Dirección:</span>
-                <span style={{ fontWeight: 700 }}>{createdService?.address}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Método de Pago:</span>
-                <span style={{ fontWeight: 800, textTransform: 'capitalize' }}>{createdService?.paymentMethod}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--color-border)', paddingTop: '8px' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Presupuesto estimado:</span>
-                <span style={{ fontWeight: 800, color: 'var(--color-success)' }}>${createdService?.amount.toLocaleString()} COP</span>
-              </div>
-            </div>
-
-            <button
-              onClick={onClose}
-              className="btn btn-primary"
-              style={{ width: '100%', padding: '12px' }}
-            >
-              <Sparkles size={16} /> Entendido, ir a mis servicios
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

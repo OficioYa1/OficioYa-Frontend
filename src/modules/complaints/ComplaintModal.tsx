@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import type { ComplaintType, ComplaintTicket, ComplaintAttachment } from '../../types';
 import {
   X,
@@ -11,6 +11,8 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
+import { useFlowModal } from '../requests/useFlowModal';
+import '../requests/Flows.css';
 
 interface ComplaintModalProps {
   targetWorkerId: string;
@@ -28,6 +30,9 @@ const COMPLAINT_TYPES: ComplaintType[] = [
   'Otro'
 ];
 
+const MAX_FILES = 5;
+const MIN_CHARS = 20;
+
 export const ComplaintModal: React.FC<ComplaintModalProps> = ({
   targetWorkerId,
   targetWorkerName,
@@ -35,6 +40,9 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
   onClose,
   onSubmitComplaint
 }) => {
+  const uid = useId();
+  const dialogRef = useFlowModal(onClose);
+
   const [type, setType] = useState<ComplaintType>('Inasistencia');
   const [description, setDescription] = useState('');
   const [evidenceFiles, setEvidenceFiles] = useState<ComplaintAttachment[]>([]);
@@ -43,7 +51,7 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
 
   // Simulación de carga de archivos (imágenes, video, PDF)
   const handleSimulateAddAttachment = (fileType: 'image' | 'video' | 'pdf') => {
-    if (evidenceFiles.length >= 5) return;
+    if (evidenceFiles.length >= MAX_FILES) return;
 
     let newAttachment: ComplaintAttachment;
     if (fileType === 'image') {
@@ -63,7 +71,7 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (description.length < 20) return;
+    if (description.length < MIN_CHARS) return;
 
     const caseNumber = `OY-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     const newTicket: ComplaintTicket = {
@@ -92,255 +100,203 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
     onSubmitComplaint(newTicket);
   };
 
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.7)',
-        backdropFilter: 'blur(6px)',
-        zIndex: 1100,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px'
-      }}
-    >
-      <div
-        className="card"
-        style={{
-          width: '100%',
-          maxWidth: '540px',
-          maxHeight: '92vh',
-          overflowY: 'auto',
-          padding: '24px',
-          borderRadius: '24px',
-          position: 'relative'
-        }}
-      >
-        <button
-          onClick={onClose}
-          style={{ position: 'absolute', top: '18px', right: '18px', color: 'var(--color-text-muted)' }}
-        >
-          <X size={20} />
-        </button>
+  const titleId = `${uid}-title`;
+  const tooShort = description.length < MIN_CHARS;
+  const filesFull = evidenceFiles.length >= MAX_FILES;
 
-        {!isSuccess ? (
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--color-danger-bg)', color: 'var(--color-danger)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <AlertTriangle size={22} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1.25rem' }}>Reportar a {targetWorkerName}</h3>
-                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
+  return (
+    <div className="oy-modal-backdrop oy-flow-layer--raised">
+      <div
+        ref={dialogRef}
+        className="oy-modal oy-flow"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+      >
+        <header className={`oy-modal__head oy-flow-head ${isSuccess ? 'oy-flow-head--esmeralda' : 'oy-flow-head--fuego'}`}>
+          <div className="oy-flow-head__main">
+            <span className="oy-flow-tile" aria-hidden="true">
+              <AlertTriangle size={24} />
+            </span>
+            <div className="oy-flow-head__text">
+              <span className="oy-eyebrow oy-flow-kicker">Reporte formal</span>
+              <h2 id={titleId} className="oy-modal__title oy-display">
+                {isSuccess ? 'Ticket radicado' : `Reportar a ${targetWorkerName}`}
+              </h2>
+              {!isSuccess && (
+                <p className="oy-flow-head__sub">
                   Genera un ticket formal ante el equipo de moderación de OficioYa
+                </p>
+              )}
+            </div>
+          </div>
+          <button type="button" className="oy-icon-btn" onClick={onClose} aria-label="Cerrar">
+            <X size={20} aria-hidden="true" />
+          </button>
+        </header>
+
+        <div className="oy-modal__body">
+          {!isSuccess ? (
+            <div className="oy-flow-body">
+              {/* Aviso sobre falsas denuncias */}
+              <div className="oy-flow-note oy-flow-note--fuego">
+                <ShieldAlert size={18} aria-hidden="true" />
+                <span>
+                  <strong>Aviso importante:</strong> Toda denuncia falsa o malintencionada afecta la reputación de los trabajadores y acarreará la suspensión definitiva de tu cuenta de contratante.
                 </span>
               </div>
-            </div>
 
-            {/* Aviso sobre falsas denuncias */}
-            <div
-              style={{
-                display: 'flex',
-                gap: '10px',
-                background: 'var(--color-warning-bg)',
-                border: '1px solid var(--color-warm-soft)',
-                borderRadius: '12px',
-                padding: '10px 14px',
-                marginBottom: '16px',
-                fontSize: '12px',
-                color: 'var(--color-accent-text)'
-              }}
-            >
-              <ShieldAlert size={18} style={{ flexShrink: 0 }} />
-              <span>
-                <strong>Aviso importante:</strong> Toda denuncia falsa o malintencionada afecta la reputación de los trabajadores y acarreará la suspensión definitiva de tu cuenta de contratante.
-              </span>
-            </div>
+              <form onSubmit={handleSubmit} className="oy-flow-form">
+                {/* Tipo de Queja */}
+                <section className="oy-flow-section" aria-labelledby={`${uid}-s1`}>
+                  <h3 id={`${uid}-s1`} className="oy-flow-section__title">
+                    <span className="oy-flow-num">1</span> Tipo de anomalía o motivo
+                  </h3>
+                  <div className="oy-flow-choices" role="group" aria-labelledby={`${uid}-s1`}>
+                    {COMPLAINT_TYPES.map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        className="oy-chip oy-flow-chip--danger"
+                        aria-pressed={type === t}
+                        onClick={() => setType(t)}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </section>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {/* Tipo de Queja */}
-              <div>
-                <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
-                  Tipo de anomalía o motivo
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '6px' }}>
-                  {COMPLAINT_TYPES.map(t => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setType(t)}
-                      style={{
-                        padding: '8px 4px',
-                        borderRadius: '10px',
-                        border: type === t ? '2px solid var(--color-danger)' : '1px solid var(--color-border)',
-                        background: type === t ? 'var(--color-danger-bg)' : 'var(--color-surface)',
-                        color: type === t ? 'var(--color-danger)' : 'var(--color-text-main)',
-                        fontSize: '11px',
-                        fontWeight: 700
-                      }}
+                {/* Descripción con contador de caracteres (mínimo 20) */}
+                <section className="oy-flow-section oy-flow-section--ruled" aria-labelledby={`${uid}-s2`}>
+                  <div className="oy-flow-section__head">
+                    <h3 id={`${uid}-s2`} className="oy-flow-section__title">
+                      <span className="oy-flow-num">2</span> Descripción detallada de lo sucedido
+                    </h3>
+                    <span
+                      id={`${uid}-count`}
+                      className={`oy-flow-counter ${tooShort ? 'oy-flow-counter--low' : 'oy-flow-counter--ok'}`}
                     >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                      {description.length}/{MIN_CHARS} car. mín.
+                    </span>
+                  </div>
+                  <div className="oy-flow-field">
+                    <textarea
+                      className="input-base"
+                      rows={4}
+                      value={description}
+                      onChange={e => setDescription(e.target.value)}
+                      placeholder="Explica detalladamente qué ocurrió (mínimo 20 caracteres)..."
+                      aria-labelledby={`${uid}-s2`}
+                      aria-describedby={`${uid}-count`}
+                      required
+                    />
+                  </div>
+                </section>
 
-              {/* Descripción con contador de caracteres (mínimo 20) */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 700 }}>
-                    Descripción detallada de lo sucedido
-                  </label>
-                  <span style={{ fontSize: '11px', color: description.length < 20 ? 'var(--color-danger)' : 'var(--color-success)', fontWeight: 600 }}>
-                    {description.length}/20 car. mín.
-                  </span>
-                </div>
-                <textarea
-                  className="input-base"
-                  rows={4}
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  placeholder="Explica detalladamente qué ocurrió (mínimo 20 caracteres)..."
-                  required
-                />
-              </div>
-
-              {/* Adjuntar Evidencia (Imágenes, Video o PDF, máx 5) */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Paperclip size={14} /> Adjuntar Evidencia ({evidenceFiles.length}/5)
-                  </label>
-                  <div style={{ display: 'flex', gap: '4px' }}>
+                {/* Adjuntar Evidencia (Imágenes, Video o PDF, máx 5) */}
+                <section className="oy-flow-section oy-flow-section--ruled" aria-labelledby={`${uid}-s3`}>
+                  <div className="oy-flow-section__head">
+                    <h3 id={`${uid}-s3`} className="oy-flow-section__title">
+                      <span className="oy-flow-num">3</span>
+                      <Paperclip size={16} aria-hidden="true" /> Adjuntar Evidencia ({evidenceFiles.length}/{MAX_FILES})
+                    </h3>
+                  </div>
+                  <div className="oy-flow-choices">
                     <button
                       type="button"
-                      disabled={evidenceFiles.length >= 5}
+                      disabled={filesFull}
                       onClick={() => handleSimulateAddAttachment('image')}
-                      className="btn btn-secondary"
-                      style={{ padding: '3px 8px', fontSize: '10px' }}
+                      className="oy-flow-link"
                       title="Adjuntar imagen"
                     >
-                      <ImageIcon size={12} /> + Foto
+                      <ImageIcon size={14} aria-hidden="true" /> + Foto
                     </button>
                     <button
                       type="button"
-                      disabled={evidenceFiles.length >= 5}
+                      disabled={filesFull}
                       onClick={() => handleSimulateAddAttachment('video')}
-                      className="btn btn-secondary"
-                      style={{ padding: '3px 8px', fontSize: '10px' }}
+                      className="oy-flow-link"
                       title="Adjuntar video"
                     >
-                      <Film size={12} /> + Video
+                      <Film size={14} aria-hidden="true" /> + Video
                     </button>
                     <button
                       type="button"
-                      disabled={evidenceFiles.length >= 5}
+                      disabled={filesFull}
                       onClick={() => handleSimulateAddAttachment('pdf')}
-                      className="btn btn-secondary"
-                      style={{ padding: '3px 8px', fontSize: '10px' }}
+                      className="oy-flow-link"
                       title="Adjuntar PDF o recibo"
                     >
-                      <FileCheck size={12} /> + PDF
+                      <FileCheck size={14} aria-hidden="true" /> + PDF
                     </button>
                   </div>
-                </div>
 
-                {/* Chips de archivos adjuntos */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {evidenceFiles.map((file, idx) => (
-                    <span
-                      key={idx}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        background: 'var(--color-surface-hover)',
-                        border: '1px solid var(--color-border)',
-                        padding: '4px 10px',
-                        borderRadius: '999px',
-                        fontSize: '11px',
-                        fontWeight: 600
-                      }}
-                    >
-                      {file.type.includes('image') && <ImageIcon size={12} color="var(--color-trust)" />}
-                      {file.type.includes('video') && <Film size={12} color="#8B5CF6" />}
-                      {file.type.includes('pdf') && <FileCheck size={12} color="var(--color-danger)" />}
-                      <span>{file.name}</span>
-                      <X size={12} style={{ cursor: 'pointer', color: 'var(--color-text-muted)' }} onClick={() => removeAttachment(idx)} />
-                    </span>
-                  ))}
+                  {/* Fichas de archivos adjuntos */}
+                  {evidenceFiles.length > 0 && (
+                    <ul className="oy-flow-choices oy-flow-plain-list" aria-label="Evidencias adjuntas">
+                      {evidenceFiles.map((file, idx) => (
+                        <li key={idx} className="oy-flow-token">
+                          {file.type.includes('image') && <ImageIcon size={14} aria-hidden="true" />}
+                          {file.type.includes('video') && <Film size={14} aria-hidden="true" />}
+                          {file.type.includes('pdf') && <FileCheck size={14} aria-hidden="true" />}
+                          <span className="oy-flow-token__label">{file.name}</span>
+                          <button
+                            type="button"
+                            className="oy-flow-token__remove"
+                            onClick={() => removeAttachment(idx)}
+                            aria-label={`Quitar ${file.name}`}
+                          >
+                            <X size={14} aria-hidden="true" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+
+                <div className="oy-flow-actions">
+                  <button type="button" onClick={onClose} className="btn btn-secondary">
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={tooShort}
+                    className="btn btn-danger oy-flow-cta"
+                  >
+                    Radicar Queja Formal
+                  </button>
                 </div>
+              </form>
+            </div>
+          ) : (
+            /* Pantalla de Éxito con Caso Único */
+            <div className="oy-flow-success" role="status">
+              <div className="oy-flow-success__mascot">
+                <MascotAvatar size="md" />
+                <span className="oy-flow-success__check" aria-hidden="true">
+                  <CheckCircle2 size={24} />
+                </span>
               </div>
 
-              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="btn btn-secondary"
-                  style={{ flex: 1 }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={description.length < 20}
-                  className="btn btn-danger"
-                  style={{ flex: 1.5, opacity: description.length < 20 ? 0.6 : 1 }}
-                >
-                  Radicar Queja Formal
-                </button>
+              <h3 className="oy-flow-success__title oy-display">Ticket Radicado Correctamente</h3>
+              <p className="oy-flow-success__text">
+                El equipo de moderación ha recibido el reporte y revisará las evidencias en un plazo máximo de 24 horas.
+              </p>
+
+              <div className="oy-flow-case">
+                <span className="oy-label">Número de caso único</span>
+                <span className="oy-flow-case__number">{generatedCase}</span>
+                <span className="oy-flow-case__meta">Guardado en almacenamiento local (oy-complaints)</span>
               </div>
-            </form>
-          </div>
-        ) : (
-          /* Pantalla de Éxito con Caso Único */
-          <div style={{ textAlign: 'center', padding: '16px 0' }}>
-            <div style={{ margin: '0 auto 12px', display: 'inline-block' }}>
-              <MascotAvatar size="sm" />
+
+              <button type="button" onClick={onClose} className="btn btn-primary oy-flow-cta">
+                Entendido, volver a la aplicación
+              </button>
             </div>
-
-            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--color-status-soft)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-              <CheckCircle2 size={28} />
-            </div>
-
-            <h3 style={{ fontSize: '1.3rem', marginBottom: '6px' }}>Ticket Radicado Correctamente</h3>
-            <p style={{ color: 'var(--color-text-muted)', fontSize: '13px', marginBottom: '16px' }}>
-              El equipo de moderación ha recibido el reporte y revisará las evidencias en un plazo máximo de 24 horas.
-            </p>
-
-            <div
-              style={{
-                background: 'var(--color-surface-hover)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '16px',
-                padding: '14px',
-                marginBottom: '20px',
-                display: 'inline-block',
-                width: '100%'
-              }}
-            >
-              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>
-                NÚMERO DE CASO ÚNICO
-              </span>
-              <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--role-primary)', letterSpacing: '1px' }}>
-                {generatedCase}
-              </span>
-              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block', marginTop: '4px' }}>
-                Guardado en almacenamiento local (oy-complaints)
-              </span>
-            </div>
-
-            <button
-              onClick={onClose}
-              className="btn btn-primary"
-              style={{ width: '100%', padding: '12px' }}
-            >
-              Entendido, volver a la aplicación
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

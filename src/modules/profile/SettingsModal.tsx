@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { FontScale, ComplaintTicket } from '../../types';
@@ -15,30 +15,108 @@ import {
   Trash2,
   AlertTriangle,
   FileText,
+  Settings,
 } from 'lucide-react';
 import { SquishSwitch } from '../../components/ui/SquishSwitch';
+import { useFlowModal } from '../requests/useFlowModal';
+import '../requests/Flows.css';
 
 interface SettingsModalProps {
   onClose: () => void;
 }
 
+const FONT_OPTIONS: { id: FontScale; label: string }[] = [
+  { id: 'normal', label: 'Normal (16px)' },
+  { id: 'large', label: 'Grande (18px)' },
+  { id: 'xlarge', label: 'Muy grande (20px)' }
+];
+
+const statusClass = (status: ComplaintTicket['status']) => {
+  if (status === 'Resuelto') return 'oy-flow-status--resuelto';
+  if (status === 'En revisión') return 'oy-flow-status--revision';
+  if (status === 'Abierto') return 'oy-flow-status--abierto';
+  return '';
+};
+
+interface DeleteAccountDialogProps {
+  deleteConfirmed: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}
+
+/* Confirmación de borrado lógico (OFY-58): diálogo anidado con su propio foco */
+const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ deleteConfirmed, onCancel, onConfirm }) => {
+  const uid = useId();
+  const dialogRef = useFlowModal(() => {
+    if (!deleteConfirmed) onCancel();
+  });
+
+  return (
+    <div className="oy-modal-backdrop oy-flow-layer--alert">
+      <div
+        ref={dialogRef}
+        className="oy-modal oy-flow oy-flow--sm"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby={`${uid}-title`}
+        aria-describedby={`${uid}-desc`}
+        tabIndex={-1}
+      >
+        <header className={`oy-modal__head oy-flow-head ${deleteConfirmed ? 'oy-flow-head--esmeralda' : 'oy-flow-head--fuego'}`}>
+          <div className="oy-flow-head__main">
+            <span className={`oy-flow-tile ${deleteConfirmed ? 'oy-flow-tile--esmeralda' : 'oy-flow-tile--fuego'}`} aria-hidden="true">
+              {deleteConfirmed ? <CheckCircle2 size={24} /> : <AlertTriangle size={24} />}
+            </span>
+            <h2 id={`${uid}-title`} className="oy-modal__title oy-display">
+              {deleteConfirmed ? 'Cuenta dada de baja' : '¿Eliminar tu cuenta?'}
+            </h2>
+          </div>
+        </header>
+        <div className="oy-modal__body oy-flow-body">
+          {!deleteConfirmed ? (
+            <>
+              <p id={`${uid}-desc`} className="oy-flow-text">
+                Por privacidad y cumplimiento normativo, se aplicará un <strong>borrado lógico</strong>.
+                Tu cuenta quedará inhabilitada de inmediato, pero el historial de transacciones y calificaciones que otros usuarios recibieron se conservará para no romper la reputación del sistema.
+              </p>
+              <div className="oy-flow-actions">
+                <button type="button" onClick={onCancel} className="btn btn-secondary">
+                  Cancelar
+                </button>
+                <button type="button" onClick={onConfirm} className="btn btn-danger">
+                  Sí, dar de baja
+                </button>
+              </div>
+            </>
+          ) : (
+            <p id={`${uid}-desc`} className="oy-flow-text" role="status">Cerrando sesión...</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
   const { user, role, switchRole, logout, updateUserProfile } = useAuth();
   const { theme, toggleTheme, fontScale, setFontScale } = useTheme();
+  const uid = useId();
 
-  // RF-57: Editar información básica del perfil
+  // OFY-57: Editar información básica del perfil
   const [name, setName] = useState(user?.name || '');
   const [phone, setPhone] = useState(user?.phone || '+57 300 123 4567');
   const [city, setCity] = useState(user?.city || 'Bogotá D.C.');
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || '');
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  // RF-58: Modal de confirmación de eliminación lógica de cuenta
+  // OFY-58: Modal de confirmación de eliminación lógica de cuenta
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
 
-  // RF-73: Estado de reportes enviados por el usuario
+  // OFY-73: Estado de reportes enviados por el usuario
   const [userReports, setUserReports] = useState<ComplaintTicket[]>([]);
+
+  const dialogRef = useFlowModal(onClose, !showDeleteModal);
 
   useEffect(() => {
     try {
@@ -56,7 +134,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
     setTimeout(() => setSavedSuccess(false), 2000);
   };
 
-  // RF-58: Borrado lógico de cuenta propia
+  // OFY-58: Borrado lógico de cuenta propia
   const handleExecuteDeleteAccount = () => {
     updateUserProfile({ isDeleted: true });
     setDeleteConfirmed(true);
@@ -71,374 +149,251 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
     onClose();
   };
 
+  const titleId = `${uid}-title`;
+  const isSeeker = role === 'seeker';
+
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.65)',
-        backdropFilter: 'blur(6px)',
-        zIndex: 1100,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px'
-      }}
-    >
+    <div className="oy-modal-backdrop oy-flow-layer--raised">
       <div
-        className="card"
-        style={{
-          width: '100%',
-          maxWidth: '560px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          padding: '24px',
-          borderRadius: '24px',
-          position: 'relative'
-        }}
+        ref={dialogRef}
+        className="oy-modal oy-flow"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
       >
-        <button
-          onClick={onClose}
-          style={{ position: 'absolute', top: '18px', right: '18px', color: 'var(--color-text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
-        >
-          <X size={20} />
-        </button>
-
-        <h3 style={{ fontSize: '1.3rem', marginBottom: '18px' }}>Configuración & Perfil</h3>
-
-        {/* Tarjeta de usuario con RF-59 (Avatar) y RF-55 (Alternar Rol) */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'var(--color-surface-hover)',
-            padding: '16px',
-            borderRadius: '16px',
-            marginBottom: '20px',
-            flexWrap: 'wrap',
-            gap: '12px'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div
-              style={{
-                width: '52px',
-                height: '52px',
-                borderRadius: '50%',
-                background: user?.avatarColor || 'var(--role-primary)',
-                color: '#FFF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 900,
-                fontSize: '18px',
-                overflow: 'hidden',
-                border: '2px solid var(--color-surface)'
-              }}
-            >
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : user?.name ? (
-                user.name.slice(0, 2).toUpperCase()
-              ) : (
-                'OY'
-              )}
-            </div>
-
-            <div>
-              <span style={{ fontWeight: 800, fontSize: '15px', display: 'block' }}>{user?.name}</span>
-              <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{user?.email}</span>
-              <span
-                style={{
-                  display: 'inline-block',
-                  marginTop: '2px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: role === 'seeker' ? 'var(--role-primary)' : 'var(--brand-amber)'
-                }}
-              >
-                Rol activo: {role === 'seeker' ? 'Contratante' : 'Profesional'}
-              </span>
+        <header className="oy-modal__head oy-flow-head oy-flow-head--almendra">
+          <div className="oy-flow-head__main">
+            <span className="oy-flow-tile oy-flow-tile--marino" aria-hidden="true">
+              <Settings size={24} />
+            </span>
+            <div className="oy-flow-head__text">
+              <span className="oy-eyebrow oy-flow-kicker">Tu cuenta</span>
+              <h2 id={titleId} className="oy-modal__title oy-display">Configuración & Perfil</h2>
             </div>
           </div>
-
-          {/* RF-55: Alternar Rol sin desloguearse */}
-          <button
-            type="button"
-            onClick={() => switchRole(role === 'seeker' ? 'provider' : 'seeker')}
-            className="btn btn-secondary"
-            style={{ fontSize: '12px', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
-            title="Alternar entre modo contratante y modo profesional"
-          >
-            <RefreshCw size={13} />
-            <span>Cambiar a {role === 'seeker' ? 'Profesional' : 'Contratante'}</span>
+          <button type="button" className="oy-icon-btn" onClick={onClose} aria-label="Cerrar">
+            <X size={20} aria-hidden="true" />
           </button>
-        </div>
+        </header>
 
-        {/* Formulario de Datos Básicos y Foto de Perfil (RF-57, RF-59) */}
-        <form onSubmit={handleSaveContact} style={{ marginBottom: '24px' }}>
-          <h4 style={{ fontSize: '14px', marginBottom: '12px' }}>Editar Información Básica</h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '14px' }}>
-            <div>
-              <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>
-                Nombre completo
-              </label>
-              <div style={{ position: 'relative' }}>
-                <User size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
+        <div className="oy-modal__body oy-flow-body">
+          {/* Tarjeta de usuario con OFY-59 (Avatar) y OFY-55 (Alternar Rol) */}
+          <div className="oy-panel oy-panel--marino oy-flow-profile">
+            <div className="oy-flow-item__who">
+              <div
+                className="oy-flow-avatar oy-flow-avatar--round"
+                style={{ background: user?.avatarColor || 'var(--role-primary)' }}
+                aria-hidden={avatarUrl ? undefined : true}
+              >
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar" />
+                ) : user?.name ? (
+                  user.name.slice(0, 2).toUpperCase()
+                ) : (
+                  'OY'
+                )}
+              </div>
+              <div className="oy-flow-min0">
+                <span className="oy-flow-profile__name">{user?.name}</span>
+                <span className="oy-flow-profile__mail">{user?.email}</span>
+                <span className={`oy-flow-tag oy-flow-tag--spaced ${isSeeker ? '' : 'oy-flow-tag--fuego'}`}>
+                  Rol activo: {isSeeker ? 'Contratante' : 'Profesional'}
+                </span>
+              </div>
+            </div>
+
+            {/* OFY-55: Alternar Rol sin desloguearse */}
+            <button
+              type="button"
+              onClick={() => switchRole(isSeeker ? 'provider' : 'seeker')}
+              className="btn btn-secondary oy-flow-small"
+              title="Alternar entre modo contratante y modo profesional"
+            >
+              <RefreshCw size={14} aria-hidden="true" />
+              <span>Cambiar a {isSeeker ? 'Profesional' : 'Contratante'}</span>
+            </button>
+          </div>
+
+          {/* Formulario de Datos Básicos y Foto de Perfil (OFY-57, OFY-59) */}
+          <form onSubmit={handleSaveContact} className="oy-flow-section" aria-labelledby={`${uid}-s1`}>
+            <h3 id={`${uid}-s1`} className="oy-flow-section__title">
+              <span className="oy-flow-num">1</span> Editar Información Básica
+            </h3>
+
+            <div className="oy-flow-field">
+              <label className="oy-flow-label" htmlFor={`${uid}-name`}>Nombre completo</label>
+              <div className="oy-flow-input-icon">
+                <User size={16} aria-hidden="true" />
                 <input
+                  id={`${uid}-name`}
                   type="text"
                   className="input-base"
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  style={{ paddingLeft: '34px', fontSize: '13px' }}
+                  autoComplete="name"
                   required
                 />
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>
-                  Teléfono / WhatsApp
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <Phone size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
+            <div className="oy-flow-grid2">
+              <div className="oy-flow-field">
+                <label className="oy-flow-label" htmlFor={`${uid}-phone`}>Teléfono / WhatsApp</label>
+                <div className="oy-flow-input-icon">
+                  <Phone size={16} aria-hidden="true" />
                   <input
-                    type="text"
+                    id={`${uid}-phone`}
+                    type="tel"
                     className="input-base"
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
-                    style={{ paddingLeft: '34px', fontSize: '13px' }}
+                    autoComplete="tel"
                     required
                   />
                 </div>
               </div>
 
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>
-                  Ciudad / Localidad
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <MapPin size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
+              <div className="oy-flow-field">
+                <label className="oy-flow-label" htmlFor={`${uid}-city`}>Ciudad / Localidad</label>
+                <div className="oy-flow-input-icon">
+                  <MapPin size={16} aria-hidden="true" />
                   <input
+                    id={`${uid}-city`}
                     type="text"
                     className="input-base"
                     value={city}
                     onChange={e => setCity(e.target.value)}
-                    style={{ paddingLeft: '34px', fontSize: '13px' }}
+                    autoComplete="address-level2"
                     required
                   />
                 </div>
               </div>
             </div>
 
-            {/* RF-59: Cargar y actualizar foto de perfil */}
-            <div>
-              <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>
-                URL Foto de perfil / Avatar
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Camera size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
+            {/* OFY-59: Cargar y actualizar foto de perfil */}
+            <div className="oy-flow-field">
+              <label className="oy-flow-label" htmlFor={`${uid}-avatar`}>URL Foto de perfil / Avatar</label>
+              <div className="oy-flow-input-icon">
+                <Camera size={16} aria-hidden="true" />
                 <input
+                  id={`${uid}-avatar`}
                   type="text"
+                  inputMode="url"
                   className="input-base"
                   placeholder="https://images.unsplash.com/..."
                   value={avatarUrl}
                   onChange={e => setAvatarUrl(e.target.value)}
-                  style={{ paddingLeft: '34px', fontSize: '13px' }}
                 />
               </div>
             </div>
-          </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
-            {savedSuccess && (
-              <span style={{ fontSize: '12px', color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700 }}>
-                <CheckCircle2 size={14} /> Guardado con éxito
-              </span>
-            )}
-            <button type="submit" className="btn btn-primary" style={{ fontSize: '12px', padding: '6px 14px' }}>
-              <Save size={14} /> Guardar Cambios
-            </button>
-          </div>
-        </form>
-
-        {/* RF-73: Consultar el estado de un reporte enviado */}
-        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px', marginBottom: '20px' }}>
-          <h4 style={{ fontSize: '14px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FileText size={16} color="var(--role-primary)" /> Estado de Mis Reportes Enviados
-          </h4>
-          <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '10px' }}>
-            Seguimiento y transparencia de quejas o reportes de reseñas enviadas a moderación.
-          </span>
-
-          {userReports.length === 0 ? (
-            <div style={{ padding: '12px', background: 'var(--color-surface-hover)', borderRadius: '10px', fontSize: '12px', color: 'var(--color-text-muted)', textAlign: 'center' }}>
-              No has enviado ningún ticket de reporte o queja.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '160px', overflowY: 'auto' }}>
-              {userReports.map(ticket => (
-                <div
-                  key={ticket.id}
-                  style={{
-                    padding: '10px 12px',
-                    background: 'var(--color-surface-hover)',
-                    borderRadius: '10px',
-                    fontSize: '12px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}
-                >
-                  <div>
-                    <span style={{ fontWeight: 700, display: 'block' }}>Caso {ticket.caseNumber}: {ticket.type}</span>
-                    <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Contra: {ticket.targetWorkerName}</span>
-                  </div>
-                  <span
-                    className="badge"
-                    style={{
-                      background: ticket.status === 'Resuelto' ? 'var(--color-status-soft)' : 'var(--color-trust-soft)',
-                      color: ticket.status === 'Resuelto' ? 'var(--color-status-text)' : 'var(--color-trust)',
-                      border: '1px solid currentColor'
-                    }}
-                  >
-                    ● {ticket.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Preferencias de Accesibilidad */}
-        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px', marginBottom: '20px' }}>
-          <h4 style={{ fontSize: '14px', marginBottom: '12px' }}>Apariencia & Accesibilidad</h4>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <div>
-              <span style={{ fontSize: '13px', fontWeight: 700, display: 'block' }}>Modo oscuro</span>
-              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
-                Modo actual: {theme === 'light' ? 'Claro' : 'Oscuro'}
-              </span>
-            </div>
-            <SquishSwitch
-              checked={theme === 'dark'}
-              onChange={toggleTheme}
-              ariaLabel="Modo oscuro"
-            />
-          </div>
-
-          <div>
-            <span style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-              Tamaño de Fuente (Accesibilidad)
-            </span>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
-              {[
-                { id: 'normal', label: 'Normal (16px)' },
-                { id: 'large', label: 'Grande (18px)' },
-                { id: 'xlarge', label: 'Muy grande (20px)' }
-              ].map(opt => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => setFontScale(opt.id as FontScale)}
-                  style={{
-                    padding: '8px 4px',
-                    borderRadius: '10px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    border: fontScale === opt.id ? '2px solid var(--role-primary)' : '1px solid var(--color-border)',
-                    background: fontScale === opt.id ? 'var(--role-primary-light)' : 'var(--color-surface)',
-                    color: fontScale === opt.id ? 'var(--role-primary)' : 'var(--color-text-main)'
-                  }}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Zona de Peligro: RF-58 Eliminar cuenta propia & Cerrar Sesión */}
-        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="btn btn-secondary"
-            style={{ width: '100%', color: 'var(--color-text-main)', padding: '10px' }}
-          >
-            <LogOut size={16} /> Cerrar Sesión
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowDeleteModal(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--color-danger)',
-              fontSize: '12px',
-              padding: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px'
-            }}
-          >
-            <Trash2 size={14} /> Eliminar mi cuenta (borrado lógico)
-          </button>
-        </div>
-
-        {/* Modal Confirmación de Borrado Lógico (RF-58) */}
-        {showDeleteModal && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.7)',
-              zIndex: 1200,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '16px'
-            }}
-          >
-            <div className="card" style={{ width: '100%', maxWidth: '420px', borderRadius: '20px', padding: '24px' }}>
-              {!deleteConfirmed ? (
-                <div>
-                  <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#FEE2E2', color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-                    <AlertTriangle size={24} />
-                  </div>
-                  <h4 style={{ fontSize: '1.2rem', textAlign: 'center', marginBottom: '8px' }}>
-                    ¿Eliminar tu cuenta?
-                  </h4>
-                  <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.4, marginBottom: '16px' }}>
-                    Por privacidad y cumplimiento normativo, se aplicará un <strong>borrado lógico</strong>.
-                    Tu cuenta quedará inhabilitada de inmediato, pero el historial de transacciones y calificaciones que otros usuarios recibieron se conservará para no romper la reputación del sistema.
-                  </p>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button onClick={() => setShowDeleteModal(false)} className="btn btn-secondary" style={{ flex: 1 }}>
-                      Cancelar
-                    </button>
-                    <button onClick={handleExecuteDeleteAccount} className="btn btn-primary" style={{ flex: 1, background: '#DC2626' }}>
-                      Sí, dar de baja
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                  <CheckCircle2 size={36} color="#10B981" style={{ margin: '0 auto 10px' }} />
-                  <h4 style={{ fontSize: '1.1rem', marginBottom: '4px' }}>Cuenta dada de baja</h4>
-                  <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Cerrando sesión...</p>
-                </div>
+            <div className="oy-flow-end">
+              {savedSuccess && (
+                <span className="oy-flow-saved" role="status">
+                  <CheckCircle2 size={16} aria-hidden="true" /> Guardado con éxito
+                </span>
               )}
+              <button type="submit" className="btn btn-primary oy-flow-small">
+                <Save size={16} aria-hidden="true" /> Guardar Cambios
+              </button>
             </div>
-          </div>
-        )}
+          </form>
+
+          {/* OFY-73: Consultar el estado de un reporte enviado */}
+          <section className="oy-flow-section oy-flow-section--ruled" aria-labelledby={`${uid}-s2`}>
+            <div className="oy-flow-section__head">
+              <h3 id={`${uid}-s2`} className="oy-flow-section__title">
+                <span className="oy-flow-num">2</span>
+                <FileText size={16} aria-hidden="true" /> Estado de Mis Reportes Enviados
+              </h3>
+            </div>
+            <p className="oy-flow-section__hint">
+              Seguimiento y transparencia de quejas o reportes de reseñas enviadas a moderación.
+            </p>
+
+            {userReports.length === 0 ? (
+              <div className="oy-flow-empty-line">No has enviado ningún ticket de reporte o queja.</div>
+            ) : (
+              <ul className="oy-flow-list oy-flow-list--scroll">
+                {userReports.map(ticket => (
+                  <li key={ticket.id} className="oy-flow-item oy-flow-item--compact">
+                    <div className="oy-flow-item__row">
+                      <div className="oy-flow-min0">
+                        <p className="oy-flow-item__title">Caso {ticket.caseNumber}: {ticket.type}</p>
+                        <p className="oy-flow-item__meta">Contra: {ticket.targetWorkerName}</p>
+                      </div>
+                      <span className={`oy-flow-status ${statusClass(ticket.status)}`}>{ticket.status}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* Preferencias de Accesibilidad */}
+          <section className="oy-flow-section oy-flow-section--ruled" aria-labelledby={`${uid}-s3`}>
+            <h3 id={`${uid}-s3`} className="oy-flow-section__title">
+              <span className="oy-flow-num">3</span> Apariencia & Accesibilidad
+            </h3>
+
+            <div className="oy-flow-row">
+              <div>
+                <span className="oy-flow-row__label">Modo oscuro</span>
+                <span className="oy-flow-row__hint">
+                  Modo actual: {theme === 'light' ? 'Claro' : 'Oscuro'}
+                </span>
+              </div>
+              <SquishSwitch
+                checked={theme === 'dark'}
+                onChange={toggleTheme}
+                ariaLabel="Modo oscuro"
+              />
+            </div>
+
+            <div className="oy-flow-field">
+              <span className="oy-flow-row__label" id={`${uid}-font`}>Tamaño de Fuente (Accesibilidad)</span>
+              <div className="oy-flow-choices oy-flow-choices--grid" role="group" aria-labelledby={`${uid}-font`}>
+                {FONT_OPTIONS.map(opt => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    className="oy-chip"
+                    aria-pressed={fontScale === opt.id}
+                    onClick={() => setFontScale(opt.id)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Zona de Peligro: OFY-58 Eliminar cuenta propia & Cerrar Sesión */}
+          <section className="oy-flow-danger" aria-label="Sesión y cuenta">
+            <button type="button" onClick={handleLogout} className="btn btn-secondary oy-flow-cta">
+              <LogOut size={16} aria-hidden="true" /> Cerrar Sesión
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="oy-flow-danger__delete"
+              aria-haspopup="dialog"
+            >
+              <Trash2 size={16} aria-hidden="true" /> Eliminar mi cuenta (borrado lógico)
+            </button>
+          </section>
+        </div>
       </div>
+
+      {/* Modal Confirmación de Borrado Lógico (OFY-58) */}
+      {showDeleteModal && (
+        <DeleteAccountDialog
+          deleteConfirmed={deleteConfirmed}
+          onCancel={() => setShowDeleteModal(false)}
+          onConfirm={handleExecuteDeleteAccount}
+        />
+      )}
     </div>
   );
 };
