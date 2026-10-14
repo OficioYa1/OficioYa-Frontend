@@ -11,6 +11,8 @@ import { AppFooter } from '../../components/layout/AppFooter';
 import { TrueFocus } from '../../components/ui/TrueFocus';
 import { BRAND_ASSETS } from '../../utils/assets';
 
+const PlasmaWarp = React.lazy(() => import('../../components/background/PlasmaWarp'));
+
 interface LandingPageProps { onEnterApp: (role?: 'seeker' | 'provider') => void; }
 
 interface TradeOption {
@@ -404,6 +406,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
       <section ref={ctaReveal.ref} className={`lp-cta-dark ${ctaReveal.visible ? 'lp-reveal' : ''}`}>
         <div className="lp-wrap">
           <div className="lp-cta-card">
+            <React.Suspense fallback={null}>
+              <PlasmaWarp className="lp-cta-warp" />
+            </React.Suspense>
             <div className="lp-cta-mascot-col">
               <div className="lp-cta-glow" />
               <img src={BRAND_ASSETS.manyWave} alt="Many" className="lp-cta-mascot-img" />
@@ -443,7 +448,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
                 <button onClick={handleStartAsProvider} className="lp-cta-primary lp-cta-amber">
                   Empezar gratis <ArrowRight size={16} />
                 </button>
-                <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>
+                <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'rgba(255,255,255,0.82)', fontWeight: 400 }}>
                   Sin tarjeta de crédito
                 </span>
               </div>

@@ -375,3 +375,19 @@ html.theme-dark .lp-cta-card {
   .lp-sticker--amarillo { top: 3% !important; left: 5% !important; }
   .lp-sticker--esmeralda { top: 3% !important; right: 5% !important; }
 }
+
+/* ── Plasma de marca detrás de la tarjeta CTA (inspirado en CRTWarp) ── */
+.lp-cta-warp {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.lp-cta-card > :not(.lp-cta-warp) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Texto secundario sobre el plasma: se aclara para seguir en AA */
+.lp-cta-desc { color: #E2E8F0; }
