@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Clock, ArrowRight, ShieldCheck } from 'lucide-react';
-import type { Worker, TradeCategory, Coordinates } from '../../types';
+import { Search } from 'lucide-react';
+import type { Worker, TradeCategory } from '../../types';
+import type { Coordinates } from '../../utils/geo';
 import { SeekerDirectory } from './SeekerDirectory';
 
 interface SeekerHomeViewProps {
@@ -19,9 +20,6 @@ export const SeekerHomeView: React.FC<SeekerHomeViewProps> = ({
   onChangeTradeCategory
 }) => {
   const [problemDescription, setProblemDescription] = useState('');
-  const [selectedTrade, setSelectedTrade] = useState<TradeCategory | ''>('');
-  const [location, setLocation] = useState('Bogotá D.C.');
-  const [urgency, setUrgency] = useState('Ahora');
 
   const handlePostRequest = () => {
     if (!problemDescription) return;

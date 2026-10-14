@@ -1,6 +1,6 @@
 // Datos semilla de trabajadores, servicios, chats y tickets en Bogotá D.C.
 
-import type { Worker, ServiceRequest, Conversation, ChatMessage, ComplaintTicket } from '../types';
+import type { Worker, ServiceRequest, Conversation, ChatMessage } from '../types';
 
 export const INITIAL_WORKERS: Worker[] = [
   {

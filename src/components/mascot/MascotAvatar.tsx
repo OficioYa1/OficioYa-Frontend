@@ -52,7 +52,7 @@ const CONFIGS: Record<string, ImgConfig> = {
 
 function getConfig(
   trade?: TradeCategory,
-  expression?: MascotExpression,
+  _expression?: MascotExpression,
   forceImage?: string
 ): ImgConfig {
   if (forceImage && CONFIGS[forceImage]) return CONFIGS[forceImage];

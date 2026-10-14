@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { MapPin, Clock, ArrowRight, Share, Info, CheckCircle } from 'lucide-react';
-import type { ServiceRequest, TradeCategory } from '../../types';
+import { MapPin, Clock, Share, Info, CheckCircle } from 'lucide-react';
+import type { TradeCategory } from '../../types';
 
 interface ProviderHomeViewProps {
   onRecommend: (requestId: string) => void;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import type { FontScale, UserRole, ComplaintTicket } from '../../types';
+import type { FontScale, ComplaintTicket } from '../../types';
 import {
   X,
   Phone,
@@ -17,7 +17,6 @@ import {
   Trash2,
   AlertTriangle,
   FileText,
-  Clock
 } from 'lucide-react';
 
 interface SettingsModalProps {

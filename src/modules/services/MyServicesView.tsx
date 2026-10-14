@@ -8,17 +8,13 @@ import {
   Clock,
   MapPin,
   Calendar,
-  AlertTriangle,
   Star,
-  Sparkles,
   Camera,
   RotateCcw,
   BarChart3,
   UserCheck,
-  Send,
   X
 } from 'lucide-react';
-import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 
 interface MyServicesViewProps {
   services: ServiceRequest[];
@@ -50,7 +46,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
   // Modal Cancelación con justificación obligatoria (RF-76)
   const [cancellingService, setCancellingService] = useState<ServiceRequest | null>(null);
   const [selectedReason, setSelectedReason] = useState<string>(CANCEL_REASONS[0]);
-  const [otherReason, setOtherReason] = useState<string>('');
+  const otherReason = '';
 
   // Modal Finalización con Evidencia Fotográfica (RF-62, RF-29)
   const [completingService, setCompletingService] = useState<ServiceRequest | null>(null);

@@ -4,7 +4,6 @@ import {
   X,
   Star,
   ShieldCheck,
-  Clock,
   MapPin,
   Calendar,
   MessageCircle,

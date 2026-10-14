@@ -19,12 +19,9 @@ import {
   Award,
   Users,
   CreditCard,
-  Wrench,
-  Tag,
   Image as ImageIcon,
   UserCheck,
   X,
-  AlertCircle
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 

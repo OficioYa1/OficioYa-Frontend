@@ -1,15 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import type { Worker, TradeCategory } from '../../types';
 import type { Coordinates } from '../../utils/geo';
-import { calculateHaversineDistance, formatDistance, getProximityStatus } from '../../utils/geo';
+import { calculateHaversineDistance, formatDistance } from '../../utils/geo';
 import {
   Search,
-  SlidersHorizontal,
   Star,
   MapPin,
-  Clock,
-  ShieldCheck,
-  Send,
   ChevronRight,
   Zap,
   Wrench,
@@ -29,7 +25,6 @@ import {
   Calendar,
   DollarSign,
   AlertCircle,
-  Award
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 import { OptionWheel } from '../../components/ui/OptionWheel';
@@ -374,11 +369,6 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
     availabilityDay,
     sortBy
   ]);
-
-  // Strip de los 3 disponibles más cercanos
-  const top3Closest = useMemo(() => {
-    return workersWithDistance.filter(w => w.available && !w.isPaused).slice(0, 3);
-  }, [workersWithDistance]);
 
   const handleWheelChange = (val: string) => {
     if (val === 'todos') {

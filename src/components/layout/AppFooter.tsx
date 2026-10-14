@@ -1,5 +1,4 @@
 import React from 'react';
-import { Heart } from 'lucide-react';
 import { MascotAvatar } from '../mascot/MascotAvatar';
 
 export const AppFooter: React.FC = () => {

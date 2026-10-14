@@ -1,17 +1,15 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import type { UserRole, FontScale } from '../../types';
+import type { UserRole } from '../../types';
 import {
   Sun,
   Moon,
-  Type,
   MapPin,
   CheckCircle2,
   Home,
   User,
   LogOut,
-  ShieldAlert,
   Navigation,
   Search,
   FileText,
@@ -38,7 +36,6 @@ interface AppHeaderProps {
 export const AppHeader: React.FC<AppHeaderProps> = ({
   onOpenLanding,
   onOpenSettings,
-  onOpenAdminModeration,
   onRefreshGps,
   hasGps,
   currentTab,
@@ -47,19 +44,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   isChatOpen,
   onToggleChat
 }) => {
-  const { user, role, switchRole, logout } = useAuth();
-  const { theme, toggleTheme, fontScale, setFontScale } = useTheme();
+  const { role, switchRole, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [showRoleDropdown, setShowRoleDropdown] = React.useState(false);
 
   const handleRoleChange = (newRole: UserRole) => {
     switchRole(newRole);
     setShowRoleDropdown(false);
-  };
-
-  const cycleFontScale = () => {
-    const scales: FontScale[] = ['normal', 'large', 'xlarge'];
-    const next = scales[(scales.indexOf(fontScale) + 1) % scales.length];
-    setFontScale(next);
   };
 
   return (

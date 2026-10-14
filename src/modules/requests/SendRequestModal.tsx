@@ -7,13 +7,11 @@ import {
   Clock,
   DollarSign,
   Users,
-  Search,
   CheckCircle2,
   MapPin,
   Camera,
   Calendar,
   Sparkles,
-  AlertCircle
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 
@@ -50,7 +48,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
   const [addressDetail, setAddressDetail] = useState('Carrera 15 # 85-20');
   const [urgency, setUrgency] = useState<UrgencyLevel>('urgente');
   const [budget, setBudget] = useState('80000');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('bre_b');
+  const [paymentMethod] = useState<PaymentMethod>('bre_b');
   const [attachedPhotos, setAttachedPhotos] = useState<string[]>([
     'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&auto=format&fit=crop'
   ]);
@@ -61,7 +59,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
   const [selectedWorkers, setSelectedWorkers] = useState<Worker[]>(() => {
     return initialWorker ? [initialWorker] : [];
   });
-  const [searchWorkerQuery, setSearchWorkerQuery] = useState('');
+  const [, setSearchWorkerQuery] = useState('');
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [createdList, setCreatedList] = useState<ServiceRequest[]>([]);
 

@@ -3,15 +3,8 @@ import type { ComplaintTicket, Worker } from '../../types';
 import {
   X,
   ShieldAlert,
-  AlertTriangle,
   CheckCircle2,
-  XCircle,
-  Clock,
-  UserX,
-  UserCheck,
   Search,
-  Flag,
-  FileText
 } from 'lucide-react';
 
 interface AdminModerationModalProps {
