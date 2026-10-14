@@ -17,7 +17,8 @@ import {
   Bell,
   Settings,
   ChevronDown,
-  Briefcase
+  Briefcase,
+  Inbox
 } from 'lucide-react';
 import { Logo } from '../ui';
 
@@ -32,6 +33,8 @@ interface AppHeaderProps {
   unreadCount: number;
   isChatOpen?: boolean;
   onToggleChat?: () => void;
+  notificationCount?: number;
+  onOpenNotifications?: () => void;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -43,7 +46,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onSelectTab,
   unreadCount,
   isChatOpen,
-  onToggleChat
+  onToggleChat,
+  notificationCount = 0,
+  onOpenNotifications
 }) => {
   const { role, switchRole, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -86,9 +91,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               cursor: 'pointer', fontFamily: 'var(--font-ui)',
             }}
             title="Actualizar ubicación"
+            aria-label="Ubicación: Bogotá D.C. Actualizar ubicación"
           >
             <MapPin size={11} color="var(--role-primary)" />
-            <span>Bogotá D.C.</span>
+            <span className="hide-on-mobile" style={{ whiteSpace: 'nowrap' }}>Bogotá D.C.</span>
             {hasGps ? <CheckCircle2 size={11} color="#10B981" /> : <Navigation size={10} color="var(--color-text-muted)" />}
           </button>
         </div>
@@ -107,7 +113,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               <TabButton id="inicio_pro" label="Inicio" icon={Home} current={currentTab} onSelect={onSelectTab} />
               <TabButton id="oportunidades" label="Oportunidades" icon={Search} current={currentTab} onSelect={onSelectTab} />
               <TabButton id="clientes" label="Mis clientes" icon={Briefcase} current={currentTab} onSelect={onSelectTab} />
-              <TabButton id="alertas" label="Alertas" icon={Bell} current={currentTab} onSelect={onSelectTab} />
+              <TabButton id="alertas" label="Alertas" icon={Inbox} current={currentTab} onSelect={onSelectTab} />
               <TabButton id="mensajes" label="Mensajes" icon={MessageCircle} current={isChatOpen ? 'mensajes' : ''} onSelect={() => onToggleChat && onToggleChat()} badge={unreadCount} />
             </>
           )}
@@ -119,6 +125,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         {/* Herramientas de Accesibilidad, Moderación y Usuario */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {onOpenNotifications && (
+            <TabButton
+              id="notificaciones"
+              label={notificationCount > 0 ? `Notificaciones (${notificationCount} sin leer)` : 'Notificaciones'}
+              icon={Bell}
+              current=""
+              onSelect={onOpenNotifications}
+              badge={notificationCount}
+            />
+          )}
           
           {/* Selector de Rol Compacto y Configuración */}
           <div style={{ position: 'relative' }}>

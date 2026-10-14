@@ -1,6 +1,6 @@
 // Datos semilla de trabajadores, servicios, chats y tickets en Bogotá D.C.
 
-import type { Worker, ServiceRequest, Conversation, ChatMessage } from '../types';
+import type { Worker, ServiceRequest, Conversation, ChatMessage, PushNotification } from '../types';
 
 export const INITIAL_WORKERS: Worker[] = [
   {
@@ -966,6 +966,42 @@ export const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
     }
   ]
 };
+
+// Bandeja de notificaciones inicial (la más reciente primero)
+export const INITIAL_NOTIFICATIONS: PushNotification[] = [
+  {
+    id: 'notif-1',
+    title: 'Mateo aceptó tu solicitud',
+    body: 'Llega mañana a las 9:00 a. m. para revisar el tablero eléctrico.',
+    type: 'acceptance',
+    timestamp: '10:24 a. m.',
+    read: false
+  },
+  {
+    id: 'notif-2',
+    title: 'Nuevo mensaje de Carlos',
+    body: '¿Me confirmas la dirección exacta del apartamento?',
+    type: 'message',
+    timestamp: '9:02 a. m.',
+    read: false
+  },
+  {
+    id: 'notif-3',
+    title: 'Tu reseña ya es visible',
+    body: 'Gracias por calificar el servicio de pintura en Chapinero.',
+    type: 'system',
+    timestamp: 'Ayer',
+    read: true
+  },
+  {
+    id: 'notif-4',
+    title: 'Solicitud enviada',
+    body: 'Le avisamos a 3 plomeros cercanos. Te contamos cuando respondan.',
+    type: 'request',
+    timestamp: 'Ayer',
+    read: true
+  }
+];
 
 // Helper de persistencia en localStorage
 export const getStoredData = <T>(key: string, fallback: T): T => {

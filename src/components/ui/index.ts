@@ -13,3 +13,5 @@ export type {
   CircularCarouselAutoplay,
   CircularCarouselProps,
 } from './CircularCarousel';
+export { Shredder } from './Shredder';
+export type { ShredderItem, ShredderProps } from './Shredder';

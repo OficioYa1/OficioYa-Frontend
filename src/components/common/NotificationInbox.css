@@ -1,0 +1,155 @@
+/* Bandeja de notificaciones con trituradora */
+.inbox-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+}
+
+.inbox-panel {
+  position: fixed;
+  top: 68px;
+  right: 16px;
+  z-index: 901;
+  width: min(380px, calc(100vw - 32px));
+  max-height: calc(100dvh - 84px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-4) var(--space-4) 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  transform-origin: top right;
+  animation: inbox-in 200ms var(--ease-out);
+}
+
+.inbox-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.inbox-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.inbox-hint {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+.inbox-close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms var(--ease-out);
+}
+
+.inbox-close:active { transform: scale(0.95); }
+
+@media (hover: hover) and (pointer: fine) {
+  .inbox-close:hover { background: var(--color-surface-hover); }
+}
+
+.inbox-shredder { margin: 0 auto; }
+
+/* Tarjeta de notificación: fondo opaco para que las tiras se vean como papel */
+.inbox-card {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  height: 76px;
+  padding: 12px 14px;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.inbox-card[data-unread] {
+  background: var(--color-warm-soft);
+  border-color: var(--oy-almendra-claro);
+}
+
+.inbox-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-hover);
+}
+
+.inbox-text { min-width: 0; flex: 1; }
+
+.inbox-card-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.inbox-card-title span:first-child {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.inbox-time {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.inbox-card-body {
+  display: -webkit-box;
+  margin: 2px 0 0;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+.inbox-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4) var(--space-8);
+  text-align: center;
+}
+
+.inbox-empty p { margin: 0; color: var(--color-text-muted); font-size: 13.5px; }
+.inbox-empty strong { color: var(--color-text-main); font-size: 15px; }
+
+@keyframes inbox-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inbox-panel { animation: none; }
+}

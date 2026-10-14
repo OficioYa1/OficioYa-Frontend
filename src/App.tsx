@@ -18,6 +18,7 @@ import {
   INITIAL_SERVICES,
   INITIAL_CONVERSATIONS,
   INITIAL_MESSAGES,
+  INITIAL_NOTIFICATIONS,
   getStoredData,
   setStoredData
 } from './services/mockData';
@@ -28,6 +29,7 @@ import { BottomNav } from './components/layout/BottomNav';
 import { MascotAssistant } from './components/mascot/MascotAssistant';
 import { MascotAvatar } from './components/mascot/MascotAvatar';
 import { PushNotificationToast } from './components/common/PushNotificationToast';
+import { NotificationInbox } from './components/common/NotificationInbox';
 
 import { LandingPage } from './modules/landing/LandingPage';
 import { SeekerDirectory } from './modules/seeker/SeekerDirectory';
@@ -93,6 +95,10 @@ const MainAppContent: React.FC = () => {
 
   // RF-61: Notificaciones Push en tiempo real
   const [activePushNotification, setActivePushNotification] = useState<PushNotification | null>(null);
+  const [notifications, setNotifications] = useState<PushNotification[]>(() =>
+    getStoredData('oy-notifications', INITIAL_NOTIFICATIONS)
+  );
+  const [isInboxOpen, setIsInboxOpen] = useState(false);
 
   // Datos Persistentes en localStorage
   const [workers, setWorkers] = useState<Worker[]>(() =>
@@ -128,15 +134,22 @@ const MainAppContent: React.FC = () => {
     body: string,
     type: 'request' | 'acceptance' | 'message' | 'system'
   ) => {
-    setActivePushNotification({
+    const notification: PushNotification = {
       id: `push-${Date.now()}`,
       title,
       body,
       type,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       read: false
-    });
+    };
+    setActivePushNotification(notification);
+    setNotifications(prev => [notification, ...prev]);
   };
+
+  const closeInbox = React.useCallback(() => {
+    setIsInboxOpen(false);
+    setNotifications(prev => prev.map(n => (n.read ? n : { ...n, read: true })));
+  }, []);
 
   // RF-63: Capturar y actualizar ubicación geoespacial del dispositivo
   const handleRefreshGps = () => {
@@ -182,6 +195,10 @@ const MainAppContent: React.FC = () => {
   }, [services]);
 
   // Guardar cambios de mensajes
+  useEffect(() => {
+    setStoredData('oy-notifications', notifications);
+  }, [notifications]);
+
   useEffect(() => {
     setStoredData('oy-messages', messages);
     setStoredData('oy-conversations', conversations);
@@ -419,7 +436,17 @@ const MainAppContent: React.FC = () => {
         unreadCount={totalUnreadCount}
         isChatOpen={isChatOpen}
         onToggleChat={() => setIsChatOpen(!isChatOpen)}
+        notificationCount={notifications.filter(n => !n.read).length}
+        onOpenNotifications={() => setIsInboxOpen(open => !open)}
       />
+
+      {isInboxOpen && (
+        <NotificationInbox
+          notifications={notifications}
+          onClose={closeInbox}
+          onDelete={id => setNotifications(prev => prev.filter(n => n.id !== id))}
+        />
+      )}
 
       <div className="app-main-body">
         {/* Área Central de Contenido */}
