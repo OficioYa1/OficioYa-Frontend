@@ -1,0 +1,205 @@
+/* ============================================================
+   GlassIcons · grupo de iconos de vidrio (WebGL2)
+   El canvas pinta placa + vidrio; el DOM aporta el contorno del
+   vidrio, el glifo, la etiqueta y el foco. En modo plano (sin
+   WebGL2 o con movimiento reducido) cada icono es una placa de
+   color sólido con contorno Cacao y el glifo encima.
+   ============================================================ */
+
+.oy-glass-icons {
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--glass-icons-row-gap) var(--glass-icons-gap);
+  width: 100%;
+  max-width: calc(
+    var(--glass-icons-columns) * var(--glass-icons-size) +
+      (var(--glass-icons-columns) - 1) * var(--glass-icons-gap) +
+      2 * var(--glass-icons-pad)
+  );
+  margin-inline: auto;
+  padding: var(--glass-icons-pad);
+}
+
+.oy-glass-icons[data-labels='always'] {
+  padding-bottom: calc(var(--glass-icons-pad) + 44px);
+}
+
+.oy-glass-icons__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.oy-glass-icons__item {
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+  width: var(--glass-icons-size);
+  height: var(--glass-icons-size);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--glass-icons-radius);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.oy-glass-icons__item:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 4px;
+}
+
+/* ── Modo vidrio ─────────────────────────────────────────── */
+
+.oy-glass-icons__glass {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  box-sizing: border-box;
+  border-radius: var(--glass-icons-radius);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.oy-glass-icons[data-outline] .oy-glass-icons__glass {
+  border: var(--stroke-w, 1.5px) solid var(--stroke-ink);
+}
+
+.oy-glass-icons__face {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  border-radius: var(--glass-icons-radius);
+  pointer-events: none;
+}
+
+.oy-glass-icons:not(.oy-glass-icons--flat) .oy-glass-icons__face {
+  will-change: transform, opacity;
+}
+
+.oy-glass-icons__glyph {
+  display: grid;
+  place-items: center;
+  width: 40%;
+  height: 40%;
+  color: var(--glass-icons-ink);
+}
+
+.oy-glass-icons__glyph > svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Entrada escalonada: el motor revela cada pieza fijando su opacidad. */
+.oy-glass-icons[data-intro] .oy-glass-icons__glass,
+.oy-glass-icons[data-intro] .oy-glass-icons__face,
+.oy-glass-icons[data-intro][data-labels='always'] .oy-glass-icons__label {
+  opacity: 0;
+}
+
+/* ── Etiquetas ───────────────────────────────────────────── */
+
+.oy-glass-icons__label {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  z-index: 3;
+  width: max-content;
+  max-width: calc(var(--glass-icons-size) + var(--glass-icons-gap) - 8px);
+  font-family: var(--font-text);
+  font-size: var(--text-small);
+  font-weight: 600;
+  line-height: var(--leading-snug);
+  text-align: center;
+  color: var(--color-text-main);
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.oy-glass-icons[data-labels='hover'] .oy-glass-icons__label {
+  opacity: 0;
+  transform: translate(-50%, -4px);
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+}
+
+.oy-glass-icons[data-labels='hover'] .oy-glass-icons__item:focus-visible .oy-glass-icons__label {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .oy-glass-icons[data-labels='hover'] .oy-glass-icons__item:hover .oy-glass-icons__label {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* ── Modo plano (fallback CSS) ───────────────────────────── */
+
+.oy-glass-icons__plate {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border-radius: var(--glass-icons-radius);
+  background: var(--glass-icons-fill);
+}
+
+.oy-glass-icons[data-outline] .oy-glass-icons__plate {
+  border: var(--stroke-w, 1.5px) solid var(--stroke-ink);
+}
+
+.oy-glass-icons--flat .oy-glass-icons__plate,
+.oy-glass-icons--flat .oy-glass-icons__face {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .oy-glass-icons--flat:not([data-hover='none']) .oy-glass-icons__item:hover .oy-glass-icons__plate,
+  .oy-glass-icons--flat:not([data-hover='none']) .oy-glass-icons__item:hover .oy-glass-icons__face {
+    transform: translateY(-3px);
+  }
+}
+
+.oy-glass-icons--flat .oy-glass-icons__item:focus-visible .oy-glass-icons__plate,
+.oy-glass-icons--flat .oy-glass-icons__item:focus-visible .oy-glass-icons__face {
+  transform: translateY(-3px);
+}
+
+.oy-glass-icons--flat .oy-glass-icons__item:active .oy-glass-icons__plate,
+.oy-glass-icons--flat .oy-glass-icons__item:active .oy-glass-icons__face {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oy-glass-icons__label,
+  .oy-glass-icons[data-labels='hover'] .oy-glass-icons__label,
+  .oy-glass-icons--flat .oy-glass-icons__plate,
+  .oy-glass-icons--flat .oy-glass-icons__face {
+    transition: none;
+  }
+
+  .oy-glass-icons--flat .oy-glass-icons__item:focus-visible .oy-glass-icons__plate,
+  .oy-glass-icons--flat .oy-glass-icons__item:focus-visible .oy-glass-icons__face,
+  .oy-glass-icons--flat .oy-glass-icons__item:hover .oy-glass-icons__plate,
+  .oy-glass-icons--flat .oy-glass-icons__item:hover .oy-glass-icons__face {
+    transform: none;
+  }
+}
