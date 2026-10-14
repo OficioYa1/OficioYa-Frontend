@@ -10,6 +10,7 @@ import './LandingSticker.css';
 import { AppFooter } from '../../components/layout/AppFooter';
 import { TrueFocus } from '../../components/ui/TrueFocus';
 import { BRAND_ASSETS } from '../../utils/assets';
+import { PixelSwap } from '../../components/ui/PixelSwap';
 
 const PlasmaWarp = React.lazy(() => import('../../components/background/PlasmaWarp'));
 
@@ -84,6 +85,48 @@ function HoverText({ children, hoverColor = '#FFC72C', style = {} }: {
 }
 
 // Item desplegable FAQ
+// Many cambia de pose por píxeles al elegir un oficio: dos caras que se
+// alternan, la entrante recibe la pose nueva y PixelSwap la revela.
+function ManySwap({ src, alt, imgClassName, onClick }: { src: string; alt: string; imgClassName: string; onClick: () => void }) {
+  const [faces, setFaces] = useState<[{ src: string; alt: string }, { src: string; alt: string }]>([{ src, alt }, { src, alt }]);
+  const [front, setFront] = useState(false);
+
+  useEffect(() => {
+    const shown = faces[front ? 1 : 0];
+    if (shown.src === src) return;
+    const next = !front;
+    setFaces(prev => {
+      const copy: typeof prev = [prev[0], prev[1]];
+      copy[next ? 1 : 0] = { src, alt };
+      return copy;
+    });
+    setFront(next);
+  }, [src]);
+
+  const face = (f: { src: string; alt: string }) => (
+    <img src={f.src} alt={f.alt} className={imgClassName} onClick={onClick} draggable={false} />
+  );
+
+  return (
+    <PixelSwap
+      className="lp-many-swap"
+      firstContent={face(faces[0])}
+      secondContent={face(faces[1])}
+      active={front}
+      trigger="manual"
+      aspectRatio="1 / 1"
+      pattern="bottom-to-top"
+      randomness={0.35}
+      pixelSize={22}
+      pixelRadius={0}
+      pixelScale={0.2}
+      duration={760}
+      pixelDuration={320}
+      fadeOutgoing
+    />
+  );
+}
+
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
@@ -250,19 +293,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
         {/* Many mascot */}
         <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
 
-          {selectedTrade === 'plomeria' ? (
-            <img src={BRAND_ASSETS.manyPlomero} alt="Many Plomero"
-              className={`lp-many-hero-img ${manyAnimate === 'wave' ? 'lp-many-waving' : ''}`}
-              onClick={triggerWave} style={{ height: '300px', objectFit: 'contain', cursor: 'pointer', position: 'relative' }} />
-          ) : selectedTrade === 'electricidad' ? (
-            <img src={BRAND_ASSETS.manyElectricista} alt="Many Electricista"
-              className={`lp-many-hero-img ${manyAnimate === 'wave' ? 'lp-many-waving' : ''}`}
-              onClick={triggerWave} style={{ height: '300px', objectFit: 'contain', cursor: 'pointer', position: 'relative' }} />
-          ) : (
-            <img src={BRAND_ASSETS.manyWave} alt="Many OficioYa"
-              className={`lp-many-hero-img ${manyAnimate === 'wave' ? 'lp-many-waving' : ''}`}
-              onClick={triggerWave} style={{ height: '300px', objectFit: 'contain', cursor: 'pointer', position: 'relative' }} />
-          )}
+          <ManySwap
+            src={selectedTrade === 'plomeria' ? BRAND_ASSETS.manyPlomero : selectedTrade === 'electricidad' ? BRAND_ASSETS.manyElectricista : BRAND_ASSETS.manyWave}
+            alt={selectedTrade === 'plomeria' ? 'Many plomero' : selectedTrade === 'electricidad' ? 'Many electricista' : 'Many saludando'}
+            imgClassName={`lp-many-hero-img ${manyAnimate === 'wave' ? 'lp-many-waving' : ''}`}
+            onClick={triggerWave}
+          />
 
           {/* Tagline del oficio — texto suelto */}
           <p style={{

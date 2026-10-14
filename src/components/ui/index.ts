@@ -21,3 +21,5 @@ export { PeekRating, RATING_LABELS } from './PeekRating';
 export type { PeekRatingProps, PeekRatingShape } from './PeekRating';
 export { SquishSwitch } from './SquishSwitch';
 export type { SquishSwitchProps } from './SquishSwitch';
+export { PixelSwap } from './PixelSwap';
+export type { PixelSwapProps, PixelSwapPattern, PixelSwapTrigger } from './PixelSwap';

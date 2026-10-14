@@ -1,0 +1,49 @@
+/* ============================================================
+   PixelSwap · cambio de contenido por píxeles
+   CSS plano (el repo no usa Tailwind). Con fadeOutgoing la cara
+   saliente se desvanece mientras entran los píxeles, para que las
+   ilustraciones con fondo transparente no se superpongan.
+   ============================================================ */
+
+.pxs {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  overflow: hidden;
+  outline: none;
+}
+
+.pxs:focus-visible {
+  border-radius: var(--radius-card);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+.pxs-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.pxs-layer[data-visible='false'] { visibility: hidden; }
+
+.pxs[data-fade-outgoing] .pxs-layer[data-outgoing] {
+  opacity: 0;
+  transition: opacity var(--pxs-out) var(--ease-out);
+}
+
+.pxs-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.pxs-pixel {
+  position: absolute;
+  overflow: hidden;
+  opacity: 0;
+  contain: paint;
+}
+
+.pxs-window { position: absolute; }

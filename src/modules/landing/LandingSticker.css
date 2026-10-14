@@ -391,3 +391,16 @@ html.theme-dark .lp-cta-card {
 
 /* Texto secundario sobre el plasma: se aclara para seguir en AA */
 .lp-cta-desc { color: #E2E8F0; }
+
+/* ── Many cambia de pose por píxeles (PixelSwap) ── */
+.lp-many-swap {
+  width: 300px;
+  max-width: 100%;
+  overflow: visible; /* deja respirar el resplandor de Many */
+}
+
+.lp-many-swap .lp-many-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
