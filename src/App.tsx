@@ -489,7 +489,7 @@ const MainAppContent: React.FC = () => {
               ======================================================== */}
           {(currentTab === 'inicio_pro' || currentTab === 'oportunidades') && (
             <ProviderHomeView
-              onRecommend={(id) => console.log('Recomendar', id)}
+              onRecommend={() => triggerPushNotification('Recomendación enviada', 'Compartimos la oportunidad con tus colegas del oficio.', 'system')}
             />
           )}
 
@@ -517,7 +517,7 @@ const MainAppContent: React.FC = () => {
               <div 
                 className="hide-on-desktop"
                 onClick={() => setIsChatOpen(false)}
-                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, backdropFilter: 'blur(2px)' }}
+                style={{ position: 'fixed', inset: 0, background: 'rgba(62,31,20,0.45)', zIndex: 999 }}
               />
               <ChatView
                 conversations={conversations}
