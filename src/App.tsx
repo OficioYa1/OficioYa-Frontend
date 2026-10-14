@@ -48,6 +48,11 @@ import { ProviderHomeView } from './modules/provider/ProviderHomeView';
 
 import './App.css';
 
+/* El fondo WebGL se carga aparte para no retrasar el primer pintado */
+const BrandBackground = React.lazy(() =>
+  import('./components/background/BrandBackground').then(m => ({ default: m.BrandBackground }))
+);
+
 /* ── CROSSFADE TRANSITION SYSTEM ── */
 type ViewMode = 'auth' | 'app' | 'landing';
 
@@ -597,6 +602,9 @@ export function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
+        <React.Suspense fallback={null}>
+          <BrandBackground />
+        </React.Suspense>
         <MainAppContent />
       </ThemeProvider>
     </AuthProvider>

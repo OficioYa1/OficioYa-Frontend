@@ -67,6 +67,11 @@
   --color-error-soft:       var(--oy-rojo-suave);
   --color-focus-ring:       var(--oy-azul-marino);
 
+  /* Fondo animado (MicroSlats): Almendra con brillos Amarillo Canario */
+  --bg-slats-color:         var(--oy-almendra-claro);
+  --bg-slats-glint:         var(--oy-amarillo-canario);
+  --bg-slats-opacity:       0.5;
+
   /* ── 3. TIPOGRAFÍA ─────────────────────────────────────────── */
   /* Manual: DM Sans → títulos y mensajes clave · Inter → texto, datos e interfaz */
   --font-display: 'DM Sans', 'Inter', system-ui, sans-serif;
@@ -135,4 +140,9 @@ html.theme-dark {
   --color-warm-soft:     rgba(248, 216, 168, 0.12);
   --color-error-soft:    rgba(220, 38, 38, 0.15);
   --color-focus-ring:    var(--oy-amarillo-canario);
+
+  /* Fondo animado: Azul Marino con brillos Ámbar, más tenue de noche */
+  --bg-slats-color:      var(--oy-azul-marino);
+  --bg-slats-glint:      var(--oy-ambar-calido);
+  --bg-slats-opacity:    0.3;
 }

@@ -1,0 +1,21 @@
+/* Capa fija detrás de toda la app. La opacidad sale de los tokens para que
+   el texto que cae directo sobre el fondo conserve contraste AA. */
+.brand-background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--bg-slats-opacity);
+}
+
+.micro-slats {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Contexto propio para que la capa -1 quede detrás del contenido y no del body */
+#root {
+  isolation: isolate;
+}

@@ -58,7 +58,7 @@ html.theme-light {
   --color-surface-hover: #F1F5F9;
   --color-surface-elevated: #FFFFFF;
   --color-text-main: #0F172A;
-  --color-text-muted: #64748B;
+  --color-text-muted: #475569; /* AA también sobre el fondo animado */
   --color-text-subtle: #94A3B8;
   --color-border: #E2E8F0;
   --color-border-subtle: #F1F5F9;
@@ -76,7 +76,7 @@ html.theme-dark {
   --color-surface-hover: #1F2937;
   --color-surface-elevated: #182234;
   --color-text-main: #F8FAFC;
-  --color-text-muted: #94A3B8;
+  --color-text-muted: #A8B3C5; /* AA también sobre el fondo animado */
   --color-text-subtle: #64748B;
   --color-border: #1E293B;
   --color-border-subtle: #162032;

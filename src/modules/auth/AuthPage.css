@@ -7,7 +7,7 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: var(--color-bg);
+  background: transparent;
 }
 
 /* ── PANEL IZQUIERDO ── */
@@ -137,7 +137,7 @@
   align-items: center;
   justify-content: center;
   padding: 48px 40px;
-  background: var(--color-bg);
+  background: transparent;
 }
 
 .auth-form-wrap {
