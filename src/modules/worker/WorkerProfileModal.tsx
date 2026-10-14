@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Worker, Review } from '../../types';
+import { CircularCarousel } from '../../components/ui';
 import {
   X,
   Star,
@@ -638,31 +639,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
           )}
 
           {/* Contenido Pestaña 4: Portafolio de Trabajos (RF-07, RF-65) */}
-          {activeTab === 'galeria' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '20px' }}>
-              {worker.gallery.map((imgUrl, i) => (
-                <div
-                  key={i}
-                  style={{
-                    height: '140px',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    background: 'var(--color-surface-hover)',
-                    position: 'relative'
-                  }}
-                >
-                  <img
-                    src={imgUrl}
-                    alt={`Evidencia de trabajo ${i + 1}`}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                  <span style={{ position: 'absolute', bottom: '6px', right: '6px', background: 'rgba(0,0,0,0.6)', color: '#FFF', padding: '2px 6px', borderRadius: '4px', fontSize: '10px' }}>
-                    <ImageIcon size={10} style={{ display: 'inline', marginRight: '3px' }} /> Evidencia
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+          {activeTab === 'galeria' && <WorkerGallery images={worker.gallery} />}
 
           {/* Barra de Acciones: Chat, Enviar Petición, Contratar / No disponible */}
           <div
@@ -709,6 +686,51 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+/** Portafolio en carrusel 3D; repite las fotos para que el anillo se vea lleno. */
+const MIN_RING_ITEMS = 6;
+
+const WorkerGallery: React.FC<{ images: string[] }> = ({ images }) => {
+  const [current, setCurrent] = useState(0);
+
+  if (images.length === 0) {
+    return (
+      <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--color-text-muted)', marginBottom: '20px' }}>
+        <ImageIcon size={28} style={{ marginBottom: '8px' }} aria-hidden="true" />
+        <p style={{ margin: 0 }}>Este trabajador aún no ha subido evidencias de trabajo.</p>
+      </div>
+    );
+  }
+
+  const repeats = Math.max(1, Math.ceil(MIN_RING_ITEMS / images.length));
+  const items = Array.from({ length: images.length * repeats }, (_, i) => ({
+    src: images[i % images.length],
+    alt: `Evidencia de trabajo ${(i % images.length) + 1}`,
+  }));
+
+  return (
+    <div style={{ marginBottom: '20px' }}>
+      <div style={{ height: '320px' }}>
+        <CircularCarousel
+          items={items}
+          preset="cylinder"
+          intro="rise"
+          cardWidth={220}
+          aspectRatio={4 / 3}
+          captions={false}
+          ariaLabel="Portafolio de trabajos"
+          onChange={(i) => setCurrent(i % images.length)}
+        />
+      </div>
+      <p
+        aria-live="polite"
+        style={{ margin: '8px 0 0', textAlign: 'center', fontSize: 'var(--text-small)', color: 'var(--color-text-muted)', fontVariantNumeric: 'tabular-nums' }}
+      >
+        Trabajo {current + 1} de {images.length} · arrastra o usa las flechas
+      </p>
     </div>
   );
 };

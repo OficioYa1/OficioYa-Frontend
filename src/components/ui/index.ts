@@ -5,3 +5,11 @@ export type { BadgeProps } from './Badge';
 export { Card } from './Card';
 export { Logo } from './Logo';
 export type { LogoProps } from './Logo';
+export { CircularCarousel } from './CircularCarousel';
+export type {
+  CircularCarouselItem,
+  CircularCarouselPreset,
+  CircularCarouselIntro,
+  CircularCarouselAutoplay,
+  CircularCarouselProps,
+} from './CircularCarousel';
