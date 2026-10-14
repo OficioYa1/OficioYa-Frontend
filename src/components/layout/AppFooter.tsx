@@ -1,5 +1,6 @@
 import React from 'react';
 import { MascotAvatar } from '../mascot/MascotAvatar';
+import { Logo } from '../ui';
 
 export const AppFooter: React.FC = () => {
   return (
@@ -22,17 +23,7 @@ export const AppFooter: React.FC = () => {
           {/* Brand Column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{
-                background: 'var(--role-primary)',
-                color: 'white',
-                padding: '4px 8px',
-                borderRadius: '8px',
-                fontWeight: 900,
-                fontSize: '18px',
-                letterSpacing: '-0.5px'
-              }}>
-                OficioYa
-              </span>
+              <Logo size={32} />
             </div>
             <p style={{
               fontSize: '15px',

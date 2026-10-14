@@ -19,7 +19,7 @@ import {
   ChevronDown,
   Briefcase
 } from 'lucide-react';
-import { BRAND_ASSETS } from '../../utils/assets';
+import { Logo } from '../ui';
 
 interface AppHeaderProps {
   onOpenLanding: () => void;
@@ -70,19 +70,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
             onClick={onOpenLanding}
-            style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'none', border: 'none', cursor: 'pointer' }}
+            aria-label="OficioYa, ir al inicio"
+            style={{ display: 'flex', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            <img src={BRAND_ASSETS.logo} alt="OficioYa" style={{ width: '34px', height: '34px', borderRadius: '9px' }} />
-            <span style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: '20px',
-              fontWeight: 800,
-              letterSpacing: '-0.5px',
-              color: 'var(--color-text-main)',
-              lineHeight: 1,
-            }}>
-              Oficio<span style={{ color: 'var(--brand-amber)' }}>Ya</span>
-            </span>
+            <Logo size={34} />
           </button>
           {/* Indicador de ubicación */}
           <button
