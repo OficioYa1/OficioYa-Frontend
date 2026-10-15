@@ -368,11 +368,10 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
       {completingService && (
         <div className="oy-modal-backdrop svc-backdrop">
           <div
-            className="oy-modal svc-modal svc-modal--esmeralda"
+            className="oy-modal svc-modal svc-modal--esmeralda svc-modal--md"
             role="dialog"
             aria-modal="true"
             aria-labelledby="svc-finalize-title"
-            style={{ '--oy-modal-w': '480px' } as React.CSSProperties}
           >
             <div className="oy-modal__head">
               <div className="svc-modal__headline">
@@ -424,7 +423,6 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
             role="dialog"
             aria-modal="true"
             aria-labelledby="svc-cancel-title"
-            style={{ '--oy-modal-w': '460px' } as React.CSSProperties}
           >
             <div className="oy-modal__head">
               <div>
@@ -475,7 +473,6 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
             role="dialog"
             aria-modal="true"
             aria-labelledby="svc-review-title"
-            style={{ '--oy-modal-w': '460px' } as React.CSSProperties}
           >
             {!reviewSuccess ? (
               <>
@@ -536,7 +533,6 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
             role="dialog"
             aria-modal="true"
             aria-labelledby="svc-client-title"
-            style={{ '--oy-modal-w': '460px' } as React.CSSProperties}
           >
             <div className="oy-modal__head">
               <div>
@@ -582,11 +578,10 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
       {showStatsModal && (
         <div className="oy-modal-backdrop svc-backdrop">
           <div
-            className="oy-modal svc-modal svc-modal--marino"
+            className="oy-modal svc-modal svc-modal--marino svc-modal--lg"
             role="dialog"
             aria-modal="true"
             aria-labelledby="svc-stats-title"
-            style={{ '--oy-modal-w': '500px' } as React.CSSProperties}
           >
             <div className="oy-modal__head">
               <div className="svc-modal__headline">

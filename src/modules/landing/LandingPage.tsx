@@ -21,23 +21,23 @@ interface LandingPageProps { onEnterApp: (role?: 'seeker' | 'provider') => void;
 
 interface TradeOption {
   key: TradeCategory; label: string; icon: React.ReactNode;
-  tagline: string; color: string;
+  tagline: string;
 }
 
 const TRADES: TradeOption[] = [
-  { key: 'electricidad',    label: 'Electricidad',    icon: <Zap size={15} />,        tagline: 'Instalaciones eléctricas, cableado y circuitos seguros.',            color: '#FFC72C' },
-  { key: 'plomeria',        label: 'Plomería',        icon: <Wrench size={15} />,      tagline: 'Destapes, fugas y redes hidráulicas con garantía de trabajo.',        color: '#FFC72C' },
-  { key: 'pintura',         label: 'Pintura',         icon: <PaintBucket size={15} />, tagline: 'Acabados finos y pintura arquitectónica para tu hogar.',                color: '#FFC72C' },
-  { key: 'cerrajeria',      label: 'Cerrajería',      icon: <KeyRound size={15} />,    tagline: 'Aperturas de emergencia 24 horas, sin daño a tus cerraduras.',         color: '#FFC72C' },
-  { key: 'electrodomesticos', label: 'Electrodomésticos', icon: <Tv2 size={15} />,    tagline: 'Reparación de lavadoras, neveras y aires acondicionados.',             color: '#FFC72C' },
-  { key: 'clases',          label: 'Clases',          icon: <BookOpen size={15} />,    tagline: 'Profesores particulares verificados para todas las materias.',          color: '#FFC72C' },
+  { key: 'electricidad',    label: 'Electricidad',    icon: <Zap size={15} />,        tagline: 'Instalaciones eléctricas, cableado y circuitos seguros.' },
+  { key: 'plomeria',        label: 'Plomería',        icon: <Wrench size={15} />,      tagline: 'Destapes, fugas y redes hidráulicas con garantía de trabajo.' },
+  { key: 'pintura',         label: 'Pintura',         icon: <PaintBucket size={15} />, tagline: 'Acabados finos y pintura arquitectónica para tu hogar.' },
+  { key: 'cerrajeria',      label: 'Cerrajería',      icon: <KeyRound size={15} />,    tagline: 'Aperturas de emergencia 24 horas, sin daño a tus cerraduras.' },
+  { key: 'electrodomesticos', label: 'Electrodomésticos', icon: <Tv2 size={15} />,    tagline: 'Reparación de lavadoras, neveras y aires acondicionados.' },
+  { key: 'clases',          label: 'Clases',          icon: <BookOpen size={15} />,    tagline: 'Profesores particulares verificados para todas las materias.' },
 ];
 
 const STATS = [
-  { label: 'Profesionales activos',  value: '2.400+',  icon: <UserCheck size={22} />,    color: 'var(--color-trust)' },
-  { label: 'Servicios completados',  value: '18.000+', icon: <CheckCircle2 size={22} />, color: 'var(--color-status-text)' },
-  { label: 'Calificación promedio',  value: '4.8 / 5', icon: <Star size={22} />,         color: 'var(--color-accent-text)' },
-  { label: 'Tiempo de respuesta',    value: '< 20 min',icon: <TrendingUp size={22} />,   color: 'var(--color-action-strong)' },
+  { label: 'Profesionales activos',  value: '2.400+',  icon: <UserCheck size={22} />,    tone: 'trust' },
+  { label: 'Servicios completados',  value: '18.000+', icon: <CheckCircle2 size={22} />, tone: 'status' },
+  { label: 'Calificación promedio',  value: '4.8 / 5', icon: <Star size={22} />,         tone: 'accent' },
+  { label: 'Tiempo de respuesta',    value: '< 20 min',icon: <TrendingUp size={22} />,   tone: 'action' },
 ];
 
 const FAQS = [
@@ -78,25 +78,10 @@ function useReveal() {
   return { ref, visible };
 }
 
-// Texto con efecto hover de color
-function HoverText({ children, hoverColor = '#FFC72C', style = {} }: {
-  children: React.ReactNode; hoverColor?: string; style?: React.CSSProperties;
-}) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <span
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        color: hovered ? hoverColor : 'inherit',
-        transition: 'color 0.22s ease',
-        cursor: 'pointer',
-        ...style,
-      }}
-    >
-      {children}
-    </span>
-  );
+// Texto con efecto hover de color (solo con puntero fino, ver LandingSticker.css)
+type HoverTone = 'action' | 'trust' | 'accent' | 'status' | 'energy';
+function HoverText({ children, tone = 'action' }: { children: React.ReactNode; tone?: HoverTone }) {
+  return <span className={`lp-hover lp-hover--${tone}`}>{children}</span>;
 }
 
 // Item desplegable FAQ
@@ -214,15 +199,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
 
           {/* Nav links con hover de color — sin recuadros */}
           <div className="lp-nav-actions">
-            <HoverText hoverColor="#C2410C" style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 500, color: 'var(--color-text-muted)' }}>
-              <span onClick={handleStartAsSeeker}>Buscar</span>
-            </HoverText>
-            <HoverText hoverColor="#C2410C" style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 500, color: 'var(--color-text-muted)' }}>
-              <span onClick={() => document.getElementById('faq-section')?.scrollIntoView({ behavior: 'smooth' })}>Preguntas</span>
-            </HoverText>
-            <HoverText hoverColor="#C2410C" style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 500, color: 'var(--color-text-muted)' }}>
-              <span onClick={handleStartAsProvider}>Para trabajadores</span>
-            </HoverText>
+            <button type="button" className="lp-nav-link" onClick={handleStartAsSeeker}>Buscar</button>
+            <button type="button" className="lp-nav-link" onClick={() => document.getElementById('faq-section')?.scrollIntoView({ behavior: 'smooth' })}>Preguntas</button>
+            <button type="button" className="lp-nav-link" onClick={handleStartAsProvider}>Para trabajadores</button>
             <button onClick={handleStartAsSeeker} className="lp-btn-cta">
               Explorar <ArrowRight size={14} />
             </button>
@@ -231,31 +210,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
       </nav>
 
       {/* ── HERO ── */}
-      <section
-        className={`lp-hero ${heroVisible ? 'lp-hero--in' : ''}`}
-        style={{
-          background: 'var(--color-warm-soft)', borderBottom: 'var(--stroke-w) solid var(--stroke-ink)',
-          color: 'var(--color-text-main)', textAlign: 'center', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', minHeight: '92vh',
-          padding: '60px 24px 40px', position: 'relative', overflow: 'hidden',
-        }}
-      >
+      <section className={`lp-hero lp-hero-band ${heroVisible ? 'lp-hero--in' : ''}`}>
         {/* Stickers decorativos con la paleta del manual (estáticos, rotados) */}
         <div className="lp-stickers" aria-hidden="true">
-          <span className="lp-sticker lp-sticker--amarillo" style={{ top: '14%', left: '12%', rotate: '-12deg' }}><Wrench size={28} /></span>
-          <span className="lp-sticker lp-sticker--esmeralda" style={{ top: '22%', right: '13%', rotate: '9deg' }}><UserCheck size={26} /></span>
-          <span className="lp-sticker lp-sticker--fuego" style={{ top: '48%', left: '7%', rotate: '8deg' }}><Zap size={26} /></span>
-          <span className="lp-sticker lp-sticker--marino" style={{ top: '55%', right: '8%', rotate: '-10deg' }}><Award size={26} /></span>
-          <span className="lp-sticker lp-sticker--almendra lp-sticker--pill" style={{ top: '8%', right: '30%', rotate: '-6deg' }}>★ 4.9</span>
+          <span className="lp-sticker lp-sticker--amarillo lp-sticker--a"><Wrench size={28} /></span>
+          <span className="lp-sticker lp-sticker--esmeralda lp-sticker--b"><UserCheck size={26} /></span>
+          <span className="lp-sticker lp-sticker--fuego lp-sticker--c"><Zap size={26} /></span>
+          <span className="lp-sticker lp-sticker--marino lp-sticker--d"><Award size={26} /></span>
+          <span className="lp-sticker lp-sticker--almendra lp-sticker--pill lp-sticker--e">★ 4.9</span>
         </div>
 
         {/* Badge ciudad — texto suelto, sin recuadro opaco */}
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '28px',
-          fontFamily: 'var(--font-ui)', fontSize: '12px', fontWeight: 700, color: 'var(--color-text-muted)',
-          letterSpacing: 'var(--tracking-label)', textTransform: 'uppercase',
-        }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981', animation: 'many-status-pulse 2s infinite', flexShrink: 0 }} />
+        <div className="lp-hero-city">
+          <span className="lp-hero-city-dot" />
           Bogotá D.C.
         </div>
 
@@ -266,31 +233,24 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
         </h1>
 
         {/* Eslogan */}
-        <div style={{
-          fontFamily: 'var(--font-body)', fontSize: 'clamp(1.15rem, 2.5vw, 1.5rem)',
-          fontWeight: 500, color: 'var(--color-text-main)', marginBottom: '16px',
-          maxWidth: '540px', lineHeight: 1.55, letterSpacing: '-0.2px',
-        }}>
+        <div className="lp-hero-slogan">
           <TrueFocus
             sentence="El talento de tu zona a un click de distancia"
             blurAmount={3}
-            borderColor="#3E1F14"
+            borderColor="var(--stroke-ink)"
             animationDuration={0.4}
           />
         </div>
 
         {/* Texto descriptivo — sin recuadro, flotante */}
-        <p style={{
-          fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 400,
-          color: 'var(--color-text-muted)', marginBottom: '40px', maxWidth: '400px',
-        }}>
+        <p className="lp-hero-copy">
           Plomeros, electricistas, pintores y más — con{' '}
-          <HoverText hoverColor="#C2410C" style={{ fontWeight: 600 }}>reputación verificada</HoverText>
+          <span className="lp-hero-copy-strong"><HoverText>reputación verificada</HoverText></span>
           {' '}y geolocalización en tiempo real.
         </p>
 
         {/* CTAs */}
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '72px', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div className="lp-hero-ctas">
           <BorderGlow animated>
             <button
               onClick={handleStartAsSeeker}
@@ -308,7 +268,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
         </div>
 
         {/* Many mascot */}
-        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+        <div className="lp-hero-many">
 
           <ManySwap
             src={selectedTrade === 'plomeria' ? BRAND_ASSETS.manyPlomero : selectedTrade === 'electricidad' ? BRAND_ASSETS.manyElectricista : BRAND_ASSETS.manyWave}
@@ -318,22 +278,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
           />
 
           {/* Tagline del oficio — texto suelto */}
-          <p style={{
-            fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--color-text-muted)',
-            fontStyle: 'italic', maxWidth: '320px', textAlign: 'center', margin: 0,
-          }}>
+          <p className="lp-hero-tagline">
             {currentTrade.tagline}
           </p>
 
           {/* Selector oficios */}
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <div className="lp-trade-row">
             {TRADES.map(t => (
               <button
                 key={t.key}
                 onClick={() => handleTradeSelect(t.key)}
                 className="lp-trade-chip"
                 aria-pressed={selectedTrade === t.key}
-                style={{ background: selectedTrade === t.key ? t.color : undefined }}
               >
                 {t.icon} {t.label}
               </button>
@@ -343,25 +299,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
       </section>
 
       {/* ── STATS — texto flotante, sin cards ── */}
-      <div ref={statsReveal.ref} style={{ padding: '56px 0', borderBottom: '1px solid var(--color-border)' }}>
+      <div ref={statsReveal.ref} className={`lp-numbers ${statsReveal.visible ? 'lp-numbers--in' : ''}`}>
         <div className="lp-wrap">
           {/* Título suelto, sin recuadro */}
-          <p style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--color-text-subtle)', textAlign: 'center', marginBottom: '40px' }}>
+          <p className="lp-numbers-kicker">
             OficioYa en números
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0' }}>
+          <div className="lp-numbers-grid">
             {STATS.map((s, i) => (
-              <div key={s.label} style={{
-                textAlign: 'center', padding: '8px 16px',
-                borderRight: i < 3 ? '1px solid var(--color-border)' : 'none',
-                opacity: statsReveal.visible ? 1 : 0,
-                transform: statsReveal.visible ? 'translateY(0)' : 'translateY(20px)',
-                transition: `all 0.5s ease ${i * 0.1}s`,
-              }}>
-                <div style={{ fontFamily: 'var(--font-heading)', fontSize: '2.4rem', fontWeight: 900, color: s.color, letterSpacing: '-1px', lineHeight: 1 }}>
+              <div key={s.label} className="lp-number" style={{ '--lp-i': i } as React.CSSProperties}>
+                <div className={`lp-number-value lp-number-value--${s.tone}`}>
                   {s.value}
                 </div>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '6px', fontWeight: 400 }}>
+                <div className="lp-number-label">
                   {s.label}
                 </div>
               </div>
@@ -371,62 +321,45 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
       </div>
 
       {/* ── CÓMO FUNCIONA ── */}
-      <section ref={stepsReveal.ref} style={{ padding: '96px 0' }}>
+      <section ref={stepsReveal.ref} className={`lp-how ${stepsReveal.visible ? 'lp-how--in' : ''}`}>
         <div className="lp-wrap">
           {/* Título + subtítulo sueltos */}
-          <div style={{ marginBottom: '64px' }}>
-            <p style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--brand-amber)', marginBottom: '12px' }}>
+          <div className="lp-how-head">
+            <p className="lp-how-kicker">
               Simple y transparente
             </p>
-            <h2 className="lp-stroke-title" style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 800, letterSpacing: '-1px', color: 'var(--color-text-main)', marginBottom: '12px' }}>
+            <h2 className="lp-stroke-title lp-how-title">
               <StrokeText text="Tres pasos," trigger="scroll" fontSize={56} />{' '}
               <StrokeText text="cero intermediarios." trigger="scroll" fontSize={56} />
             </h2>
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--color-text-muted)', maxWidth: '400px', lineHeight: 1.65 }}>
+            <p className="lp-how-sub">
               Sin comisiones ocultas, sin grupos de WhatsApp incómodos.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '32px' }}>
-            {[
-              { n: '01', icon: <MapPin size={22} />, color: '#1E3A8A', title: 'Búsqueda hiperlocal', desc: 'Activa tu GPS o selecciona tu localidad. Ves en tiempo real quién está disponible a menos de 2 km.' },
-              { n: '02', icon: <Award size={22} />, color: '#B45309', title: 'Reputación verificada', desc: 'Calificaciones reales de vecinos, fotos de trabajos terminados y antecedentes validados.' },
-              { n: '03', icon: <UserCheck size={22} />, color: '#047857', title: 'Trato directo', desc: 'Contactas, acordás la tarifa y pagás en efectivo, transferencia o Bre-B. Sin intermediarios.' },
-            ].map((s, i) => (
+          <div className="lp-how-grid">
+            {([
+              { n: '01', icon: <MapPin size={22} />, tone: 'trust', title: 'Búsqueda hiperlocal', desc: 'Activa tu GPS o selecciona tu localidad. Ves en tiempo real quién está disponible a menos de 2 km.' },
+              { n: '02', icon: <Award size={22} />, tone: 'accent', title: 'Reputación verificada', desc: 'Calificaciones reales de vecinos, fotos de trabajos terminados y antecedentes validados.' },
+              { n: '03', icon: <UserCheck size={22} />, tone: 'status', title: 'Trato directo', desc: 'Contactas, acordás la tarifa y pagás en efectivo, transferencia o Bre-B. Sin intermediarios.' },
+            ] as const).map((s, i) => (
               <div
                 key={s.n}
-                style={{
-                  padding: '40px 32px',
-                  background: 'var(--color-surface)',
-                  borderRadius: '24px',
-                  boxShadow: '0 2px 20px rgba(0,0,0,0.04)',
-                  opacity: stepsReveal.visible ? 1 : 0,
-                  transform: stepsReveal.visible ? 'translateY(0)' : 'translateY(30px)',
-                  transition: `all 0.55s ease ${i * 0.12}s`,
-                  position: 'relative', overflow: 'hidden',
-                }}
+                className={`lp-how-card lp-how-card--${s.tone}`}
+                style={{ '--lp-i': i } as React.CSSProperties}
               >
                 {/* Número decorativo — sin recuadro */}
-                <span style={{
-                  position: 'absolute', top: '16px', right: '24px',
-                  fontFamily: 'var(--font-heading)', fontSize: '3rem', fontWeight: 900,
-                  color: 'var(--color-border)', lineHeight: 1, pointerEvents: 'none',
-                }}>
+                <span className="lp-how-n" aria-hidden="true">
                   {s.n}
                 </span>
-                <div style={{
-                  width: '48px', height: '48px', borderRadius: '14px',
-                  background: `${s.color}18`, color: s.color,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginBottom: '20px',
-                }}>
+                <div className="lp-how-icon">
                   {s.icon}
                 </div>
                 {/* Título hover color */}
-                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', fontWeight: 700, marginBottom: '10px' }}>
-                  <HoverText hoverColor={s.color}>{s.title}</HoverText>
+                <h3 className="lp-how-card-title">
+                  <HoverText tone={s.tone}>{s.title}</HoverText>
                 </h3>
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--color-text-muted)', lineHeight: 1.7, margin: 0 }}>
+                <p className="lp-how-card-desc">
                   {s.desc}
                 </p>
               </div>
@@ -457,7 +390,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
 
       {/* ── FAQ DESPLEGABLE ── */}
       <section id="faq-section" ref={faqReveal.ref} className="lp-faq">
-        <div className="lp-wrap" style={{ maxWidth: '760px' }}>
+        <div className="lp-wrap lp-faq-wrap">
           <span className="lp-sticker lp-sticker--amarillo lp-sticker--pill">Preguntas frecuentes</span>
           <h2 className="oy-display lp-faq-title">
             <StrokeText text="Todo lo que" tone="cacao" trigger="scroll" fontSize={64} />{' '}
@@ -490,14 +423,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
               <div className="lp-cta-glow" />
               <img src={BRAND_ASSETS.manyWave} alt="Many" className="lp-cta-mascot-img" />
               <div className="lp-cta-badge-pill">
-                <CheckCircle2 size={14} color="#10B981" />
+                <CheckCircle2 size={14} className="lp-cta-badge-icon" />
                 <span>100% de tus ingresos son tuyos</span>
               </div>
             </div>
 
             <div className="lp-cta-content-col">
               {/* Eyebrow — texto suelto sin recuadro */}
-              <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#FFC72C', display: 'block', marginBottom: '10px' }}>
+              <span className="lp-cta-kicker">
                 Para técnicos y profesionales
               </span>
               <h2 className="lp-cta-title">¿Eres trabajador independiente?</h2>
@@ -506,28 +439,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
               </p>
 
               {/* Beneficios — texto suelto, solo con punto de color */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
+              <div className="lp-cta-list">
                 {[
                   'Cobro 100% directo con el cliente',
                   'Control de tus horarios y zona de cobertura',
                   'Calificaciones verificadas para ganar más clientes',
                 ].map((b, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#F59E0B', flexShrink: 0 }} />
-                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 500, color: '#E2E8F0' }}>
-                      <HoverText hoverColor="#FFC72C">{b}</HoverText>
+                  <div key={i} className="lp-cta-list-item">
+                    <span className="lp-cta-list-dot" />
+                    <span className="lp-cta-list-text">
+                      <HoverText tone="energy">{b}</HoverText>
                     </span>
                   </div>
                 ))}
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+              <div className="lp-cta-actions-row">
                 <BorderGlow>
                   <button onClick={handleStartAsProvider} className="lp-cta-primary lp-cta-amber">
                     Empezar gratis <ArrowRight size={16} />
                   </button>
                 </BorderGlow>
-                <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'rgba(255,255,255,0.82)', fontWeight: 400 }}>
+                <span className="lp-cta-note">
                   Sin tarjeta de crédito
                 </span>
               </div>

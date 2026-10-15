@@ -110,7 +110,7 @@
   height: 40px;
   border: var(--stroke-w) solid var(--stroke-ink);
   border-radius: var(--radius-pill);
-  color: #FFFFFF;
+  color: var(--oy-blanco);
   font-size: 13px;
   font-weight: 800;
 }
@@ -176,7 +176,7 @@
   transform: rotate(-3deg);
 }
 
-.svc-status--marino { background: var(--oy-azul-marino); color: #FFFFFF; }
+.svc-status--marino { background: var(--oy-azul-marino); color: var(--oy-blanco); }
 .svc-status--esmeralda { background: var(--oy-verde-esmeralda); color: var(--oy-cacao-profundo); }
 .svc-status--amarillo { background: var(--oy-amarillo-canario); color: var(--oy-cacao-profundo); }
 .svc-status--cancelado { background: var(--oy-almendra-claro); color: var(--oy-cacao-profundo); }
@@ -305,7 +305,7 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .svc-btn-complete:hover { background: var(--oy-esmeralda-aa); color: #FFFFFF; }
+  .svc-btn-complete:hover { background: var(--oy-esmeralda-aa); color: var(--oy-blanco); }
   .svc-btn-danger:hover { background: var(--color-danger); filter: brightness(0.92); }
 }
 
@@ -313,7 +313,7 @@
 
 .svc-btn-danger {
   background: var(--color-danger);
-  color: #FFFFFF;
+  color: var(--oy-blanco);
 }
 
 .svc-review-done {
@@ -344,6 +344,9 @@
 /* ── Modales ── */
 .svc-backdrop { z-index: 1100; }
 
+.svc-modal { --oy-modal-w: 460px; }
+.svc-modal--md { --oy-modal-w: 480px; }
+.svc-modal--lg { --oy-modal-w: 500px; }
 .svc-modal--esmeralda { --oy-modal-head-bg: var(--wash-esmeralda); }
 .svc-modal--marino { --oy-modal-head-bg: var(--wash-marino); }
 .svc-modal--danger { --oy-modal-head-bg: var(--color-error-soft); }

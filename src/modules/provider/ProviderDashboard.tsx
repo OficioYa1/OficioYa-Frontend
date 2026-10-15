@@ -330,7 +330,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
               />
             </label>
           </div>
-          <div style={{ minWidth: 0 }}>
+          <div className="pv-live__info">
             <h2 className="pv-live__title oy-display">
               {isAvailableNow ? 'Disponible ya' : 'Fuera de línea'}
             </h2>
@@ -448,7 +448,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                     </span>
                   </div>
 
-                  <span className="pv-muted" style={{ fontSize: '13px' }}>{req.address}</span>
+                  <span className="pv-muted pv-note">{req.address}</span>
 
                   <p className="pv-ticket__quote">"{req.problemDescription}"</p>
 
@@ -523,11 +523,10 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   {index > 0 && (
                     <button
                       type="button"
-                      className="oy-icon-btn"
+                      className="oy-icon-btn pv-icon-btn--danger"
                       onClick={() => handleDeleteService(srv.id)}
                       title="Eliminar este oficio secundario"
                       aria-label={`Eliminar ${srv.tradeLabel}`}
-                      style={{ color: 'var(--color-danger)' }}
                     >
                       <Trash2 size={16} aria-hidden="true" />
                     </button>
@@ -535,8 +534,8 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                 </div>
               </div>
 
-              <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{srv.tradeLabel}</h3>
-              <p className="pv-muted" style={{ margin: 0, fontSize: '14px' }}>{srv.bio}</p>
+              <h3 className="pv-ticket__title">{srv.tradeLabel}</h3>
+              <p className="pv-muted pv-copy">{srv.bio}</p>
 
               <div className="pv-row">
                 <span className="pv-tag pv-tag--fuego"><DollarSign size={13} aria-hidden="true" /> ${srv.hourlyRate.toLocaleString()} COP/h</span>
@@ -619,7 +618,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                       />
                     </div>
                   ) : (
-                    <span className="pv-muted" style={{ fontSize: '13px', textAlign: 'center' }}>Descanso</span>
+                    <span className="pv-muted pv-day__rest">Descanso</span>
                   )}
                 </div>
               );
@@ -641,7 +640,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           {/* RF-60: Métodos de Pago */}
           <div className="oy-panel oy-panel--amarillo">
             <h3 className="pv-panel-title"><CreditCard size={22} aria-hidden="true" /> Métodos de Pago Aceptados</h3>
-            <p className="pv-muted" style={{ margin: 0, fontSize: '14px' }}>
+            <p className="pv-muted pv-copy">
               Selecciona los canales en los que recibes pagos para informar al contratante antes del servicio.
             </p>
             <div className="pv-chips">
@@ -649,10 +648,9 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                 <button
                   key={method}
                   type="button"
-                  className="oy-chip"
+                  className={`oy-chip${method === 'bre_b' ? '' : ' pv-chip--cap'}`}
                   aria-pressed={paymentMethods.includes(method)}
                   onClick={() => togglePaymentMethod(method)}
-                  style={{ textTransform: method === 'bre_b' ? 'none' : 'capitalize' }}
                 >
                   {paymentMethods.includes(method) && <CheckCircle2 size={14} aria-hidden="true" />}
                   {method === 'bre_b' ? 'Bre-B (Interoperable)' : method}
@@ -669,7 +667,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                 <Plus size={14} aria-hidden="true" /> Subir foto
               </button>
             </div>
-            <p className="pv-muted" style={{ margin: 0, fontSize: '14px' }}>
+            <p className="pv-muted pv-copy">
               {portfolioPhotos.length} fotos publicadas para generar confianza en tus contratantes.
             </p>
             <div className="pv-portfolio">
@@ -684,11 +682,11 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           {/* RF-46: Servicios más solicitados */}
           <div className="oy-panel oy-panel--gris">
             <h3 className="pv-panel-title"><TrendingUp size={22} aria-hidden="true" /> Servicios más solicitados</h3>
-            <p className="pv-muted" style={{ margin: 0, fontSize: '14px' }}>Trabajos completados por categoría este mes.</p>
+            <p className="pv-muted pv-copy">Trabajos completados por categoría este mes.</p>
             <ol className="pv-top-list">
               {TOP_REQUESTED.map(t => (
                 <li key={t.label}>
-                  <div className="pv-row pv-row--between" style={{ fontSize: '14px', fontWeight: 700 }}>
+                  <div className="pv-row pv-row--between pv-top-list__row">
                     <span>{t.label}</span>
                     <span>{t.count}</span>
                   </div>
@@ -715,7 +713,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           {/* RF-41, RF-42, RF-43: Verificación de Identidad */}
           <div className="oy-panel oy-panel--esmeralda">
             <h3 className="pv-panel-title"><ShieldCheck size={22} aria-hidden="true" /> Verificación de Identidad</h3>
-            <p className="pv-muted" style={{ margin: 0, fontSize: '14px' }}>
+            <p className="pv-muted pv-copy">
               {completedJobsCount >= 10
                 ? `Has completado ${completedJobsCount} trabajos (mínimo 10 requeridos). Eres elegible para el distintivo oficial.`
                 : `Completa al menos 10 trabajos para solicitar la verificación de identidad.`}
@@ -741,7 +739,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                 <Plus size={14} aria-hidden="true" /> Referir colega
               </button>
             </div>
-            <p className="pv-muted" style={{ margin: 0, fontSize: '14px' }}>
+            <p className="pv-muted pv-copy">
               Tu código de referido: <span className="pv-code">{referralCode}</span>. Invita a trabajadores a registrarse.
             </p>
             <div className="pv-summary">
@@ -767,11 +765,10 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
       {selectedClientForProfile && (
         <div className="oy-modal-backdrop" onClick={() => setSelectedClientForProfile(null)}>
           <div
-            className="oy-modal"
+            className="oy-modal pv-modal--client"
             role="dialog"
             aria-modal="true"
             aria-labelledby="pv-client-title"
-            style={{ '--oy-modal-w': '480px' } as React.CSSProperties}
             onClick={e => e.stopPropagation()}
           >
             <div className="oy-modal__head">
@@ -788,31 +785,31 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   {selectedClientForProfile.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: '1.15rem' }}>{selectedClientForProfile.name}</h4>
-                  <span className="pv-muted" style={{ fontSize: '13px' }}>
+                  <h4 className="pv-client-name">{selectedClientForProfile.name}</h4>
+                  <span className="pv-muted pv-note">
                     Miembro desde {selectedClientForProfile.registeredSince}
                   </span>
                 </div>
               </div>
 
-              <div className="oy-panel oy-panel--amarillo" style={{ padding: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
+              <div className="oy-panel oy-panel--amarillo pv-client-rep">
                 <span className="pv-label">Reputación histórica como contratante</span>
                 <div className="pv-rating">
                   <Star size={22} fill="var(--color-star)" color="var(--oy-cacao-profundo)" aria-hidden="true" /> {selectedClientForProfile.rating}
-                  <span className="pv-muted" style={{ fontFamily: 'inherit', fontSize: '13px', fontWeight: 500 }}>
+                  <span className="pv-muted pv-rating__count">
                     ({selectedClientForProfile.reviewCount} calificaciones de otros profesionales)
                   </span>
                 </div>
-                <span className="pv-ok" style={{ marginTop: '6px' }}>
+                <span className="pv-ok pv-ok--spaced">
                   <CheckCircle2 size={14} aria-hidden="true" /> {selectedClientForProfile.completedServicesCount} servicios contratados y pagados puntualmente
                 </span>
               </div>
 
-              <p className="pv-muted" style={{ margin: '0 0 var(--space-4)', fontSize: '13px' }}>
+              <p className="pv-muted pv-client-note">
                 Esta información te permite evaluar si aceptar la solicitud con base en el historial verificado del usuario.
               </p>
 
-              <button type="button" onClick={() => setSelectedClientForProfile(null)} className="btn btn-primary" style={{ width: '100%' }}>
+              <button type="button" onClick={() => setSelectedClientForProfile(null)} className="btn btn-primary pv-btn-block">
                 Cerrar Ficha
               </button>
             </div>
@@ -824,11 +821,10 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
       {showPhotoModal && (
         <div className="oy-modal-backdrop" onClick={() => setShowPhotoModal(false)}>
           <div
-            className="oy-modal"
+            className="oy-modal pv-modal--sm"
             role="dialog"
             aria-modal="true"
             aria-labelledby="pv-photo-title"
-            style={{ '--oy-modal-w': '440px' } as React.CSSProperties}
             onClick={e => e.stopPropagation()}
           >
             <div className="oy-modal__head">
@@ -862,11 +858,10 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
       {showVerificationModal && (
         <div className="oy-modal-backdrop" onClick={() => setShowVerificationModal(false)}>
           <div
-            className="oy-modal"
+            className="oy-modal pv-modal--verify"
             role="dialog"
             aria-modal="true"
             aria-labelledby="pv-verify-title"
-            style={{ '--oy-modal-w': '460px', '--oy-modal-head-bg': 'var(--wash-esmeralda)' } as React.CSSProperties}
             onClick={e => e.stopPropagation()}
           >
             <div className="oy-modal__head">
@@ -876,7 +871,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
               </button>
             </div>
             <div className="oy-modal__body pv-form">
-              <p className="pv-muted" style={{ margin: 0, fontSize: '14px' }}>
+              <p className="pv-muted pv-copy">
                 Documento validado para emitir el distintivo de Identidad Verificada en tu perfil público de Bogotá.
               </p>
               <div>
@@ -889,9 +884,9 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   onChange={e => setDocNumber(e.target.value)}
                 />
               </div>
-              <div className="pv-summary" style={{ margin: 0 }}>
+              <div className="pv-summary pv-summary--flush">
                 <span className="pv-ok"><CheckCircle2 size={14} aria-hidden="true" /> Cédula digital validada ante Registraduría</span>
-                <span className="pv-muted" style={{ fontSize: '12px' }}>Vigente hasta Diciembre 2027</span>
+                <span className="pv-muted pv-caption">Vigente hasta Diciembre 2027</span>
               </div>
               <div className="pv-form__actions">
                 <button type="button" onClick={() => setShowVerificationModal(false)} className="btn btn-secondary">Cerrar</button>
@@ -915,11 +910,10 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
       {showReferralModal && (
         <div className="oy-modal-backdrop" onClick={() => setShowReferralModal(false)}>
           <div
-            className="oy-modal"
+            className="oy-modal pv-modal--sm"
             role="dialog"
             aria-modal="true"
             aria-labelledby="pv-ref-title"
-            style={{ '--oy-modal-w': '440px' } as React.CSSProperties}
             onClick={e => e.stopPropagation()}
           >
             <div className="oy-modal__head">
@@ -971,11 +965,10 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
       {showAddModal && (
         <div className="oy-modal-backdrop" onClick={closeServiceModal}>
           <div
-            className="oy-modal"
+            className="oy-modal pv-modal--trade"
             role="dialog"
             aria-modal="true"
             aria-labelledby="pv-trade-title"
-            style={{ '--oy-modal-w': '560px', '--oy-modal-head-bg': 'var(--wash-fuego)' } as React.CSSProperties}
             onClick={e => e.stopPropagation()}
           >
             <div className="oy-modal__head">
