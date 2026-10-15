@@ -542,3 +542,60 @@
   .seeker-catalog-card,
   .seeker-tag { transition: none; }
 }
+
+/* ── Ubicación fuera de Bogotá ── */
+.seeker-geo-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--wash-almendra);
+  color: var(--color-text-main);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.seeker-geo-note svg { flex: none; margin-top: 2px; }
+
+/* ── Disponibilidad por fecha y franja (RF-15) ── */
+.seeker-field__label--sub {
+  margin-top: var(--space-2);
+  font-weight: 600;
+}
+
+.seeker-date-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.seeker-date {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.seeker-chip-grid--slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.seeker-slot-chip {
+  flex-direction: column;
+  gap: 0;
+  padding-inline: 8px;
+  line-height: 1.2;
+}
+
+.seeker-slot-chip__hint {
+  color: inherit;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.seeker-field__hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-caption);
+}

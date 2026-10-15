@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Worker, TradeCategory } from '../../types';
 import type { Coordinates } from '../../utils/geo';
-import { calculateHaversineDistance, formatDistance } from '../../utils/geo';
+import { calculateHaversineDistance, formatDistance, FALLBACK_LOCATION_BOGOTA } from '../../utils/geo';
 import {
   Search,
   Star,
@@ -25,6 +25,7 @@ import {
   DollarSign,
   AlertCircle,
   SlidersHorizontal,
+  Navigation,
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 import { SquishSwitch } from '../../components/ui/SquishSwitch';
@@ -35,6 +36,81 @@ import { PageHero } from '../../components/layout/PageHero';
 import './Seeker.css';
 
 type SortKey = 'distancia' | 'reputacion' | 'precio' | 'trabajos';
+type TimeSlot = 'manana' | 'tarde' | 'noche';
+
+/** Más allá de esta distancia de Bogotá se usa el centro de la ciudad como origen. */
+const MAX_DISTANCE_FROM_BOGOTA_KM = 60;
+
+/** Minúsculas y sin tildes, para comparar texto libre. */
+const normalizeText = (text: string) =>
+  text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+// RF-15: franjas horarias (horas en formato 24 h, [inicio, fin))
+const TIME_SLOTS: { id: TimeSlot; label: string; hint: string; range: [number, number] }[] = [
+  { id: 'manana', label: 'Mañana', hint: '6:00 a 12:00', range: [6, 12] },
+  { id: 'tarde', label: 'Tarde', hint: '12:00 a 18:00', range: [12, 18] },
+  { id: 'noche', label: 'Noche', hint: '18:00 a 22:00', range: [18, 22] }
+];
+
+const WEEKDAYS = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+
+/** Convierte "Lunes a Viernes", "Sábados", "Todos los días"… en índices de día (0 = domingo). */
+const parseScheduleDays = (day: string): Set<number> => {
+  const text = normalizeText(day);
+  if (text.includes('todos los dias') || text.includes('toda la semana')) return new Set([0, 1, 2, 3, 4, 5, 6]);
+  const found: number[] = [];
+  const re = /(domingo|lunes|martes|miercoles|jueves|viernes|sabado)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) found.push(WEEKDAYS.indexOf(m[1]));
+  if (found.length === 2 && /\s(a|al|hasta)\s/.test(text)) {
+    const days = new Set<number>();
+    for (let d = found[0]; ; d = (d + 1) % 7) {
+      days.add(d);
+      if (d === found[1]) break;
+    }
+    return days;
+  }
+  if (text.includes('fines de semana')) found.push(0, 6);
+  return new Set(found);
+};
+
+/** Convierte "08:00 - 12:00" o "24 Horas" en un rango de horas [inicio, fin). */
+const parseSlotRange = (slot: string): [number, number] | null => {
+  const text = normalizeText(slot);
+  if (text.includes('24 horas') || text.includes('24/7')) return [0, 24];
+  const times = [...text.matchAll(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/g)]
+    .map(t => {
+      let h = parseInt(t[1], 10) + (t[2] ? parseInt(t[2], 10) / 60 : 0);
+      if (t[3] === 'pm' && h < 12) h += 12;
+      if (t[3] === 'am' && h >= 12) h -= 12;
+      return h;
+    })
+    .filter(h => h >= 0 && h <= 24);
+  if (times.length < 2) return null;
+  const [start, end] = times;
+  return end > start ? [start, end] : [start, end + 24];
+};
+
+/** ¿La agenda publicada cubre ese día de la semana y esa franja? */
+const scheduleCovers = (schedule: Worker['schedule'], weekday: number | null, slot: TimeSlot | null) => {
+  const slotRange = slot ? TIME_SLOTS.find(t => t.id === slot)!.range : null;
+  return schedule.some(entry => {
+    if (weekday !== null && !parseScheduleDays(entry.day).has(weekday)) return false;
+    if (!slotRange) return true;
+    return entry.slots.some(s => {
+      const range = parseSlotRange(s);
+      return range !== null && range[0] < slotRange[1] && range[1] > slotRange[0];
+    });
+  });
+};
+
+const todayIso = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const formatDateLabel = (iso: string) =>
+  new Date(`${iso}T12:00:00`).toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' });
 
 const FEATURED_TRADES: { id: TradeCategory; color: GlassIconsColor }[] = [
   { id: 'electricidad', color: 'amarillo' },
@@ -260,6 +336,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
   const [minRating, setMinRating] = useState<number>(0);
   const [onlyAvailable, setOnlyAvailable] = useState<boolean>(false);
   const [availabilityDay, setAvailabilityDay] = useState<string>('todos');
+  const [availabilityDate, setAvailabilityDate] = useState<string>('');
+  const [availabilitySlot, setAvailabilitySlot] = useState<TimeSlot | null>(null);
   const [sortBy, setSortBy] = useState<SortKey>('distancia');
   const [showFilterModal, setShowFilterModal] = useState<boolean>(false);
   const [showCatalogModal, setShowCatalogModal] = useState<boolean>(false);
@@ -267,7 +345,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
   // RF-11: Detección inteligente en lenguaje natural
   const nlpMatch = useMemo(() => {
     if (!searchQuery || searchQuery.trim().length < 4) return null;
-    const q = searchQuery.toLowerCase();
+    const q = normalizeText(searchQuery);
     for (const item of NLP_DICTIONARY) {
       if (item.keywords.some(k => q.includes(k))) {
         return item;
@@ -276,16 +354,28 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
     return null;
   }, [searchQuery]);
 
+  const queryTokens = useMemo(
+    () => normalizeText(searchQuery).split(/\s+/).filter(t => t.length > 1),
+    [searchQuery]
+  );
+
+  // Si el GPS ubica al usuario lejos de Bogotá, las distancias se calculan desde la ciudad
+  const isOutsideBogota = useMemo(
+    () => calculateHaversineDistance(userLocation, FALLBACK_LOCATION_BOGOTA) > MAX_DISTANCE_FROM_BOGOTA_KM,
+    [userLocation]
+  );
+  const originLocation = isOutsideBogota ? FALLBACK_LOCATION_BOGOTA : userLocation;
+
   // Distancia Haversine para todos los trabajadores
   const workersWithDistance = useMemo(() => {
     return workers.map(w => {
-      const distanceKm = calculateHaversineDistance(userLocation, {
+      const distanceKm = calculateHaversineDistance(originLocation, {
         lat: w.location.lat,
         lng: w.location.lng
       });
       return { ...w, distanceKm };
     });
-  }, [workers, userLocation]);
+  }, [workers, originLocation]);
 
   // RF-70: Filtrado estándar vs Auto-ampliación si no hay resultados en radio inicial
   const { filteredWorkers, isRadiusExpanded, originalRadius } = useMemo(() => {
@@ -294,16 +384,35 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
         // Excluir trabajadores pausados automáticamente por bajas calificaciones
         if (w.isPaused) return false;
 
-        // Filtro de texto libre (nombre, oficio, barrio, bio, marcas o equipos)
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase();
-          const matchesName = w.name.toLowerCase().includes(q);
-          const matchesTrade = w.tradeLabel.toLowerCase().includes(q) || w.trade.toLowerCase().includes(q);
-          const matchesZone = w.location.zoneName.toLowerCase().includes(q);
-          const matchesBio = w.bio.toLowerCase().includes(q);
-          const matchesEquip = w.equipment?.some(eq => eq.toLowerCase().includes(q));
-          const matchesBrands = w.brands?.some(b => b.toLowerCase().includes(q));
-          if (!matchesName && !matchesTrade && !matchesZone && !matchesBio && !matchesEquip && !matchesBrands) {
+        // RF-11: si Many interpretó la frase como un oficio, se busca por ese oficio
+        // (salvo que el usuario haya elegido otro) en lugar de exigir el texto literal.
+        if (nlpMatch) {
+          if (!selectedCategory && w.trade !== nlpMatch.trade && !w.secondaryTrades?.includes(nlpMatch.trade)) {
+            return false;
+          }
+        } else if (queryTokens.length > 0) {
+          // Texto libre: cada palabra debe aparecer en nombre, oficio, barrio, bio,
+          // especializaciones, servicios, marcas o equipos
+          const haystack = normalizeText([
+            w.name,
+            w.tradeLabel,
+            w.trade,
+            w.location.zoneName,
+            w.bio,
+            ...(w.specializations ?? []),
+            ...(w.equipment ?? []),
+            ...(w.brands ?? []),
+            ...(w.species ?? []),
+            ...(w.services ?? []).flatMap(s => [
+              s.tradeLabel,
+              s.bio,
+              ...(s.specializations ?? []),
+              ...(s.equipment ?? []),
+              ...(s.brands ?? []),
+              ...(s.species ?? [])
+            ])
+          ].join(' '));
+          if (!queryTokens.every(token => haystack.includes(token))) {
             return false;
           }
         }
@@ -346,6 +455,12 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
         if (availabilityDay === 'fines_semana') {
           const hasWeekend = w.schedule.some(s => s.day.toLowerCase().includes('sábado') || s.day.toLowerCase().includes('domingo') || s.day.toLowerCase().includes('todos los días'));
           if (!hasWeekend) return false;
+        }
+
+        // RF-15: fecha y franja solicitadas contra la agenda publicada
+        if (availabilityDate || availabilitySlot) {
+          const weekday = availabilityDate ? new Date(`${availabilityDate}T12:00:00`).getDay() : null;
+          if (!scheduleCovers(w.schedule ?? [], weekday, availabilitySlot)) return false;
         }
 
         return true;
@@ -391,7 +506,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
     };
   }, [
     workersWithDistance,
-    searchQuery,
+    nlpMatch,
+    queryTokens,
     selectedCategory,
     selectedZone,
     maxRadiusKm,
@@ -399,6 +515,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
     minRating,
     onlyAvailable,
     availabilityDay,
+    availabilityDate,
+    availabilitySlot,
     sortBy
   ]);
 
@@ -423,6 +541,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
     if (filterKey === 'rating') setMinRating(0);
     if (filterKey === 'available') setOnlyAvailable(false);
     if (filterKey === 'nlp') setSearchQuery('');
+    if (filterKey === 'date') setAvailabilityDate('');
+    if (filterKey === 'slot') setAvailabilitySlot(null);
   };
 
   const resetAllFilters = () => {
@@ -434,6 +554,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
     setMinRating(0);
     setOnlyAvailable(false);
     setAvailabilityDay('todos');
+    setAvailabilityDate('');
+    setAvailabilitySlot(null);
     setSearchQuery('');
   };
 
@@ -451,9 +573,11 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
   }, [showFilterModal, showCatalogModal]);
 
   const hasAdvancedFilters =
-    selectedZone !== 'Todas las zonas' || maxBudgetRate < 70000 || minRating > 0 || onlyAvailable;
+    selectedZone !== 'Todas las zonas' || maxBudgetRate < 70000 || minRating > 0 || onlyAvailable ||
+    Boolean(availabilityDate) || Boolean(availabilitySlot);
   const hasActiveFilters =
     Boolean(selectedCategory) || hasAdvancedFilters || maxRadiusKm !== 12 || availabilityDay !== 'todos';
+  const nlpApplied = Boolean(nlpMatch) && selectedCategory === nlpMatch?.trade;
   const selectedCategoryLabel = CATEGORIES.find(c => c.id === selectedCategory)?.label;
 
   const SORT_OPTIONS: { value: SortKey; label: string; icon: React.ReactNode }[] = [
@@ -532,7 +656,12 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
               <span className="seeker-nlp__title">
                 Búsqueda Inteligente: Interpretamos tu consulta como "{nlpMatch.label}"
               </span>
-              <span className="seeker-nlp__sub">{nlpMatch.problemTitle} en Bogotá D.C.</span>
+              <span className="seeker-nlp__sub">
+                {nlpMatch.problemTitle} en Bogotá D.C.
+                {selectedCategory && selectedCategory !== nlpMatch.trade
+                  ? ` · Mostrando ${CATEGORIES.find(c => c.id === selectedCategory)?.label ?? 'el oficio elegido'} porque lo elegiste.`
+                  : ''}
+              </span>
             </div>
           </div>
           <div className="seeker-nlp__actions">
@@ -543,8 +672,9 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
                 onChangeTradeCategory(nlpMatch.trade);
               }}
               className="btn btn-primary seeker-btn-sm"
+              aria-pressed={nlpApplied}
             >
-              Filtrar por {nlpMatch.label}
+              {nlpApplied ? `Filtrando por ${nlpMatch.label}` : `Filtrar por ${nlpMatch.label}`}
             </button>
             <button
               type="button"
@@ -658,12 +788,30 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
               Sábados y Domingos <X size={12} aria-hidden="true" />
             </button>
           )}
+          {availabilityDate && (
+            <button type="button" className="seeker-tag" onClick={() => removeFilter('date')} aria-label={`Quitar filtro de fecha ${formatDateLabel(availabilityDate)}`}>
+              Disponible el {formatDateLabel(availabilityDate)} <X size={12} aria-hidden="true" />
+            </button>
+          )}
+          {availabilitySlot && (
+            <button type="button" className="seeker-tag" onClick={() => removeFilter('slot')} aria-label="Quitar filtro de franja horaria">
+              En la {TIME_SLOTS.find(t => t.id === availabilitySlot)?.label.toLowerCase()} <X size={12} aria-hidden="true" />
+            </button>
+          )}
           {onlyAvailable && (
             <button type="button" className="seeker-tag seeker-tag--esmeralda" onClick={() => removeFilter('available')} aria-label="Quitar filtro de solo disponibles">
               ● Solo disponibles YA <X size={12} aria-hidden="true" />
             </button>
           )}
         </div>
+      )}
+
+      {/* GPS fuera de Bogotá: distancias desde la ciudad */}
+      {isOutsideBogota && (
+        <p className="seeker-geo-note" role="status">
+          <Navigation size={14} aria-hidden="true" />
+          Tu ubicación está a más de {MAX_DISTANCE_FROM_BOGOTA_KM} km de Bogotá, así que medimos las distancias desde Chapinero (Bogotá D.C.).
+        </p>
       )}
 
       {/* Ampliación automática de zona (RF-70) */}
@@ -822,6 +970,45 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
                     Sábados y Domingos
                   </button>
                 </div>
+
+                <label htmlFor="seeker-date" className="seeker-field__label seeker-field__label--sub">
+                  Fecha en que necesitas el servicio
+                </label>
+                <div className="seeker-date-row">
+                  <input
+                    id="seeker-date"
+                    type="date"
+                    className="input-base seeker-date"
+                    min={todayIso()}
+                    value={availabilityDate}
+                    onChange={e => setAvailabilityDate(e.target.value)}
+                    aria-describedby="seeker-date-hint"
+                  />
+                  {availabilityDate && (
+                    <button type="button" className="btn btn-secondary seeker-btn-sm" onClick={() => setAvailabilityDate('')}>
+                      Quitar fecha
+                    </button>
+                  )}
+                </div>
+
+                <span className="seeker-field__label seeker-field__label--sub" id="seeker-slot-label">Franja horaria</span>
+                <div className="seeker-chip-grid seeker-chip-grid--slots" role="group" aria-labelledby="seeker-slot-label">
+                  {TIME_SLOTS.map(slot => (
+                    <button
+                      key={slot.id}
+                      type="button"
+                      className="oy-chip seeker-slot-chip"
+                      aria-pressed={availabilitySlot === slot.id}
+                      onClick={() => setAvailabilitySlot(current => (current === slot.id ? null : slot.id))}
+                    >
+                      <span>{slot.label}</span>
+                      <span className="seeker-slot-chip__hint">{slot.hint}</span>
+                    </button>
+                  ))}
+                </div>
+                <p id="seeker-date-hint" className="seeker-field__hint">
+                  Comparamos el día y la franja con la agenda que publica cada profesional.
+                </p>
               </div>
 
               {/* RF-16: Calificación mínima */}
@@ -868,6 +1055,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
                     setMinRating(0);
                     setOnlyAvailable(false);
                     setAvailabilityDay('todos');
+                    setAvailabilityDate('');
+                    setAvailabilitySlot(null);
                   }}
                   className="btn btn-secondary"
                 >
