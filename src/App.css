@@ -14,7 +14,7 @@
 .app-content-area {
   flex: 1;
   min-width: 0;
-  padding-bottom: 70px; /* Espacio para BottomNav en móvil */
+  padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)); /* Espacio para BottomNav en móvil */
 }
 
 @media (min-width: 768px) {

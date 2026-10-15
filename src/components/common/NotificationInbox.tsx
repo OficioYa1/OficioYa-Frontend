@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Bell, CheckCircle2, MessageSquare, Info, X } from 'lucide-react';
 import type { PushNotification } from '../../types';
 import { Shredder } from '../ui';
@@ -16,6 +16,14 @@ const GAP = 10;
 const SLIT = 5;
 const FALL = 120;
 const MAX_VISIBLE = 5;
+const MAX_WIDTH = 348;
+/* Panel: min(380px, 100vw - 32px), menos 16px de relleno y 1.5px de contorno por lado */
+const PANEL_CHROME = 35;
+
+const shredderWidth = () =>
+  typeof window === 'undefined'
+    ? MAX_WIDTH
+    : Math.max(240, Math.min(MAX_WIDTH, Math.floor(Math.min(380, window.innerWidth - 32) - PANEL_CHROME)));
 
 const TYPE_ICON: Record<PushNotification['type'], React.ReactNode> = {
   request: <Bell size={17} color="var(--color-action-strong)" aria-hidden="true" />,
@@ -37,36 +45,43 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({ notificati
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  const [width, setWidth] = useState(shredderWidth);
+  useEffect(() => {
+    const onResize = () => setWidth(shredderWidth());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   const visible = notifications.slice(0, MAX_VISIBLE);
   const height = visible.length * (CARD_HEIGHT + GAP) + SLIT + FALL;
 
   return (
     <>
-      <div className="inbox-backdrop" onClick={onClose} />
+      <div className="inbox-backdrop" onClick={onClose} aria-hidden="true" />
       <section className="inbox-panel" role="dialog" aria-modal="false" aria-labelledby="inbox-title">
         <header className="inbox-head">
           <div>
-            <h2 id="inbox-title" className="inbox-title">Notificaciones</h2>
+            <h2 id="inbox-title" className="inbox-title oy-display">Notificaciones</h2>
             {visible.length > 0 && (
               <p className="inbox-hint">Arrastra una notificación hasta la ranura para eliminarla, o enfócala y pulsa Supr.</p>
             )}
           </div>
           <button type="button" className="inbox-close" onClick={onClose} aria-label="Cerrar notificaciones">
-            <X size={18} />
+            <X size={18} aria-hidden="true" />
           </button>
         </header>
 
         {visible.length === 0 ? (
           <div className="inbox-empty">
             <MascotAvatar size="md" animate="wave" forceImage="wave" />
-            <strong>¡Todo al día!</strong>
+            <strong className="inbox-empty__title">¡Todo al día!</strong>
             <p>No tienes notificaciones pendientes.</p>
           </div>
         ) : (
           <Shredder
             className="inbox-shredder"
             items={visible}
-            width={348}
+            width={width}
             height={height}
             inset={0}
             gap={GAP}

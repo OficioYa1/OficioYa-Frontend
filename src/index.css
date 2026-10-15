@@ -239,19 +239,16 @@ a {
 
 /* Many: flotación suave continua */
 @keyframes many-float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  33%       { transform: translateY(-10px) rotate(1deg); }
-  66%       { transform: translateY(-5px) rotate(-0.5deg); }
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
 }
 
 /* Many: saludo / wave (se usa una vez) */
 @keyframes many-wave {
-  0%   { transform: translateY(0) rotate(0deg) scale(1); }
-  20%  { transform: translateY(-16px) rotate(-8deg) scale(1.08); }
-  40%  { transform: translateY(-12px) rotate(8deg) scale(1.05); }
-  60%  { transform: translateY(-18px) rotate(-5deg) scale(1.1); }
-  80%  { transform: translateY(-8px) rotate(3deg) scale(1.04); }
-  100% { transform: translateY(0) rotate(0deg) scale(1); }
+  0%   { transform: translateY(0) scale(1); }
+  30%  { transform: translateY(-14px) scale(1.06); }
+  60%  { transform: translateY(-6px) scale(1.02); }
+  100% { transform: translateY(0) scale(1); }
 }
 
 /* Many: rebote entusiasta */
