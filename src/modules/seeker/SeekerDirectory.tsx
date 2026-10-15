@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import type { Worker, TradeCategory } from '../../types';
 import type { Coordinates } from '../../utils/geo';
 import { calculateHaversineDistance, formatDistance, FALLBACK_LOCATION_BOGOTA } from '../../utils/geo';
@@ -20,12 +20,12 @@ import {
   GraduationCap,
   X,
   BookOpen,
-  ArrowUpDown,
   Calendar,
   DollarSign,
   AlertCircle,
   SlidersHorizontal,
   Navigation,
+  Send,
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 import { SquishSwitch } from '../../components/ui/SquishSwitch';
@@ -33,6 +33,8 @@ import { GlassIcons } from '../../components/ui/GlassIcons';
 import type { GlassIconsColor } from '../../components/ui/GlassIcons';
 import { ProfileCard } from '../../components/ui/ProfileCard';
 import { PageHero } from '../../components/layout/PageHero';
+import { useReveal } from '../../hooks/useReveal';
+import { rateUnitShort } from '../../utils/workerProfile';
 import './Seeker.css';
 
 type SortKey = 'distancia' | 'reputacion' | 'precio' | 'trabajos';
@@ -40,6 +42,13 @@ type TimeSlot = 'manana' | 'tarde' | 'noche';
 
 /** Más allá de esta distancia de Bogotá se usa el centro de la ciudad como origen. */
 const MAX_DISTANCE_FROM_BOGOTA_KM = 60;
+
+const DEFAULT_RADIUS_KM = 12;
+const DEFAULT_BUDGET = 70000;
+const RADIUS_OPTIONS = [3, 5, 12, 25];
+/** Latencia simulada del mock al cargar por primera vez y al filtrar (ms). */
+const FIRST_LOAD_MS = 700;
+const FILTER_LOAD_MS = 420;
 
 /** Minúsculas y sin tildes, para comparar texto libre. */
 const normalizeText = (text: string) =>
@@ -331,8 +340,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<TradeCategory | null>(null);
   const [selectedZone, setSelectedZone] = useState<string>('Todas las zonas');
-  const [maxRadiusKm, setMaxRadiusKm] = useState<number>(12);
-  const [maxBudgetRate, setMaxBudgetRate] = useState<number>(70000);
+  const [maxRadiusKm, setMaxRadiusKm] = useState<number>(DEFAULT_RADIUS_KM);
+  const [maxBudgetRate, setMaxBudgetRate] = useState<number>(DEFAULT_BUDGET);
   const [minRating, setMinRating] = useState<number>(0);
   const [onlyAvailable, setOnlyAvailable] = useState<boolean>(false);
   const [availabilityDay, setAvailabilityDay] = useState<string>('todos');
@@ -520,6 +529,33 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
     sortBy
   ]);
 
+  // Latencia simulada del mock: esqueletos en la primera carga y tras cada cambio de filtro
+  const filterKey = [
+    searchQuery, selectedCategory, selectedZone, maxRadiusKm, maxBudgetRate, minRating,
+    onlyAvailable, availabilityDay, availabilityDate, availabilitySlot, sortBy
+  ].join('|');
+  const [settledKey, setSettledKey] = useState<string | null>(null);
+  const loading = settledKey !== filterKey;
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSettledKey(filterKey), settledKey === null ? FIRST_LOAD_MS : FILTER_LOAD_MS);
+    return () => window.clearTimeout(timer);
+  }, [filterKey, settledKey]);
+
+  const rootRef = useRef<HTMLDivElement>(null);
+  useReveal(rootRef, [loading, filteredWorkers]);
+
+  // La barra pegajosa se queda justo bajo el header de la app, mida lo que mida
+  useEffect(() => {
+    const root = rootRef.current;
+    const header = document.querySelector<HTMLElement>('.app-header');
+    if (!root || !header || !('ResizeObserver' in window)) return;
+    const sync = () => root.style.setProperty('--seeker-bar-top', `${Math.round(header.getBoundingClientRect().height) + 8}px`);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(header);
+    return () => ro.disconnect();
+  }, []);
+
   const handleCategoryChange = (val: string) => {
     if (val === 'todos') {
       setSelectedCategory(null);
@@ -536,8 +572,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
       onChangeTradeCategory(undefined);
     }
     if (filterKey === 'zone') setSelectedZone('Todas las zonas');
-    if (filterKey === 'radius') setMaxRadiusKm(12);
-    if (filterKey === 'budget') setMaxBudgetRate(70000);
+    if (filterKey === 'radius') setMaxRadiusKm(DEFAULT_RADIUS_KM);
+    if (filterKey === 'budget') setMaxBudgetRate(DEFAULT_BUDGET);
     if (filterKey === 'rating') setMinRating(0);
     if (filterKey === 'available') setOnlyAvailable(false);
     if (filterKey === 'nlp') setSearchQuery('');
@@ -549,8 +585,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
     setSelectedCategory(null);
     onChangeTradeCategory(undefined);
     setSelectedZone('Todas las zonas');
-    setMaxRadiusKm(15);
-    setMaxBudgetRate(70000);
+    setMaxRadiusKm(DEFAULT_RADIUS_KM);
+    setMaxBudgetRate(DEFAULT_BUDGET);
     setMinRating(0);
     setOnlyAvailable(false);
     setAvailabilityDay('todos');
@@ -572,78 +608,97 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
     return () => window.removeEventListener('keydown', onKey);
   }, [showFilterModal, showCatalogModal]);
 
-  const hasAdvancedFilters =
-    selectedZone !== 'Todas las zonas' || maxBudgetRate < 70000 || minRating > 0 || onlyAvailable ||
-    Boolean(availabilityDate) || Boolean(availabilitySlot);
+  const advancedCount = [
+    selectedZone !== 'Todas las zonas',
+    maxBudgetRate < DEFAULT_BUDGET,
+    minRating > 0,
+    Boolean(availabilityDate),
+    Boolean(availabilitySlot),
+    availabilityDay !== 'todos'
+  ].filter(Boolean).length;
   const hasActiveFilters =
-    Boolean(selectedCategory) || hasAdvancedFilters || maxRadiusKm !== 12 || availabilityDay !== 'todos';
+    Boolean(selectedCategory) || advancedCount > 0 || onlyAvailable || maxRadiusKm !== DEFAULT_RADIUS_KM;
   const nlpApplied = Boolean(nlpMatch) && selectedCategory === nlpMatch?.trade;
   const selectedCategoryLabel = CATEGORIES.find(c => c.id === selectedCategory)?.label;
 
   const SORT_OPTIONS: { value: SortKey; label: string; icon: React.ReactNode }[] = [
-    { value: 'distancia', label: 'Más cercanos', icon: <MapPin size={14} /> },
-    { value: 'reputacion', label: 'Mejor reputación', icon: <Star size={14} /> },
-    { value: 'precio', label: 'Menor tarifa', icon: <DollarSign size={14} /> },
-    { value: 'trabajos', label: 'Más trabajos', icon: <Hammer size={14} /> }
+    { value: 'distancia', label: 'Más cercanos', icon: <MapPin size={14} aria-hidden="true" /> },
+    { value: 'reputacion', label: 'Mejor reputación', icon: <Star size={14} aria-hidden="true" /> },
+    { value: 'precio', label: 'Menor tarifa', icon: <DollarSign size={14} aria-hidden="true" /> },
+    { value: 'trabajos', label: 'Más trabajos', icon: <Hammer size={14} aria-hidden="true" /> }
   ];
 
+  const resultsLabel = loading
+    ? 'Buscando profesionales…'
+    : `${filteredWorkers.length} ${filteredWorkers.length === 1 ? 'profesional' : 'profesionales'}`;
+
   return (
-    <div className="seeker-directory">
+    <div ref={rootRef} className={`seeker-directory${showHero ? ' seeker-directory--page' : ''}`}>
       {showHero && (
         <PageHero
           tone="marino"
           eyebrow={<><MapPin size={14} aria-hidden="true" /> Directorio en Bogotá D.C.</>}
           title={<>Encuentra a tu<br />experto</>}
           subtitle="Profesionales verificados cerca de ti, ordenados por distancia y reputación real."
-          stickers={[
-            { icon: <Zap size={26} />, tone: 'amarillo', style: { top: '14%', right: '6%', rotate: '-10deg' } },
-            { icon: <Wrench size={26} />, tone: 'esmeralda', style: { top: '46%', right: '15%', rotate: '8deg' } },
-            { icon: <Paintbrush size={26} />, tone: 'fuego', style: { top: '12%', right: '24%', rotate: '6deg' } },
-            { icon: <>4.8 ★</>, tone: 'blanco', pill: true, style: { bottom: '14%', right: '5%', rotate: '-4deg' } }
-          ]}
         />
       )}
 
-      {/* Buscador en píldora + accesos rápidos */}
-      <div className="seeker-toolbar">
-        <div className="seeker-search">
-          <Search size={20} className="seeker-search__icon" aria-hidden="true" />
-          <input
-            type="text"
-            className="seeker-search__input"
-            placeholder="¿Qué necesitas solucionar?"
-            aria-label="Buscar por problema, oficio, nombre o barrio"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              className="oy-icon-btn seeker-search__clear"
-              onClick={() => setSearchQuery('')}
-              aria-label="Borrar búsqueda"
-            >
-              <X size={16} />
-            </button>
-          )}
-        </div>
-
-        <div className="seeker-toolbar__actions">
-          <button type="button" onClick={() => setShowCatalogModal(true)} className="btn btn-secondary seeker-toolbar__btn">
-            <BookOpen size={16} aria-hidden="true" /> Oficios
-          </button>
+      {/* Barra pegajosa de vidrio: búsqueda, filtros y oficios */}
+      <div className="seeker-bar">
+        <div className="seeker-bar__row">
+          <div className="seeker-search">
+            <Search size={20} className="seeker-search__icon" aria-hidden="true" />
+            <input
+              type="search"
+              className="seeker-search__input"
+              placeholder="Busca por problema, oficio o barrio"
+              aria-label="Buscar por problema, oficio, nombre o barrio"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="seeker-search__clear"
+                onClick={() => setSearchQuery('')}
+                aria-label="Borrar búsqueda"
+              >
+                <X size={16} aria-hidden="true" />
+              </button>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => setShowFilterModal(true)}
-            className="btn btn-secondary seeker-toolbar__btn"
-            aria-label={hasAdvancedFilters ? 'Filtros (hay filtros activos)' : 'Filtros'}
+            className="btn btn-secondary seeker-bar__btn"
+            aria-label={advancedCount > 0 ? `Filtros (${advancedCount} activos)` : 'Filtros'}
           >
-            <SlidersHorizontal size={16} aria-hidden="true" /> Filtros
-            {hasAdvancedFilters && <span className="seeker-dot" aria-hidden="true" />}
+            <SlidersHorizontal size={18} aria-hidden="true" />
+            <span className="seeker-bar__btn-text">Filtros</span>
+            {advancedCount > 0 && <span className="seeker-bar__count" aria-hidden="true">{advancedCount}</span>}
           </button>
-          <button type="button" onClick={() => onOpenSendRequest()} className="btn btn-primary seeker-toolbar__btn">
-            Solicitar
+        </div>
+
+        <div className="seeker-chip-row" role="group" aria-label="Filtrar por oficio">
+          <button
+            type="button"
+            className="oy-chip"
+            aria-pressed={!selectedCategory}
+            onClick={() => handleCategoryChange('todos')}
+          >
+            Todos
           </button>
+          {CATEGORIES.map(c => (
+            <button
+              key={c.id}
+              type="button"
+              className="oy-chip"
+              aria-pressed={selectedCategory === c.id}
+              onClick={() => handleCategoryChange(c.id)}
+            >
+              <span className="seeker-chip-icon" aria-hidden="true">{c.icon}</span> {c.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -654,7 +709,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
             <MascotAvatar trade={nlpMatch.trade} size="sm" />
             <div>
               <span className="seeker-nlp__title">
-                Búsqueda Inteligente: Interpretamos tu consulta como "{nlpMatch.label}"
+                Many entendió: {nlpMatch.label}
               </span>
               <span className="seeker-nlp__sub">
                 {nlpMatch.problemTitle} en Bogotá D.C.
@@ -682,19 +737,25 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
               onClick={() => removeFilter('nlp')}
               aria-label="Descartar sugerencia"
             >
-              <X size={16} />
+              <X size={16} aria-hidden="true" />
             </button>
           </div>
         </div>
       )}
 
       {/* Oficios más buscados (RF-12) */}
-      <section className="seeker-featured" aria-labelledby="seeker-featured-title">
-        <h2 id="seeker-featured-title" className="seeker-featured__title">Oficios más buscados</h2>
+      <section className="seeker-featured" aria-labelledby="seeker-featured-title" data-reveal>
+        <div className="seeker-featured__head">
+          <h2 id="seeker-featured-title" className="seeker-featured__title">Oficios más buscados</h2>
+          <button type="button" onClick={() => setShowCatalogModal(true)} className="btn btn-secondary seeker-btn-sm">
+            <BookOpen size={16} aria-hidden="true" /> Ver los {CATEGORIES.length} oficios
+          </button>
+        </div>
         <GlassIcons
           ariaLabel="Oficios más buscados"
           columns={wideLayout ? 6 : 3}
           gap={wideLayout ? 48 : 28}
+          plate="offset"
           items={FEATURED_TRADES.map(({ id, color }) => {
             const category = CATEGORIES.find(c => c.id === id)!;
             return { icon: category.icon, label: category.label, color, onClick: () => handleCategoryChange(id) };
@@ -702,35 +763,24 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
         />
       </section>
 
-      {/* Oficios en chips (RF-12) */}
-      <div className="seeker-chip-row" role="group" aria-label="Filtrar por oficio">
-        <button
-          type="button"
-          className="oy-chip"
-          aria-pressed={!selectedCategory}
-          onClick={() => handleCategoryChange('todos')}
-        >
-          <Search size={14} aria-hidden="true" /> Todos los oficios
+      {/* Encabezado de resultados: conteo, orden (RF-17, RF-18), distancia (RF-04) y disponibilidad (RF-32) */}
+      <div className="seeker-results-head" data-reveal>
+        <div className="seeker-results-head__text">
+          <h2 className="seeker-results-head__title">
+            {selectedCategory ? selectedCategoryLabel : 'Todos los profesionales'}
+          </h2>
+          <p className="seeker-results-head__count" aria-live="polite" aria-atomic="true">
+            {!loading && <span className="seeker-results-head__num">{filteredWorkers.length}</span>}
+            {loading ? resultsLabel : filteredWorkers.length === 1 ? ' profesional encontrado' : ' profesionales encontrados'}
+          </p>
+        </div>
+        <button type="button" onClick={() => onOpenSendRequest()} className="btn btn-primary seeker-results-head__cta">
+          <Send size={16} aria-hidden="true" /> Solicitar a varios
         </button>
-        {CATEGORIES.map(c => (
-          <button
-            key={c.id}
-            type="button"
-            className="oy-chip"
-            aria-pressed={selectedCategory === c.id}
-            onClick={() => handleCategoryChange(c.id)}
-          >
-            {c.icon} {c.label}
-          </button>
-        ))}
       </div>
 
-      {/* Orden (RF-17, RF-18) y disponibilidad inmediata (RF-32) */}
       <div className="seeker-sortbar">
         <div className="seeker-sortbar__group" role="group" aria-label="Ordenar resultados">
-          <span className="oy-label seeker-sortbar__label">
-            <ArrowUpDown size={14} aria-hidden="true" /> Ordenar
-          </span>
           {SORT_OPTIONS.map(opt => (
             <button
               key={opt.value}
@@ -743,54 +793,69 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
             </button>
           ))}
         </div>
-        <div className="seeker-available-toggle">
-          <span>Disponibles ya</span>
-          <SquishSwitch
-            checked={onlyAvailable}
-            onChange={setOnlyAvailable}
-            ariaLabel="Solo profesionales disponibles ahora"
-            trackOnColor="var(--oy-verde-esmeralda)"
-          />
+        <div className="seeker-sortbar__side">
+          <label className="seeker-distance">
+            <Navigation size={14} aria-hidden="true" />
+            <span className="seeker-distance__label">Distancia máx.</span>
+            <select
+              className="seeker-distance__select"
+              value={maxRadiusKm}
+              onChange={e => setMaxRadiusKm(Number(e.target.value))}
+            >
+              {RADIUS_OPTIONS.map(km => (
+                <option key={km} value={km}>{km} km</option>
+              ))}
+              {!RADIUS_OPTIONS.includes(maxRadiusKm) && <option value={maxRadiusKm}>{maxRadiusKm} km</option>}
+            </select>
+          </label>
+          <div className="seeker-available-toggle">
+            <span>Disponibles ya</span>
+            <SquishSwitch
+              checked={onlyAvailable}
+              onChange={setOnlyAvailable}
+              ariaLabel="Solo profesionales disponibles ahora"
+              trackOnColor="var(--oy-verde-esmeralda)"
+            />
+          </div>
         </div>
       </div>
 
       {/* Filtros activos */}
       {hasActiveFilters && (
-        <div className="seeker-active-filters" aria-label="Filtros activos">
-          <span className="oy-label seeker-sortbar__label">Filtros</span>
+        <div className="seeker-active-filters" role="group" aria-label="Filtros activos">
           {selectedCategory && (
-            <button type="button" className="seeker-tag seeker-tag--marino" onClick={() => removeFilter('category')} aria-label={`Quitar filtro de oficio ${selectedCategoryLabel}`}>
-              Oficio: {selectedCategoryLabel} <X size={12} aria-hidden="true" />
+            <button type="button" className="seeker-tag" onClick={() => removeFilter('category')} aria-label={`Quitar filtro de oficio ${selectedCategoryLabel}`}>
+              {selectedCategoryLabel} <X size={12} aria-hidden="true" />
             </button>
           )}
           {selectedZone !== 'Todas las zonas' && (
             <button type="button" className="seeker-tag" onClick={() => removeFilter('zone')} aria-label={`Quitar filtro de zona ${selectedZone}`}>
-              Zona: {selectedZone} <X size={12} aria-hidden="true" />
+              {selectedZone} <X size={12} aria-hidden="true" />
             </button>
           )}
-          {maxRadiusKm !== 12 && (
-            <button type="button" className="seeker-tag" onClick={() => removeFilter('radius')} aria-label="Quitar filtro de radio">
-              Radio {maxRadiusKm} km <X size={12} aria-hidden="true" />
+          {maxRadiusKm !== DEFAULT_RADIUS_KM && (
+            <button type="button" className="seeker-tag" onClick={() => removeFilter('radius')} aria-label="Quitar filtro de distancia">
+              Hasta {maxRadiusKm} km <X size={12} aria-hidden="true" />
             </button>
           )}
-          {maxBudgetRate < 70000 && (
+          {maxBudgetRate < DEFAULT_BUDGET && (
             <button type="button" className="seeker-tag" onClick={() => removeFilter('budget')} aria-label="Quitar filtro de tarifa">
-              Hasta ${maxBudgetRate.toLocaleString()} COP/h <X size={12} aria-hidden="true" />
+              Hasta ${maxBudgetRate.toLocaleString('es-CO')}/h <X size={12} aria-hidden="true" />
             </button>
           )}
           {minRating > 0 && (
-            <button type="button" className="seeker-tag seeker-tag--amarillo" onClick={() => removeFilter('rating')} aria-label="Quitar filtro de calificación">
+            <button type="button" className="seeker-tag" onClick={() => removeFilter('rating')} aria-label="Quitar filtro de calificación">
               {minRating}+ estrellas <X size={12} aria-hidden="true" />
             </button>
           )}
           {availabilityDay === 'fines_semana' && (
             <button type="button" className="seeker-tag" onClick={() => setAvailabilityDay('todos')} aria-label="Quitar filtro de fines de semana">
-              Sábados y Domingos <X size={12} aria-hidden="true" />
+              Fines de semana <X size={12} aria-hidden="true" />
             </button>
           )}
           {availabilityDate && (
             <button type="button" className="seeker-tag" onClick={() => removeFilter('date')} aria-label={`Quitar filtro de fecha ${formatDateLabel(availabilityDate)}`}>
-              Disponible el {formatDateLabel(availabilityDate)} <X size={12} aria-hidden="true" />
+              El {formatDateLabel(availabilityDate)} <X size={12} aria-hidden="true" />
             </button>
           )}
           {availabilitySlot && (
@@ -800,85 +865,93 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
           )}
           {onlyAvailable && (
             <button type="button" className="seeker-tag seeker-tag--esmeralda" onClick={() => removeFilter('available')} aria-label="Quitar filtro de solo disponibles">
-              ● Solo disponibles YA <X size={12} aria-hidden="true" />
+              Disponibles ya <X size={12} aria-hidden="true" />
             </button>
           )}
+          <button type="button" className="seeker-clear-all" onClick={resetAllFilters}>
+            Limpiar todo
+          </button>
         </div>
       )}
 
       {/* GPS fuera de Bogotá: distancias desde la ciudad */}
       {isOutsideBogota && (
-        <p className="seeker-geo-note" role="status">
-          <Navigation size={14} aria-hidden="true" />
-          Tu ubicación está a más de {MAX_DISTANCE_FROM_BOGOTA_KM} km de Bogotá, así que medimos las distancias desde Chapinero (Bogotá D.C.).
+        <p className="seeker-note" role="status">
+          <Navigation size={16} aria-hidden="true" />
+          <span>Tu ubicación está a más de {MAX_DISTANCE_FROM_BOGOTA_KM} km de Bogotá, así que medimos las distancias desde Chapinero (Bogotá D.C.).</span>
         </p>
       )}
 
       {/* Ampliación automática de zona (RF-70) */}
-      {isRadiusExpanded && (
-        <div className="seeker-expanded" role="status">
-          <span className="seeker-expanded__icon" aria-hidden="true"><AlertCircle size={20} /></span>
-          <p>
-            <strong>Zona de búsqueda ampliada automáticamente:</strong> No encontramos profesionales en tu radio inicial de {originalRadius} km.
-            Ampliamos la cobertura a 25 km en Bogotá D.C. para mostrarte {filteredWorkers.length} candidatos compatibles.
-          </p>
-        </div>
+      {isRadiusExpanded && !loading && (
+        <p className="seeker-note seeker-note--marino" role="status">
+          <AlertCircle size={16} aria-hidden="true" />
+          <span>
+            <strong>Ampliamos tu búsqueda a 25 km.</strong> No había profesionales a menos de {originalRadius} km; estos {filteredWorkers.length} sí te pueden atender.
+          </span>
+        </p>
       )}
 
-      {/* Encabezado del directorio */}
-      <div className="oy-section-head seeker-results-head">
-        <div>
-          <h2 className="oy-section-title">
-            {selectedCategory ? `Profesionales en ${selectedCategoryLabel}` : 'Directorio de Profesionales'}
-          </h2>
-          <p className="oy-section-sub">{filteredWorkers.length} perfiles disponibles</p>
-        </div>
-      </div>
-
-      {filteredWorkers.length === 0 ? (
-        <div className="oy-empty">
+      {loading ? (
+        <ul className="seeker-directory-grid" aria-busy="true" aria-label="Cargando profesionales">
+          {Array.from({ length: wideLayout ? 8 : 3 }, (_, i) => (
+            <li key={i} aria-hidden="true">
+              <div className="seeker-skel">
+                <div className="oy-skeleton seeker-skel__media" />
+                <div className="seeker-skel__body">
+                  <div className="oy-skeleton seeker-skel__line seeker-skel__line--xs" />
+                  <div className="oy-skeleton seeker-skel__line seeker-skel__line--lg" />
+                  <div className="oy-skeleton seeker-skel__line seeker-skel__line--md" />
+                </div>
+                <div className="seeker-skel__foot">
+                  <div className="oy-skeleton seeker-skel__line seeker-skel__line--sm" />
+                  <div className="oy-skeleton seeker-skel__btn" />
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : filteredWorkers.length === 0 ? (
+        <div className="oy-empty seeker-empty" role="status">
           <MascotAvatar size="lg" />
-          <h3 className="oy-empty__title">No encontramos profesionales con estos filtros</h3>
+          <h3 className="oy-empty__title">Many no encontró a nadie con esos filtros</h3>
           <p className="oy-empty__text">
-            Intenta aumentar el presupuesto, seleccionar otra zona o restablecer el oficio para ver más opciones en Bogotá D.C.
+            Prueba con otra palabra, amplía la distancia o quita algún filtro. También puedes publicar tu solicitud y te avisamos cuando alguien la acepte.
           </p>
-          <button type="button" onClick={resetAllFilters} className="btn btn-secondary">
-            Restablecer todos los filtros
-          </button>
+          <div className="seeker-empty__actions">
+            <button type="button" onClick={resetAllFilters} className="btn btn-primary">
+              Limpiar filtros
+            </button>
+            <button type="button" onClick={() => onOpenSendRequest()} className="btn btn-secondary">
+              Publicar solicitud
+            </button>
+          </div>
         </div>
       ) : (
-        <ul className="seeker-directory-grid">
-          {filteredWorkers.map(worker => {
-            return (
-              <li key={worker.id}>
-                <ProfileCard
-                  name={worker.name}
-                  title={worker.tradeLabel}
-                  avatarUrl={`https://i.pravatar.cc/300?u=${worker.id}`}
-                  initials={worker.initials}
-                  avatarColor={worker.avatarColor}
-                  available={worker.available}
-                  status={worker.available ? 'Disponible' : 'Ocupado'}
-                  verified={worker.verified}
-                  meta={
-                    <span className="seeker-card-meta">
-                      <Star size={13} fill="var(--color-star)" color="var(--color-star)" aria-hidden="true" />
-                      <strong>{worker.rating.toFixed(1)}</strong>
-                      <span aria-hidden="true">·</span>
-                      <span>{formatDistance(worker.distanceKm || 0)}</span>
-                      <span aria-hidden="true">·</span>
-                      <strong>${worker.hourlyRate.toLocaleString()}/h</strong>
-                    </span>
-                  }
-                  contactText="Ver perfil"
-                  onContactClick={() => onSelectWorker(worker)}
-                  headingLevel={3}
-                  frame="almendra"
-                  className="seeker-profile-card"
-                />
-              </li>
-            );
-          })}
+        <ul className="seeker-directory-grid" aria-label="Profesionales encontrados">
+          {filteredWorkers.map((worker, i) => (
+            <li key={worker.id} data-reveal style={{ '--reveal-i': i % 4 } as React.CSSProperties}>
+              <ProfileCard
+                name={worker.name}
+                title={worker.tradeLabel}
+                avatarUrl={worker.photoUrl ?? `https://i.pravatar.cc/300?u=${worker.id}`}
+                initials={worker.initials}
+                avatarColor={worker.avatarColor}
+                available={worker.available}
+                status={worker.available ? 'Disponible' : 'Ocupado'}
+                verified={worker.verified}
+                rating={worker.rating}
+                reviewCount={worker.reviewCount}
+                distance={formatDistance(worker.distanceKm || 0)}
+                zone={worker.location.zoneName}
+                rate={`$${worker.hourlyRate.toLocaleString('es-CO')}`}
+                rateUnit={(worker.rateUnit ?? 'hora') === 'hora' ? 'hora' : rateUnitShort(worker.rateUnit)}
+                contactText="Ver perfil"
+                onContactClick={() => onSelectWorker(worker)}
+                headingLevel={3}
+              />
+            </li>
+          ))}
         </ul>
       )}
 
@@ -1050,8 +1123,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
                   type="button"
                   onClick={() => {
                     setSelectedZone('Todas las zonas');
-                    setMaxBudgetRate(70000);
-                    setMaxRadiusKm(12);
+                    setMaxBudgetRate(DEFAULT_BUDGET);
+                    setMaxRadiusKm(DEFAULT_RADIUS_KM);
                     setMinRating(0);
                     setOnlyAvailable(false);
                     setAvailabilityDay('todos');
@@ -1106,7 +1179,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
                             <span className="seeker-catalog-card__icon" aria-hidden="true">{cat.icon}</span>
                             {cat.label}
                           </span>
-                          <span className="badge badge-verified seeker-catalog-card__count">
+                          <span className="seeker-catalog-card__count">
                             {count} {count === 1 ? 'experto' : 'expertos'}
                           </span>
                         </span>

@@ -1,28 +1,32 @@
 /* ============================================================
-   Asistente Many — burbuja sticker con contorno Cacao.
-   Escritorio: esquina inferior derecha. Móvil: sobre BottomNav.
+   Asistente Many — burbuja de vidrio flotante.
+   Escritorio: esquina inferior derecha. Móvil: por encima de la
+   barra inferior (--bottom-nav-space) y a la derecha del botón
+   "Volver arriba", que va centrado.
    ============================================================ */
 
 .many-assistant {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
-  z-index: 990;
+  right: max(24px, calc((100vw - 1200px) / 2));
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  z-index: 890;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 10px;
-  max-width: min(300px, calc(100vw - 32px));
+  max-width: min(320px, calc(100vw - 24px));
+  pointer-events: none;
 }
+
+.many-assistant > * { pointer-events: auto; }
 
 .many-assistant__bubble {
   position: relative;
-  padding: 14px 16px;
-  border: var(--stroke-w) solid var(--stroke-ink);
-  border-radius: 24px 24px 6px 24px;
-  background: var(--color-surface);
+  padding: 14px 16px 10px;
+  border-radius: 24px 24px 8px 24px;
   color: var(--color-text-main);
-  animation: many-bubble-in 0.35s var(--ease-spring);
+  transform-origin: bottom right;
+  animation: many-assistant-in 500ms var(--ease-editorial);
 }
 
 .many-assistant__head {
@@ -36,16 +40,12 @@
 .many-assistant__name {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 10px;
-  border: 1px solid var(--stroke-ink);
-  border-radius: var(--radius-pill);
-  background: var(--wash-amarillo);
+  gap: 7px;
   color: var(--color-text-main);
   font-family: var(--font-display);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: var(--tracking-label);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -55,47 +55,44 @@
   height: 8px;
   border-radius: 50%;
   background: var(--color-status);
-  animation: many-status-pulse 2s ease-in-out infinite;
+  box-shadow: 0 0 0 3px var(--wash-esmeralda);
 }
 
 .many-assistant__close {
   display: grid;
   flex-shrink: 0;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border: var(--stroke-w) solid var(--stroke-ink);
+  width: 44px;
+  height: 44px;
+  margin: -10px -10px -6px 0;
+  border: none;
   border-radius: var(--radius-pill);
-  background: var(--color-surface);
-  color: var(--color-text-main);
+  background: transparent;
+  color: var(--color-text-muted);
   cursor: pointer;
-  transition: background-color 160ms ease, transform 160ms var(--ease-out);
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms var(--ease-out);
 }
 
 .many-assistant__message {
   margin: 0;
   color: var(--color-text-main);
-  font-size: 13.5px;
-  font-weight: 500;
+  font-size: 14px;
   line-height: 1.5;
 }
 
 .many-assistant__hint {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  width: 100%;
-  margin-top: 10px;
-  padding: 8px 0 0;
+  gap: 2px;
+  min-height: 44px;
+  margin-top: 4px;
+  padding: 0;
   border: none;
-  border-top: var(--stroke-w) dashed var(--stroke-ink);
-  border-radius: 0;
   background: none;
-  color: var(--color-text-muted);
-  font-family: var(--font-text);
-  font-size: 11.5px;
+  color: var(--role-badge-text, var(--color-text-main));
+  font-family: var(--font-ui);
+  font-size: 13px;
   font-weight: 600;
-  text-align: left;
   cursor: pointer;
   transition: color 160ms ease;
 }
@@ -110,19 +107,22 @@
 .many-assistant__open {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 8px 16px;
-  border: var(--stroke-w) solid var(--stroke-ink);
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 16px;
   border-radius: var(--radius-pill);
-  background: var(--color-surface);
   color: var(--color-text-main);
-  font-family: var(--font-text);
-  font-size: 12.5px;
-  font-weight: 700;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  animation: popIn 0.3s var(--ease-out);
+  animation: many-assistant-in 400ms var(--ease-editorial);
   transition: background-color 160ms ease, transform 160ms var(--ease-out);
+}
+
+.many-assistant__avatar {
+  flex: none;
+  transform-origin: bottom right;
 }
 
 .many-assistant__close:active,
@@ -136,23 +136,41 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .many-assistant__close:hover { background: var(--color-surface-hover); }
-  .many-assistant__open:hover { background: var(--wash-amarillo); }
+  .many-assistant__close:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-text-main);
+  }
+  .many-assistant__open:hover { background: var(--glass-3); }
   .many-assistant__hint:hover { color: var(--color-text-main); }
 }
 
-/* Móvil: por encima de la barra inferior */
+@keyframes many-assistant-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Móvil: sobre la barra inferior; avatar más pequeño y sin el botón de texto
+   (tocar a Many abre la burbuja), así no choca con "Volver arriba" */
 @media (max-width: 767px) {
   .many-assistant {
-    right: 16px;
-    bottom: calc(80px + env(safe-area-inset-bottom));
+    right: 14px;
+    bottom: calc(var(--bottom-nav-space, 0px) + 10px);
+    max-width: calc(100vw - 28px);
+  }
+  .many-assistant__open { display: none; }
+  .many-assistant__avatar {
+    width: 52px;
+    height: 52px;
+  }
+  .many-assistant__avatar > * {
+    transform: scale(0.684);
+    transform-origin: top left;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .many-assistant__bubble,
-  .many-assistant__open,
-  .many-assistant__status { animation: none; }
+  .many-assistant__open { animation: none; }
   .many-assistant__close,
   .many-assistant__open,
   .many-assistant__hint { transition: none; }

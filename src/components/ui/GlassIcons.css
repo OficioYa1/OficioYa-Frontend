@@ -1,9 +1,9 @@
 /* ============================================================
    GlassIcons · grupo de iconos de vidrio (WebGL2)
-   El canvas pinta placa + vidrio; el DOM aporta el contorno del
+   El canvas pinta placa + vidrio; el DOM aporta el canto del
    vidrio, el glifo, la etiqueta y el foco. En modo plano (sin
    WebGL2 o con movimiento reducido) cada icono es una placa de
-   color sólido con contorno Cacao y el glifo encima.
+   color con canto de luz y profundidad suave.
    ============================================================ */
 
 .oy-glass-icons {
@@ -77,7 +77,7 @@
 }
 
 .oy-glass-icons[data-outline] .oy-glass-icons__glass {
-  border: var(--stroke-w, 1.5px) solid var(--stroke-ink);
+  border: 1.5px solid var(--glass-line);
 }
 
 .oy-glass-icons__face {
@@ -125,7 +125,7 @@
   max-width: calc(var(--glass-icons-size) + var(--glass-icons-gap) - 8px);
   font-family: var(--font-text);
   font-size: var(--text-small);
-  font-weight: 600;
+  font-weight: 500;
   line-height: var(--leading-snug);
   text-align: center;
   color: var(--color-text-main);
@@ -163,8 +163,12 @@
   background: var(--glass-icons-fill);
 }
 
+.oy-glass-icons--flat .oy-glass-icons__plate {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 0 rgba(0, 0, 0, 0.08), var(--depth-1);
+}
+
 .oy-glass-icons[data-outline] .oy-glass-icons__plate {
-  border: var(--stroke-w, 1.5px) solid var(--stroke-ink);
+  border: 1.5px solid var(--glass-line);
 }
 
 .oy-glass-icons--flat .oy-glass-icons__plate,

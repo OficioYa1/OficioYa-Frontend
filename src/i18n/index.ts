@@ -4,12 +4,14 @@
   El español es la fuente; si una clave falta en inglés se muestra en español.
 */
 import { common } from './common';
+import { landing } from './landing';
+import { app } from './app';
 
 export type Lang = 'es' | 'en';
 export type Dictionary = Record<string, string>;
 export interface DictionaryPair { es: Dictionary; en: Dictionary }
 
-const parts: DictionaryPair[] = [common];
+const parts: DictionaryPair[] = [common, landing, app];
 
 export const dictionaries: Record<Lang, Dictionary> = {
   es: Object.assign({}, ...parts.map(p => p.es)),

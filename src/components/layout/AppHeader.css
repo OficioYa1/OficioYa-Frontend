@@ -1,24 +1,42 @@
 /* ============================================================
-   Header de la app — lenguaje sticker (DESIGN.md) con la paleta
-   del manual de identidad. Píldora de navegación en escritorio,
-   StaggeredMenu en móvil.
+   Header de la app — píldora de vidrio flotante.
+   Arriba: vidrio translúcido. Tras 24 px de scroll se sube un poco,
+   se vuelve más opaca y gana sombra. Navegación con un indicador
+   único que se desliza entre pestañas (useSlidingIndicator).
    ============================================================ */
 
 .app-header {
   position: sticky;
   top: 0;
-  z-index: 100;
-  padding: 10px 0;
-  border-bottom: var(--stroke-w) solid var(--stroke-ink);
-  background: var(--color-bg);
+  z-index: 950; /* sobre contenido, toasts (940) y barra inferior; bajo chat (1000) y modales */
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 12px 0;
+  pointer-events: none;
+}
+
+.app-header__inner {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .app-header__bar {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  min-height: 60px;
+  padding: 7px 8px 7px 14px;
+  border-radius: var(--radius-pill);
+  pointer-events: auto;
+  transition: transform 350ms var(--ease-out), background-color 300ms ease, box-shadow 300ms ease;
 }
 
+.app-header--scrolled .app-header__bar {
+  background-color: var(--glass-3);
+  box-shadow: var(--glass-shine), var(--depth-3);
+  transform: translateY(-6px);
+}
+
+/* ── Marca y ubicación ── */
 .app-header__brand {
   display: flex;
   flex: none;
@@ -30,43 +48,125 @@
 .app-header__logo {
   display: flex;
   align-items: center;
-  padding: 0;
+  min-height: 44px;
+  padding: 0 4px;
   border: none;
+  border-radius: var(--radius-pill);
   background: none;
   cursor: pointer;
+  transform-origin: left center;
+  transition: transform 350ms var(--ease-out);
 }
+
+.app-header--scrolled .app-header__logo { transform: scale(0.92); }
 
 .app-header__gps {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  min-height: 32px;
-  padding: 4px 10px;
-  border: var(--stroke-w) solid var(--stroke-ink);
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-pill);
-  background: var(--wash-almendra);
+  background: var(--glass-1);
+  box-shadow: var(--glass-shine);
   color: var(--color-text-main);
   font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 12.5px;
+  font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
-  transition: transform 160ms var(--ease-out), background-color 160ms ease;
+  transition: transform 160ms var(--ease-out), background-color 200ms ease;
 }
 
 .app-header__gps-ok { color: var(--color-status-text); }
+.app-header__gps-off { color: var(--color-text-subtle); }
 
+/* ── Navegación con indicador deslizante ── */
 .app-header__nav {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-inline: auto;
-  padding: 4px;
-  border: var(--stroke-w) solid var(--stroke-ink);
-  border-radius: var(--radius-pill);
-  background: var(--color-surface);
+  flex: 1 1 auto;
+  justify-content: center;
+  min-width: 0;
 }
 
+.app-header__tabs {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--wash-gris);
+}
+
+.app-header__indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  width: 0;
+  border-radius: var(--radius-pill);
+  background: var(--role-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 8px 18px -10px var(--role-primary);
+  opacity: 0;
+  pointer-events: none;
+  transform-origin: left center;
+  transition: opacity 200ms ease, background-color 300ms ease;
+}
+
+.app-header__tab {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: color 250ms ease, transform 160ms var(--ease-out);
+}
+
+.app-header__tab[aria-current='page'] { color: var(--role-on-primary); }
+
+.app-header__tab-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* Badges: Amarillo Canario con texto Cacao (9.5:1) */
+.app-header__badge {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  min-width: 18px;
+  padding: 1px 5px;
+  border-radius: var(--radius-pill);
+  background: var(--oy-amarillo-canario);
+  box-shadow: 0 0 0 2px var(--canvas);
+  color: var(--oy-cacao-profundo);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
+}
+
+.app-header__badge--icon {
+  top: 4px;
+  right: 3px;
+}
+
+/* ── Acciones y cuenta ── */
 .app-header__actions {
   display: flex;
   flex: none;
@@ -75,105 +175,120 @@
   margin-left: auto;
 }
 
-.app-header__tab {
+.app-header__icon-btn {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 8px 12px;
-  border: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
   border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--color-text-muted);
-  font-family: var(--font-ui);
+  color: var(--color-text-main);
   cursor: pointer;
-  transition: transform 160ms var(--ease-out), background-color 160ms ease, color 160ms ease;
+  transition: background-color 200ms ease, border-color 200ms ease, transform 160ms var(--ease-out);
 }
 
-.app-header__tab--active {
-  background: var(--role-primary);
-  color: var(--role-on-primary);
+.app-header__icon-btn[data-active] {
+  border-color: var(--glass-border);
+  background: var(--color-surface-hover);
 }
-
-.app-header__tab-label {
-  font-size: 13.5px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
-  white-space: nowrap;
-}
-
-.app-header__badge {
-  position: absolute;
-  top: 0;
-  right: 2px;
-  min-width: 18px;
-  padding: 1px 5px;
-  border: 1px solid var(--stroke-ink);
-  border-radius: var(--radius-pill);
-  background: var(--oy-amarillo-canario);
-  color: var(--oy-cacao-profundo);
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 14px;
-  text-align: center;
-}
-
-.app-header__account-wrap { position: relative; }
 
 .app-header__account {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 6px 12px;
-  border: var(--stroke-w) solid var(--stroke-ink);
+  gap: 8px;
+  min-height: 44px;
+  padding: 4px 12px 4px 4px;
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-pill);
-  background: var(--color-surface);
+  background: var(--glass-1);
+  box-shadow: var(--glass-shine);
   color: var(--color-text-main);
   font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 13.5px;
+  font-weight: 600;
   cursor: pointer;
-  transition: transform 160ms var(--ease-out), background-color 160ms ease;
+  transition: background-color 200ms ease, transform 160ms var(--ease-out);
 }
 
-.app-header__chevron { opacity: 0.6; }
+.app-header__avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--role-primary);
+  color: var(--role-on-primary);
+  transition: background-color 300ms ease;
+}
+
+.app-header__chevron {
+  color: var(--color-text-subtle);
+  transition: transform 300ms var(--ease-out);
+}
+
+.app-header__account[aria-expanded='true'] .app-header__chevron { transform: rotate(180deg); }
 
 .app-header__gps:active,
 .app-header__tab:active,
+.app-header__icon-btn:active,
 .app-header__account:active { transform: scale(0.97); }
 
-.app-header__gps:focus-visible,
-.app-header__tab:focus-visible,
-.app-header__account:focus-visible,
-.app-header__logo:focus-visible {
+.app-header :focus-visible {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .app-header__tab:not(.app-header__tab--active):hover,
-  .app-header__account:hover { background: var(--color-surface-hover); }
-  .app-header__gps:hover { background: var(--wash-amarillo); }
+  .app-header__tab:not([aria-current='page']):hover { color: var(--color-text-main); }
+  .app-header__icon-btn:hover { background: var(--color-surface-hover); }
+  .app-header__account:hover,
+  .app-header__gps:hover { background: var(--color-surface-hover); }
 }
 
+/* Tabletas: solo iconos en la navegación (la etiqueta queda en aria-label) */
+@media (max-width: 1099px) {
+  .app-header__tab-label { display: none; }
+  .app-header__tab { padding: 8px 12px; }
+}
+
+/* Móvil: logo, ubicación, campana y cuenta; la navegación vive en la barra inferior */
 @media (max-width: 767px) {
+  .app-header { padding-inline: 10px; }
+  .app-header__bar {
+    gap: var(--space-2);
+    min-height: 56px;
+    padding: 5px 6px 5px 8px;
+  }
   .app-header__nav,
   .app-header__gps-text,
-  .app-header__account-text { display: none; }
-  .app-header__bar { gap: var(--space-2); }
-  .app-header__actions { gap: 4px; }
-  .app-header__account { padding: 6px 10px; }
-  .app-header__tab { padding: 8px 10px; }
+  .app-header__account-text,
+  .app-header__chevron { display: none; }
+  .app-header__gps {
+    justify-content: center;
+    width: 40px;
+    min-height: 40px;
+    padding: 0;
+  }
+  .app-header__actions { gap: 2px; }
+  .app-header__account { padding: 4px; }
+  .app-header--scrolled .app-header__bar { transform: translateY(-4px); }
 }
 
-@media (max-width: 400px) {
-  .app-header__chevron { display: none; }
+@media (max-width: 359px) {
+  .app-header__gps { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .app-header__bar,
+  .app-header__logo,
   .app-header__gps,
   .app-header__tab,
-  .app-header__account { transition: none; }
+  .app-header__icon-btn,
+  .app-header__account,
+  .app-header__chevron { transition: none; }
+  .app-header--scrolled .app-header__bar,
+  .app-header--scrolled .app-header__logo { transform: none; }
 }

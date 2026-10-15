@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   Phone,
   ShieldCheck,
-  Sparkles,
   X,
   MessageCircle
 } from 'lucide-react';
@@ -59,8 +58,24 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   // Auto-scroll al final del chat
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    messagesEndRef.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'end' });
   }, [currentMessages, isTyping]);
+
+  // Esc: vuelve a la lista desde una conversación; desde la lista, cierra el panel
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (activeConvId) setActiveConvId(null);
+      else onClose?.();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [activeConvId, onClose]);
+
+  useEffect(() => () => {
+    if (replyTimerRef.current) clearTimeout(replyTimerRef.current);
+  }, []);
 
   const handleSend = (textToSend?: string) => {
     const text = textToSend || inputText;
@@ -100,15 +115,17 @@ export const ChatView: React.FC<ChatViewProps> = ({
         <div className="chat-pane chat-pane--list">
           <header className="chat-list-head">
             <div>
-              <span className="oy-eyebrow chat-eyebrow">
-                <MessageCircle size={13} aria-hidden="true" /> Chat en vivo
+              <span className="chat-kicker">
+                <MessageCircle size={14} aria-hidden="true" /> Chat en vivo
               </span>
-              <h2 className="oy-display chat-list-title">Mensajes</h2>
-              <span className="chat-muted">{conversations.length} conversaciones activas</span>
+              <h2 className="chat-list-title">Mensajes</h2>
+              <span className="chat-muted">
+                {conversations.length === 1 ? '1 conversación activa' : `${conversations.length} conversaciones activas`}
+              </span>
             </div>
             {onClose && (
-              <button onClick={onClose} className="oy-icon-btn" aria-label="Cerrar mensajes">
-                <X size={18} />
+              <button type="button" onClick={onClose} className="oy-icon-btn" aria-label="Cerrar mensajes">
+                <X size={18} aria-hidden="true" />
               </button>
             )}
           </header>
@@ -116,10 +133,16 @@ export const ChatView: React.FC<ChatViewProps> = ({
           <div className="chat-list">
             {conversations.length === 0 ? (
               <div className="oy-empty chat-empty">
-                <MascotAvatar expression="guino" size="sm" animate="none" />
+                <MascotAvatar expression="guino" size="md" animate="none" />
+                <h3 className="oy-empty__title">Aún no hay mensajes</h3>
                 <p className="oy-empty__text">
-                  No tienes conversaciones activas. Inicia un chat desde el perfil de un profesional.
+                  Inicia un chat desde el perfil de un profesional y aquí verás la conversación.
                 </p>
+                {onClose && (
+                  <button type="button" className="btn btn-secondary" onClick={onClose}>
+                    Explorar profesionales
+                  </button>
+                )}
               </div>
             ) : (
               <ul className="chat-list__items">
@@ -167,8 +190,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
           {/* Header del Chat Activo */}
           <header className="chat-head">
             <div className="chat-head__pill">
-              <button onClick={() => setActiveConvId(null)} className="oy-icon-btn chat-head__back" aria-label="Volver a la lista de mensajes">
-                <ArrowLeft size={18} />
+              <button type="button" onClick={() => setActiveConvId(null)} className="oy-icon-btn chat-head__back" aria-label="Volver a la lista de mensajes">
+                <ArrowLeft size={18} aria-hidden="true" />
               </button>
 
               <span className="chat-avatar chat-avatar--sm" style={{ background: activeConv.workerAvatarColor }} aria-hidden="true">
@@ -178,8 +201,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
               <div className="chat-head__who">
                 <div className="chat-head__name-row">
                   <span className="chat-head__name">{activeConv.workerName}</span>
-                  <span className="badge badge-verified chat-verified">
-                    <ShieldCheck size={11} aria-hidden="true" /> Verificado
+                  <span className="chat-verified">
+                    <ShieldCheck size={12} aria-hidden="true" /> Verificado
                   </span>
                 </div>
                 <span className="chat-head__status">
@@ -195,8 +218,13 @@ export const ChatView: React.FC<ChatViewProps> = ({
                   title="Llamar directamente al profesional"
                   aria-label="Llamar directamente al profesional"
                 >
-                  <Phone size={15} aria-hidden="true" /> <span className="hide-on-mobile">Llamar</span>
+                  <Phone size={16} aria-hidden="true" /> <span className="hide-on-mobile">Llamar</span>
                 </a>
+              )}
+              {onClose && (
+                <button type="button" onClick={onClose} className="oy-icon-btn chat-head__close" aria-label="Cerrar mensajes">
+                  <X size={18} aria-hidden="true" />
+                </button>
               )}
             </div>
           </header>
@@ -228,9 +256,11 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
             {/* Delay de escritura animado (···) */}
             {isTyping && (
-              <div className="chat-typing" role="status">
-                <Sparkles size={13} aria-hidden="true" /> {activeConv.workerName} está escribiendo
-                <span className="chat-typing__dots" aria-hidden="true"><i /><i /><i /></span>
+              <div className="chat-msg chat-msg--them chat-typing" role="status">
+                <span className="chat-bubble chat-typing__bubble">
+                  <span className="chat-typing__dots" aria-hidden="true"><i /><i /><i /></span>
+                  <span className="chat-sr">{activeConv.workerName} está escribiendo</span>
+                </span>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -252,13 +282,15 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 type="text"
                 className="chat-compose__input"
                 aria-label="Escribe un mensaje"
-                placeholder="Escribe un mensaje aquí... (Presiona Enter para enviar)"
+                placeholder="Escribe un mensaje…"
+                enterKeyHint="send"
                 value={inputText}
                 onChange={e => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
               />
 
               <button
+                type="button"
                 onClick={() => handleSend()}
                 disabled={!inputText.trim()}
                 className="btn btn-primary chat-send"

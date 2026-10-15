@@ -1,4 +1,4 @@
-import React, { useId, useState } from 'react';
+import React, { useId, useRef, useState } from 'react';
 import type { ComplaintType, ComplaintTicket, ComplaintAttachment } from '../../types';
 import {
   X,
@@ -8,11 +8,12 @@ import {
   FileCheck,
   Film,
   Image as ImageIcon,
-  ShieldAlert
+  ShieldAlert,
+  AlertCircle
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 import { useFlowModal } from '../requests/useFlowModal';
-import '../requests/Flows.css';
+import './Complaint.css';
 
 interface ComplaintModalProps {
   targetWorkerId: string;
@@ -48,6 +49,8 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
   const [evidenceFiles, setEvidenceFiles] = useState<ComplaintAttachment[]>([]);
   const [isSuccess, setIsSuccess] = useState(false);
   const [generatedCase, setGeneratedCase] = useState('');
+  const [showErrors, setShowErrors] = useState(false);
+  const descRef = useRef<HTMLTextAreaElement>(null);
 
   // Simulación de carga de archivos (imágenes, video, PDF)
   const handleSimulateAddAttachment = (fileType: 'image' | 'video' | 'pdf') => {
@@ -69,9 +72,17 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
     setEvidenceFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const tooShort = description.trim().length < MIN_CHARS;
+  const filesFull = evidenceFiles.length >= MAX_FILES;
+  const descError = showErrors && tooShort;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (description.length < MIN_CHARS) return;
+    if (tooShort) {
+      setShowErrors(true);
+      descRef.current?.focus();
+      return;
+    }
 
     const caseNumber = `OY-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     const newTicket: ComplaintTicket = {
@@ -81,18 +92,17 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
       targetWorkerName,
       serviceId,
       type,
-      description,
+      description: description.trim(),
       evidenceFiles,
       createdAt: new Date().toISOString(),
       status: 'En revisión'
     };
 
-    // Guardar en localStorage (oy-complaints)
     try {
       const existing: ComplaintTicket[] = JSON.parse(localStorage.getItem('oy-complaints') || '[]');
       localStorage.setItem('oy-complaints', JSON.stringify([newTicket, ...existing]));
-    } catch (err) {
-      console.error('Error guardando ticket en oy-complaints', err);
+    } catch {
+      /* sin almacenamiento local: el ticket sigue su curso por onSubmitComplaint */
     }
 
     setGeneratedCase(caseNumber);
@@ -101,198 +111,174 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
   };
 
   const titleId = `${uid}-title`;
-  const tooShort = description.length < MIN_CHARS;
-  const filesFull = evidenceFiles.length >= MAX_FILES;
+  const descId = `${uid}-desc`;
+  const countId = `${uid}-count`;
+  const errorId = `${uid}-error`;
 
   return (
-    <div className="oy-modal-backdrop oy-flow-layer--raised">
+    <div className="oy-modal-backdrop cmp-layer" onClick={onClose}>
       <div
         ref={dialogRef}
-        className="oy-modal oy-flow"
+        className="oy-modal cmp"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
+        onClick={e => e.stopPropagation()}
       >
-        <header className={`oy-modal__head oy-flow-head ${isSuccess ? 'oy-flow-head--esmeralda' : 'oy-flow-head--fuego'}`}>
-          <div className="oy-flow-head__main">
-            <span className="oy-flow-tile" aria-hidden="true">
-              <AlertTriangle size={24} />
+        <header className="oy-modal__head cmp-head">
+          <div className="cmp-head__main">
+            <span className="cmp-tile" data-done={isSuccess ? '' : undefined} aria-hidden="true">
+              {isSuccess ? <CheckCircle2 size={24} /> : <AlertTriangle size={24} />}
             </span>
-            <div className="oy-flow-head__text">
-              <span className="oy-eyebrow oy-flow-kicker">Reporte formal</span>
-              <h2 id={titleId} className="oy-modal__title oy-display">
+            <div className="cmp-head__text">
+              <span className="cmp-kicker">Reporte formal</span>
+              <h2 id={titleId} className="oy-modal__title cmp-title">
                 {isSuccess ? 'Ticket radicado' : `Reportar a ${targetWorkerName}`}
               </h2>
               {!isSuccess && (
-                <p className="oy-flow-head__sub">
-                  Genera un ticket formal ante el equipo de moderación de OficioYa
-                </p>
+                <p className="cmp-sub">Genera un ticket formal ante el equipo de moderación de OficioYa.</p>
               )}
             </div>
           </div>
-          <button type="button" className="oy-icon-btn" onClick={onClose} aria-label="Cerrar">
+          <button type="button" className="oy-icon-btn" onClick={onClose} aria-label="Cerrar reporte">
             <X size={20} aria-hidden="true" />
           </button>
         </header>
 
-        <div className="oy-modal__body">
+        <div className="oy-modal__body cmp-body">
           {!isSuccess ? (
-            <div className="oy-flow-body">
-              {/* Aviso sobre falsas denuncias */}
-              <div className="oy-flow-note oy-flow-note--fuego">
+            <>
+              <div className="cmp-note">
                 <ShieldAlert size={18} aria-hidden="true" />
                 <span>
-                  <strong>Aviso importante:</strong> Toda denuncia falsa o malintencionada afecta la reputación de los trabajadores y acarreará la suspensión definitiva de tu cuenta de contratante.
+                  <strong>Aviso importante:</strong> una denuncia falsa afecta la reputación del trabajador y puede
+                  llevar a la suspensión definitiva de tu cuenta.
                 </span>
               </div>
 
-              <form onSubmit={handleSubmit} className="oy-flow-form">
-                {/* Tipo de Queja */}
-                <section className="oy-flow-section" aria-labelledby={`${uid}-s1`}>
-                  <h3 id={`${uid}-s1`} className="oy-flow-section__title">
-                    <span className="oy-flow-num">1</span> Tipo de anomalía o motivo
-                  </h3>
-                  <div className="oy-flow-choices" role="group" aria-labelledby={`${uid}-s1`}>
+              <form onSubmit={handleSubmit} className="cmp-form" noValidate>
+                <fieldset className="cmp-field">
+                  <legend className="cmp-label">
+                    <span className="cmp-num" aria-hidden="true">1</span> Tipo de anomalía o motivo
+                  </legend>
+                  <div className="cmp-choices">
                     {COMPLAINT_TYPES.map(t => (
                       <button
                         key={t}
                         type="button"
-                        className="oy-chip oy-flow-chip--danger"
+                        className="oy-chip cmp-chip"
                         aria-pressed={type === t}
                         onClick={() => setType(t)}
                       >
-                        {t}
+                        {type === t && <CheckCircle2 size={14} aria-hidden="true" />} {t}
                       </button>
                     ))}
                   </div>
-                </section>
+                </fieldset>
 
-                {/* Descripción con contador de caracteres (mínimo 20) */}
-                <section className="oy-flow-section oy-flow-section--ruled" aria-labelledby={`${uid}-s2`}>
-                  <div className="oy-flow-section__head">
-                    <h3 id={`${uid}-s2`} className="oy-flow-section__title">
-                      <span className="oy-flow-num">2</span> Descripción detallada de lo sucedido
-                    </h3>
+                <div className="cmp-field">
+                  <div className="cmp-field__head">
+                    <label htmlFor={descId} className="cmp-label">
+                      <span className="cmp-num" aria-hidden="true">2</span> Descripción de lo sucedido
+                    </label>
                     <span
-                      id={`${uid}-count`}
-                      className={`oy-flow-counter ${tooShort ? 'oy-flow-counter--low' : 'oy-flow-counter--ok'}`}
+                      id={countId}
+                      className="cmp-counter"
+                      data-ok={!tooShort ? '' : undefined}
                     >
-                      {description.length}/{MIN_CHARS} car. mín.
+                      {description.trim().length}/{MIN_CHARS} caracteres mínimo
                     </span>
                   </div>
-                  <div className="oy-flow-field">
-                    <textarea
-                      className="input-base"
-                      rows={4}
-                      value={description}
-                      onChange={e => setDescription(e.target.value)}
-                      placeholder="Explica detalladamente qué ocurrió (mínimo 20 caracteres)..."
-                      aria-labelledby={`${uid}-s2`}
-                      aria-describedby={`${uid}-count`}
-                      required
-                    />
-                  </div>
-                </section>
+                  <textarea
+                    ref={descRef}
+                    id={descId}
+                    className="input-base cmp-textarea"
+                    rows={4}
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                    onBlur={() => description.length > 0 && setShowErrors(true)}
+                    placeholder="Cuenta qué pasó, cuándo y dónde."
+                    aria-invalid={descError}
+                    aria-describedby={descError ? `${errorId} ${countId}` : countId}
+                    required
+                    minLength={MIN_CHARS}
+                  />
+                  {descError && (
+                    <p id={errorId} className="cmp-error" role="alert">
+                      <AlertCircle size={14} aria-hidden="true" />
+                      Escribe al menos {MIN_CHARS} caracteres para que moderación entienda el caso
+                      (faltan {MIN_CHARS - description.trim().length}).
+                    </p>
+                  )}
+                </div>
 
-                {/* Adjuntar Evidencia (Imágenes, Video o PDF, máx 5) */}
-                <section className="oy-flow-section oy-flow-section--ruled" aria-labelledby={`${uid}-s3`}>
-                  <div className="oy-flow-section__head">
-                    <h3 id={`${uid}-s3`} className="oy-flow-section__title">
-                      <span className="oy-flow-num">3</span>
-                      <Paperclip size={16} aria-hidden="true" /> Adjuntar Evidencia ({evidenceFiles.length}/{MAX_FILES})
-                    </h3>
-                  </div>
-                  <div className="oy-flow-choices">
-                    <button
-                      type="button"
-                      disabled={filesFull}
-                      onClick={() => handleSimulateAddAttachment('image')}
-                      className="oy-flow-link"
-                      title="Adjuntar imagen"
-                    >
-                      <ImageIcon size={14} aria-hidden="true" /> + Foto
+                <fieldset className="cmp-field">
+                  <legend className="cmp-label">
+                    <span className="cmp-num" aria-hidden="true">3</span>
+                    Evidencia ({evidenceFiles.length}/{MAX_FILES}, opcional)
+                  </legend>
+                  <div className="cmp-choices">
+                    <button type="button" disabled={filesFull} onClick={() => handleSimulateAddAttachment('image')} className="oy-chip cmp-chip">
+                      <ImageIcon size={14} aria-hidden="true" /> Foto
                     </button>
-                    <button
-                      type="button"
-                      disabled={filesFull}
-                      onClick={() => handleSimulateAddAttachment('video')}
-                      className="oy-flow-link"
-                      title="Adjuntar video"
-                    >
-                      <Film size={14} aria-hidden="true" /> + Video
+                    <button type="button" disabled={filesFull} onClick={() => handleSimulateAddAttachment('video')} className="oy-chip cmp-chip">
+                      <Film size={14} aria-hidden="true" /> Video
                     </button>
-                    <button
-                      type="button"
-                      disabled={filesFull}
-                      onClick={() => handleSimulateAddAttachment('pdf')}
-                      className="oy-flow-link"
-                      title="Adjuntar PDF o recibo"
-                    >
-                      <FileCheck size={14} aria-hidden="true" /> + PDF
+                    <button type="button" disabled={filesFull} onClick={() => handleSimulateAddAttachment('pdf')} className="oy-chip cmp-chip">
+                      <FileCheck size={14} aria-hidden="true" /> PDF o recibo
                     </button>
                   </div>
+                  {filesFull && <p className="cmp-hint">Llegaste al máximo de {MAX_FILES} archivos.</p>}
 
-                  {/* Fichas de archivos adjuntos */}
                   {evidenceFiles.length > 0 && (
-                    <ul className="oy-flow-choices oy-flow-plain-list" aria-label="Evidencias adjuntas">
+                    <ul className="cmp-files" aria-label="Evidencias adjuntas">
                       {evidenceFiles.map((file, idx) => (
-                        <li key={idx} className="oy-flow-token">
-                          {file.type.includes('image') && <ImageIcon size={14} aria-hidden="true" />}
-                          {file.type.includes('video') && <Film size={14} aria-hidden="true" />}
-                          {file.type.includes('pdf') && <FileCheck size={14} aria-hidden="true" />}
-                          <span className="oy-flow-token__label">{file.name}</span>
+                        <li key={idx} className="cmp-file">
+                          {file.type.includes('image') && <ImageIcon size={16} aria-hidden="true" />}
+                          {file.type.includes('video') && <Film size={16} aria-hidden="true" />}
+                          {file.type.includes('pdf') && <FileCheck size={16} aria-hidden="true" />}
+                          <span className="cmp-file__name">{file.name}</span>
+                          <span className="cmp-file__size">{file.size}</span>
                           <button
                             type="button"
-                            className="oy-flow-token__remove"
+                            className="oy-icon-btn cmp-file__remove"
                             onClick={() => removeAttachment(idx)}
                             aria-label={`Quitar ${file.name}`}
                           >
-                            <X size={14} aria-hidden="true" />
+                            <X size={16} aria-hidden="true" />
                           </button>
                         </li>
                       ))}
                     </ul>
                   )}
-                </section>
+                </fieldset>
 
-                <div className="oy-flow-actions">
+                <div className="cmp-actions">
                   <button type="button" onClick={onClose} className="btn btn-secondary">
                     Cancelar
                   </button>
-                  <button
-                    type="submit"
-                    disabled={tooShort}
-                    className="btn btn-danger oy-flow-cta"
-                  >
-                    Radicar Queja Formal
+                  <button type="submit" className="btn cmp-submit">
+                    <Paperclip size={16} aria-hidden="true" /> Radicar queja formal
                   </button>
                 </div>
               </form>
-            </div>
+            </>
           ) : (
-            /* Pantalla de Éxito con Caso Único */
-            <div className="oy-flow-success" role="status">
-              <div className="oy-flow-success__mascot">
-                <MascotAvatar size="md" />
-                <span className="oy-flow-success__check" aria-hidden="true">
-                  <CheckCircle2 size={24} />
-                </span>
-              </div>
-
-              <h3 className="oy-flow-success__title oy-display">Ticket Radicado Correctamente</h3>
-              <p className="oy-flow-success__text">
-                El equipo de moderación ha recibido el reporte y revisará las evidencias en un plazo máximo de 24 horas.
+            <div className="cmp-success" role="status">
+              <MascotAvatar size="md" expression="alegre" />
+              <h3 className="cmp-success__title">Recibimos tu reporte</h3>
+              <p className="cmp-success__text">
+                El equipo de moderación revisará las evidencias en un plazo máximo de 24 horas.
               </p>
 
-              <div className="oy-flow-case">
-                <span className="oy-label">Número de caso único</span>
-                <span className="oy-flow-case__number">{generatedCase}</span>
-                <span className="oy-flow-case__meta">Guardado en almacenamiento local (oy-complaints)</span>
+              <div className="cmp-case">
+                <span className="cmp-kicker">Número de caso</span>
+                <span className="cmp-case__number">{generatedCase}</span>
               </div>
 
-              <button type="button" onClick={onClose} className="btn btn-primary oy-flow-cta">
-                Entendido, volver a la aplicación
+              <button type="button" onClick={onClose} className="btn btn-primary">
+                Entendido, volver
               </button>
             </div>
           )}

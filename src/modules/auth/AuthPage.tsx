@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import type { User, UserRole } from '../../types';
 import {
-  Eye, EyeOff, ArrowRight, ArrowLeft, Zap, Wrench, Star, ShieldCheck,
-  Mail, Smartphone, KeyRound, CheckCircle2,
+  AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Eye, EyeOff, KeyRound, Mail, Smartphone, Zap,
 } from 'lucide-react';
-import './AuthPage.css';
 import { BRAND_ASSETS } from '../../utils/assets';
+import { LiquidField } from '../landing/LiquidField';
+import { LangSwitch } from '../landing/LangSwitch';
+import './AuthPage.css';
 
 interface AuthPageProps {
   onAuthSuccess: () => void;
@@ -15,15 +17,27 @@ interface AuthPageProps {
 
 type AuthMode = 'login' | 'register' | 'verify' | 'recover' | 'recover-sent' | 'reset';
 type VerifyChannel = 'email' | 'sms';
+type FieldId = 'name' | 'email' | 'password' | 'phone' | 'code' | 'recover' | 'newPassword' | 'confirmPassword';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^\+?[\d\s-]{7,15}$/;
+
+/** Campos que valida cada pantalla, en el orden en que aparecen. */
+const FIELDS_BY_MODE: Record<AuthMode, FieldId[]> = {
+  login: ['email', 'password'],
+  register: ['name', 'email', 'password', 'phone'],
+  verify: ['code'],
+  recover: ['recover'],
+  'recover-sent': [],
+  reset: ['newPassword', 'confirmPassword'],
+};
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const makeCode = () => String(Math.floor(100000 + Math.random() * 900000));
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialRole = 'seeker' }) => {
   const { login, register, findAccount, resetPassword } = useAuth();
+  const { t } = useLanguage();
 
   const [mode, setMode] = useState<AuthMode>('login');
   const [selectedRole, setSelectedRole] = useState<UserRole>(initialRole);
@@ -33,14 +47,17 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialRole =
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [formError, setFormError] = useState('');
+  const [notice, setNotice] = useState('');
   const [mascotPose, setMascotPose] = useState<'wave' | 'float' | 'work'>('float');
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldId, string>>>({});
+  const [touched, setTouched] = useState<Partial<Record<FieldId, boolean>>>({});
+  const formRef = useRef<HTMLDivElement>(null);
 
   // OFY-40 · verificación por código (correo o SMS)
   const [channel, setChannel] = useState<VerifyChannel>('email');
   const [sentCode, setSentCode] = useState('');
   const [code, setCode] = useState('');
-  const [notice, setNotice] = useState('');
 
   // OFY-75 · recuperación de cuenta
   const [recoverTarget, setRecoverTarget] = useState('');
@@ -48,18 +65,71 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialRole =
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const mascotImg =
-    selectedRole === 'provider'
-      ? BRAND_ASSETS.manyElectricista
-      : BRAND_ASSETS.manyWave;
+  const values: Record<FieldId, string> = {
+    name, email, password, phone, code, recover: recoverTarget, newPassword, confirmPassword,
+  };
 
-  const handleFocus = () => setMascotPose('wave');
-  const handleBlur  = () => setMascotPose('float');
+  /** Clave de i18n del error de un campo en la pantalla actual, o null si es válido. */
+  const validate = (field: FieldId, v: Record<FieldId, string> = values): string | null => {
+    switch (field) {
+      case 'name': return v.name.trim() ? null : 'auth.err.name';
+      case 'email':
+        if (!v.email.trim()) return 'auth.err.emailRequired';
+        return EMAIL_RE.test(v.email.trim()) ? null : 'auth.err.email';
+      case 'password':
+        if (!v.password) return 'auth.err.passwordRequired';
+        return mode === 'register' && v.password.length < 6 ? 'auth.err.password' : null;
+      case 'phone': return channel !== 'sms' || PHONE_RE.test(v.phone.trim()) ? null : 'auth.err.phone';
+      case 'code': return v.code.trim().length === 6 ? null : 'auth.err.code';
+      case 'recover': return EMAIL_RE.test(v.recover.trim()) || PHONE_RE.test(v.recover.trim()) ? null : 'auth.err.recover';
+      case 'newPassword': return v.newPassword.length >= 6 ? null : 'auth.err.password';
+      case 'confirmPassword': return v.confirmPassword && v.confirmPassword === v.newPassword ? null : 'auth.err.confirm';
+    }
+  };
+
+  const setValue = (field: FieldId, value: string) => {
+    const setters: Record<FieldId, (s: string) => void> = {
+      name: setName, email: setEmail, password: setPassword, phone: setPhone, code: setCode,
+      recover: setRecoverTarget, newPassword: setNewPassword, confirmPassword: setConfirmPassword,
+    };
+    setters[field](value);
+    if (touched[field]) {
+      const key = validate(field, { ...values, [field]: value });
+      setFieldErrors(prev => ({ ...prev, [field]: key ?? undefined }));
+    }
+  };
+
+  const onBlurField = (field: FieldId) => {
+    setMascotPose('float');
+    setTouched(prev => ({ ...prev, [field]: true }));
+    const key = validate(field);
+    setFieldErrors(prev => ({ ...prev, [field]: key ?? undefined }));
+  };
+
+  /** Valida la pantalla; si hay errores los muestra y enfoca el primer campo inválido. */
+  const validateAll = (): boolean => {
+    const fields = FIELDS_BY_MODE[mode].filter(f => f !== 'phone' || channel === 'sms');
+    const next: Partial<Record<FieldId, string>> = {};
+    fields.forEach(f => {
+      const key = validate(f);
+      if (key) next[f] = key;
+    });
+    setFieldErrors(next);
+    setTouched(Object.fromEntries(fields.map(f => [f, true])));
+    const first = fields.find(f => next[f]);
+    if (first) {
+      formRef.current?.querySelector<HTMLElement>(`#auth-${first}`)?.focus();
+      return false;
+    }
+    return true;
+  };
 
   const goTo = (next: AuthMode) => {
     setMode(next);
-    setError('');
+    setFormError('');
     setNotice('');
+    setFieldErrors({});
+    setTouched({});
     setMascotPose('float');
   };
 
@@ -67,45 +137,25 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialRole =
     setLoading(true);
     setMascotPose('work');
     await wait(700);
-    const fresh = makeCode();
-    setSentCode(fresh);
+    setSentCode(makeCode());
     setCode('');
     setLoading(false);
     setMascotPose('float');
-    return fresh;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    if (!email.trim() || !password.trim()) {
-      setError('Completa todos los campos.');
-      return;
-    }
-    if (mode === 'register' && !name.trim()) {
-      setError('Ingresa tu nombre completo.');
-      return;
-    }
+    setFormError('');
+    setNotice('');
+    if (!validateAll()) return;
 
     if (mode === 'register') {
-      if (!EMAIL_RE.test(email.trim())) {
-        setError('Ingresa un correo válido.');
-        return;
-      }
-      if (password.length < 6) {
-        setError('La contraseña debe tener mínimo 6 caracteres.');
-        return;
-      }
-      if (channel === 'sms' && !PHONE_RE.test(phone.trim())) {
-        setError('Ingresa un número de celular válido para recibir el código.');
-        return;
-      }
       if (findAccount(email)) {
-        setError('Ya existe una cuenta con ese correo. Inicia sesión o recupera tu contraseña.');
+        setFormError(t('auth.err.exists'));
         return;
       }
       await sendCode();
-      setMode('verify');
+      goTo('verify');
       return;
     }
 
@@ -116,15 +166,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialRole =
       if (ok) {
         onAuthSuccess();
       } else {
-        setError(
-          findAccount(email)
-            ? 'La contraseña no coincide con esta cuenta. Revísala o usa “¿Olvidaste tu contraseña?”.'
-            : 'No encontramos una cuenta con ese correo. Revisa que esté bien escrito o regístrate gratis.'
-        );
+        setFormError(t(findAccount(email) ? 'auth.err.wrongPassword' : 'auth.err.noAccount'));
         setMascotPose('float');
       }
     } catch {
-      setError('Ocurrió un error. Intenta de nuevo.');
+      setFormError(t('auth.err.generic'));
       setMascotPose('float');
     } finally {
       setLoading(false);
@@ -133,14 +179,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialRole =
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setFormError('');
     setNotice('');
-    if (code.trim().length !== 6) {
-      setError('El código tiene 6 dígitos.');
-      return;
-    }
+    if (!validateAll()) return;
     if (code.trim() !== sentCode) {
-      setError('El código no coincide. Revisa e intenta de nuevo.');
+      setFieldErrors({ code: 'auth.err.codeMismatch' });
+      formRef.current?.querySelector<HTMLElement>('#auth-code')?.focus();
       return;
     }
     setLoading(true);
@@ -152,11 +196,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialRole =
       if (ok) {
         onAuthSuccess();
       } else {
-        setError('Ya existe una cuenta con ese correo. Vuelve e inicia sesión o recupera tu contraseña.');
+        setFormError(t('auth.err.exists'));
         setMascotPose('float');
       }
     } catch {
-      setError('Ocurrió un error. Intenta de nuevo.');
+      setFormError(t('auth.err.generic'));
       setMascotPose('float');
     } finally {
       setLoading(false);
@@ -164,26 +208,22 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialRole =
   };
 
   const handleResend = async () => {
-    setError('');
+    setFormError('');
+    setFieldErrors({});
     await sendCode();
-    setNotice('Te enviamos un código nuevo.');
+    setNotice(t('auth.code.resent'));
   };
 
   const handleRecover = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    const target = recoverTarget.trim();
-    if (!EMAIL_RE.test(target) && !PHONE_RE.test(target)) {
-      setError('Escribe el correo o celular verificado de tu cuenta.');
-      return;
-    }
+    setFormError('');
+    if (!validateAll()) return;
     setLoading(true);
     setMascotPose('work');
     await wait(800);
-    setRecoverAccount(findAccount(target));
+    setRecoverAccount(findAccount(recoverTarget.trim()));
     setLoading(false);
-    setMascotPose('float');
-    setMode('recover-sent');
+    goTo('recover-sent');
   };
 
   const openResetLink = () => {
@@ -195,19 +235,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialRole =
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setFormError('');
     if (!recoverAccount) {
-      setError('El enlace ya no es válido. Solicita uno nuevo.');
+      setFormError(t('auth.err.linkInvalid'));
       return;
     }
-    if (newPassword.length < 6) {
-      setError('La contraseña nueva debe tener mínimo 6 caracteres.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError('Las contraseñas no coinciden. Escríbela igual en ambos campos.');
-      return;
-    }
+    if (!validateAll()) return;
     setLoading(true);
     setMascotPose('work');
     await wait(600);
@@ -215,333 +248,290 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialRole =
     setLoading(false);
     if (!ok) {
       setMascotPose('float');
-      setError('No pudimos actualizar tu contraseña. Solicita un enlace nuevo.');
+      setFormError(t('auth.err.resetFailed'));
       return;
     }
     goTo('login');
     setEmail(recoverAccount.email);
     setPassword('');
     setShowPass(false);
-    setNotice('Listo, tu contraseña quedó actualizada. Inicia sesión con la nueva.');
+    setNotice(t('auth.reset.done'));
+  };
+
+  const fillDemo = () => {
+    setEmail('juan.perez@correo.com');
+    setPassword('demo123');
+    setFormError('');
+    setFieldErrors({});
+    setTouched({});
+    setNotice(t('auth.demo.filled'));
+    setMascotPose('wave');
   };
 
   const verifyDestination = channel === 'sms' ? phone.trim() : email.trim();
   const roleClass = selectedRole === 'provider' ? 'provider' : 'seeker';
 
-  const headings: Record<AuthMode, { title: string; sub: string }> = {
-    login: { title: 'Bienvenido de nuevo', sub: 'Ingresa con tu cuenta de OficioYa' },
-    register: { title: 'Crear cuenta', sub: 'Únete a miles de usuarios en Bogotá' },
-    verify: { title: 'Verifica tu cuenta', sub: `Escribe el código de 6 dígitos que enviamos a ${verifyDestination}` },
-    recover: { title: 'Recuperar cuenta', sub: 'Te enviaremos un enlace para restablecer tu contraseña' },
-    'recover-sent': { title: 'Revisa tu bandeja', sub: 'El enlace de recuperación ya va en camino' },
-    reset: { title: 'Nueva contraseña', sub: recoverAccount ? `Crea una contraseña nueva para ${recoverAccount.email}` : 'Crea una contraseña nueva para tu cuenta' },
+  const headings: Record<AuthMode, { eyebrow: string; title: string; sub: string }> = {
+    login: { eyebrow: t('auth.eyebrow.login'), title: t('auth.title.login'), sub: t('auth.sub.login') },
+    register: { eyebrow: t('auth.eyebrow.register'), title: t('auth.title.register'), sub: t('auth.sub.register') },
+    verify: { eyebrow: t('auth.eyebrow.verify'), title: t('auth.title.verify'), sub: t('auth.sub.verify', { dest: verifyDestination }) },
+    recover: { eyebrow: t('auth.eyebrow.recover'), title: t('auth.title.recover'), sub: t('auth.sub.recover') },
+    'recover-sent': { eyebrow: t('auth.eyebrow.recover'), title: t('auth.title.recoverSent'), sub: t('auth.sub.recoverSent') },
+    reset: {
+      eyebrow: t('auth.eyebrow.recover'),
+      title: t('auth.title.reset'),
+      sub: recoverAccount ? t('auth.sub.reset', { email: recoverAccount.email }) : t('auth.sub.resetGeneric'),
+    },
   };
 
-  const posterFoot =
-    mode === 'register' && selectedRole === 'provider'
-      ? 'Registra tu perfil y empieza a recibir clientes en Bogotá.'
-      : 'Encuentra al profesional ideal en tu localidad, verificado y con reseñas reales.';
+  const posterFoot = mode === 'register' && selectedRole === 'provider' ? t('auth.poster.provider') : t('auth.poster.seeker');
+  const mascotImg = selectedRole === 'provider' ? BRAND_ASSETS.manyElectricista : BRAND_ASSETS.manyWave;
+
+  /** Atributos comunes de un input validado: id, aria-invalid/aria-describedby y eventos. */
+  const inputProps = (field: FieldId) => ({
+    id: `auth-${field}`,
+    value: values[field],
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => setValue(field, e.target.value),
+    onFocus: () => setMascotPose('wave'),
+    onBlur: () => onBlurField(field),
+    'aria-invalid': fieldErrors[field] ? true : undefined,
+    'aria-describedby': fieldErrors[field] ? `auth-${field}-err` : undefined,
+  });
+
+  const fieldError = (field: FieldId) => fieldErrors[field] && (
+    <p id={`auth-${field}-err`} className="auth-field-error">
+      <AlertTriangle size={14} aria-hidden="true" /> {t(fieldErrors[field] as string)}
+    </p>
+  );
+
+  const passToggle = (
+    <button
+      type="button"
+      className="auth-pass-toggle"
+      onClick={() => setShowPass(s => !s)}
+      aria-label={showPass ? t('auth.password.hide') : t('auth.password.show')}
+      aria-pressed={showPass}
+    >
+      {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+    </button>
+  );
+
+  const spinner = <span className="auth-spinner" role="status" aria-label={t('auth.loading')} />;
+  const messages = (
+    <>
+      {formError && <p className="auth-alert" role="alert"><AlertTriangle size={16} aria-hidden="true" /> {formError}</p>}
+      {notice && <p className="auth-notice" role="status"><CheckCircle2 size={16} aria-hidden="true" /> {notice}</p>}
+    </>
+  );
 
   return (
-    <div className="auth-root">
-      <div className={`auth-card auth-card--${roleClass}`}>
-        {/* ── Póster: marca, Many y stickers ── */}
-        <aside className="auth-poster" aria-label="OficioYa">
+    <div className={`auth-root auth-root--${roleClass}`}>
+      <LiquidField className="auth-liquid" />
+
+      <div className="auth-shell">
+        <aside className="auth-aside">
           <div className="auth-brand">
-            <img src={BRAND_ASSETS.logo} alt="" className="auth-brand-logo" />
-            <span className="auth-brand-slogan">
-              El talento de tu zona a un click de distancia.
-            </span>
+            <img src={BRAND_ASSETS.logo} alt="" className="auth-brand__logo" width={40} height={40} />
+            <span className="auth-brand__word">Oficio<b>Ya</b></span>
           </div>
-
-          <p className="oy-display auth-wordmark" aria-label="OficioYa">
-            <span className="auth-wordmark-oficio">Oficio</span>
-            <span className="auth-wordmark-ya">Ya</span>
+          <p className="auth-aside__title" aria-hidden="true">
+            <span>{t('auth.poster.line1')}</span>
+            <span>{t('auth.poster.line2')}</span>
+            <span>{t('auth.poster.line3')}</span>
           </p>
-
-          <div className="auth-mascot-stage">
-            <span className="oy-sticker oy-sticker--amarillo auth-sticker auth-sticker--a" aria-hidden="true">
-              <Wrench size={24} />
-            </span>
-            <span className="oy-sticker oy-sticker--esmeralda auth-sticker auth-sticker--b" aria-hidden="true">
-              <ShieldCheck size={24} />
-            </span>
-            <span className="oy-sticker oy-sticker--blanco oy-sticker--pill auth-sticker auth-sticker--c" aria-hidden="true">
-              <Star size={14} /> 4,9
-            </span>
-            <img
-              src={mascotImg}
-              alt="Many, la mascota de OficioYa"
-              className={`auth-mascot-img auth-mascot--${mascotPose}`}
-            />
-          </div>
-
-          <p className="auth-poster-foot">{posterFoot}</p>
+          <p className="auth-aside__foot">{posterFoot}</p>
+          <img
+            src={mascotImg}
+            alt={t('auth.manyAlt')}
+            className={`auth-many auth-many--${mascotPose}`}
+            width={720}
+            height={806}
+          />
         </aside>
 
-        {/* ── Formulario ── */}
-        <section className="auth-panel" aria-labelledby="auth-title">
-          <div className="auth-form-wrap">
-            <header className="auth-form-header">
-              <span className="oy-eyebrow auth-eyebrow">
-                {mode === 'login' && 'Acceso'}
-                {mode === 'register' && 'Registro'}
-                {mode === 'verify' && 'Paso 2 de 2'}
-                {(mode === 'recover' || mode === 'recover-sent' || mode === 'reset') && 'Recuperar acceso'}
-              </span>
-              <h1 id="auth-title" className="oy-display auth-form-title">{headings[mode].title}</h1>
-              <p className="auth-form-sub">{headings[mode].sub}</p>
-            </header>
+        <section className="auth-panel glass-3" aria-labelledby="auth-title">
+          <div className="auth-panel__top">
+            <span className="auth-eyebrow">{headings[mode].eyebrow}</span>
+            <LangSwitch />
+          </div>
+          <h1 id="auth-title" className="auth-title">{headings[mode].title}</h1>
+          <p className="auth-sub">{headings[mode].sub}</p>
 
+          <div ref={formRef} className="auth-body">
             {(mode === 'login' || mode === 'register') && (
               <>
-                {/* Selector de rol inicial (OFY-55) */}
                 {mode === 'register' && (
-                  <div className="auth-role" role="radiogroup" aria-label="¿Cómo quieres usar OficioYa?">
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={selectedRole === 'seeker'}
-                      onClick={() => setSelectedRole('seeker')}
-                      className="auth-role-btn auth-role-btn--seeker"
-                    >
-                      Busco servicios
-                    </button>
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={selectedRole === 'provider'}
-                      onClick={() => setSelectedRole('provider')}
-                      className="auth-role-btn auth-role-btn--provider"
-                    >
-                      Ofrezco mis servicios
-                    </button>
-                  </div>
+                  <fieldset className="auth-role">
+                    <legend className="auth-label">{t('auth.role.label')}</legend>
+                    <div className="auth-seg">
+                      {(['seeker', 'provider'] as const).map(r => (
+                        <label key={r} className={`auth-seg__opt auth-seg__opt--${r}`}>
+                          <input
+                            type="radio"
+                            name="auth-role"
+                            value={r}
+                            checked={selectedRole === r}
+                            onChange={() => setSelectedRole(r)}
+                          />
+                          <span>{t(r === 'seeker' ? 'auth.role.seeker' : 'auth.role.provider')}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
                 )}
 
                 <form onSubmit={handleSubmit} className="auth-form" noValidate>
                   {mode === 'register' && (
                     <div className="auth-field">
-                      <label className="auth-label" htmlFor="auth-name">Nombre completo</label>
-                      <input
-                        id="auth-name"
-                        type="text"
-                        className="input-base auth-input"
-                        placeholder="Ej: Carlos Restrepo"
-                        value={name}
-                        onChange={e => setName(e.target.value)}
-                        onFocus={handleFocus}
-                        onBlur={handleBlur}
-                        autoComplete="name"
-                      />
+                      <label className="auth-label" htmlFor="auth-name">{t('auth.name')}</label>
+                      <input type="text" className="input-base auth-input" placeholder={t('auth.name.ph')} autoComplete="name" {...inputProps('name')} />
+                      {fieldError('name')}
                     </div>
                   )}
 
                   <div className="auth-field">
-                    <label className="auth-label" htmlFor="auth-email">Correo electrónico</label>
-                    <input
-                      id="auth-email"
-                      type="email"
-                      className="input-base auth-input"
-                      placeholder="tu@correo.com"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      onFocus={handleFocus}
-                      onBlur={handleBlur}
-                      autoComplete="email"
-                    />
+                    <label className="auth-label" htmlFor="auth-email">{t('auth.email')}</label>
+                    <input type="email" inputMode="email" className="input-base auth-input" placeholder={t('auth.email.ph')} autoComplete="email" {...inputProps('email')} />
+                    {fieldError('email')}
                   </div>
 
                   <div className="auth-field">
                     <div className="auth-label-row">
-                      <label className="auth-label" htmlFor="auth-pass">Contraseña</label>
+                      <label className="auth-label" htmlFor="auth-password">{t('auth.password')}</label>
                       {mode === 'login' && (
                         <button type="button" className="auth-link auth-link--small" onClick={() => { setRecoverTarget(email); goTo('recover'); }}>
-                          ¿Olvidaste tu contraseña?
+                          {t('auth.forgot')}
                         </button>
                       )}
                     </div>
                     <div className="auth-pass-wrap">
                       <input
-                        id="auth-pass"
                         type={showPass ? 'text' : 'password'}
                         className="input-base auth-input"
-                        placeholder="Mínimo 6 caracteres"
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        onFocus={handleFocus}
-                        onBlur={handleBlur}
+                        placeholder={t('auth.password.ph')}
                         autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                        {...inputProps('password')}
                       />
-                      <button
-                        type="button"
-                        className="auth-pass-toggle"
-                        onClick={() => setShowPass(s => !s)}
-                        aria-label={showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                        aria-pressed={showPass}
-                      >
-                        {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
+                      {passToggle}
                     </div>
+                    {fieldError('password')}
                   </div>
 
-                  {/* Canal de verificación (OFY-40) */}
                   {mode === 'register' && (
                     <fieldset className="auth-field auth-fieldset">
-                      <legend className="auth-label">Verificar con</legend>
+                      <legend className="auth-label">{t('auth.channel')}</legend>
                       <div className="auth-channel">
-                        <button
-                          type="button"
-                          className="oy-chip"
-                          aria-pressed={channel === 'email'}
-                          onClick={() => setChannel('email')}
-                        >
-                          <Mail size={15} /> Correo
+                        <button type="button" className="oy-chip auth-chip" aria-pressed={channel === 'email'} onClick={() => setChannel('email')}>
+                          <Mail size={15} aria-hidden="true" /> {t('auth.channel.email')}
                         </button>
-                        <button
-                          type="button"
-                          className="oy-chip"
-                          aria-pressed={channel === 'sms'}
-                          onClick={() => setChannel('sms')}
-                        >
-                          <Smartphone size={15} /> SMS
+                        <button type="button" className="oy-chip auth-chip" aria-pressed={channel === 'sms'} onClick={() => setChannel('sms')}>
+                          <Smartphone size={15} aria-hidden="true" /> {t('auth.channel.sms')}
                         </button>
                       </div>
                       {channel === 'sms' && (
-                        <>
-                          <label className="auth-label auth-label--sub" htmlFor="auth-phone">Celular</label>
-                          <input
-                            id="auth-phone"
-                            type="tel"
-                            inputMode="tel"
-                            className="input-base auth-input"
-                            placeholder="+57 300 000 0000"
-                            value={phone}
-                            onChange={e => setPhone(e.target.value)}
-                            onFocus={handleFocus}
-                            onBlur={handleBlur}
-                            autoComplete="tel"
-                          />
-                        </>
+                        <div className="auth-field">
+                          <label className="auth-label auth-label--sub" htmlFor="auth-phone">{t('auth.phone')}</label>
+                          <input type="tel" inputMode="tel" className="input-base auth-input" placeholder={t('auth.phone.ph')} autoComplete="tel" {...inputProps('phone')} />
+                          {fieldError('phone')}
+                        </div>
                       )}
                     </fieldset>
                   )}
 
-                  {error && <p className="auth-error" role="alert">{error}</p>}
-                  {notice && <p className="auth-notice" role="status">{notice}</p>}
+                  {messages}
 
-                  <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
-                    {loading ? (
-                      <span className="auth-spinner" aria-label="Cargando" />
-                    ) : (
+                  <button type="submit" className="auth-submit" disabled={loading}>
+                    {loading ? spinner : (
                       <>
-                        {mode === 'login' ? 'Iniciar sesión' : 'Crear mi cuenta'}
-                        <ArrowRight size={16} />
+                        <span>{mode === 'login' ? t('auth.submit.login') : t('auth.submit.register')}</span>
+                        <span className="auth-submit__orb" aria-hidden="true"><ArrowRight size={18} /></span>
                       </>
                     )}
                   </button>
 
-                  {/* Demo rápido */}
-                  <button
-                    type="button"
-                    className="auth-demo-btn"
-                    onClick={() => { setEmail('juan.perez@correo.com'); setPassword('demo123'); setError(''); }}
-                  >
-                    <Zap size={14} /> Usar cuenta demo
-                  </button>
+                  {mode === 'login' && (
+                    <button type="button" className="auth-demo" onClick={fillDemo}>
+                      <Zap size={16} aria-hidden="true" /> {t('auth.demo')}
+                    </button>
+                  )}
                 </form>
 
                 <p className="auth-switch">
-                  {mode === 'login' ? (
-                    <>¿No tienes cuenta?{' '}
-                      <button type="button" className="auth-link" onClick={() => goTo('register')}>
-                        Regístrate gratis
-                      </button>
-                    </>
-                  ) : (
-                    <>¿Ya tienes cuenta?{' '}
-                      <button type="button" className="auth-link" onClick={() => goTo('login')}>
-                        Inicia sesión
-                      </button>
-                    </>
-                  )}
+                  {mode === 'login' ? t('auth.switch.toRegister') : t('auth.switch.toLogin')}{' '}
+                  <button type="button" className="auth-link" onClick={() => goTo(mode === 'login' ? 'register' : 'login')}>
+                    {mode === 'login' ? t('auth.switch.register') : t('auth.switch.login')}
+                  </button>
                 </p>
               </>
             )}
 
-            {/* ── Verificación por código (OFY-40) ── */}
             {mode === 'verify' && (
               <form onSubmit={handleVerify} className="auth-form" noValidate>
                 <div className="auth-code-note">
-                  {channel === 'sms' ? <Smartphone size={18} /> : <Mail size={18} />}
-                  <span>
-                    Modo demostración: tu código es <strong>{sentCode}</strong>
-                  </span>
+                  {channel === 'sms' ? <Smartphone size={18} aria-hidden="true" /> : <Mail size={18} aria-hidden="true" />}
+                  <span>{t('auth.code.demo')} <strong>{sentCode}</strong></span>
                 </div>
 
                 <div className="auth-field">
-                  <label className="auth-label" htmlFor="auth-code">Código de verificación</label>
+                  <label className="auth-label" htmlFor="auth-code">{t('auth.code')}</label>
                   <input
-                    id="auth-code"
                     type="text"
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={6}
                     className="input-base auth-input auth-code-input"
                     placeholder="000000"
-                    value={code}
-                    onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    onFocus={handleFocus}
-                    onBlur={handleBlur}
                     autoComplete="one-time-code"
                     autoFocus
+                    {...inputProps('code')}
+                    onChange={e => setValue('code', e.target.value.replace(/\D/g, '').slice(0, 6))}
                   />
+                  {fieldError('code')}
                 </div>
 
-                {error && <p className="auth-error" role="alert">{error}</p>}
-                {notice && <p className="auth-notice" role="status">{notice}</p>}
+                {messages}
 
-                <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
-                  {loading ? <span className="auth-spinner" aria-label="Cargando" /> : <>Verificar y crear cuenta <ArrowRight size={16} /></>}
+                <button type="submit" className="auth-submit" disabled={loading}>
+                  {loading ? spinner : (
+                    <>
+                      <span>{t('auth.code.submit')}</span>
+                      <span className="auth-submit__orb" aria-hidden="true"><ArrowRight size={18} /></span>
+                    </>
+                  )}
                 </button>
 
                 <div className="auth-row">
                   <button type="button" className="auth-link" onClick={() => goTo('register')}>
-                    <ArrowLeft size={14} /> Cambiar datos
+                    <ArrowLeft size={14} aria-hidden="true" /> {t('auth.code.change')}
                   </button>
                   <button type="button" className="auth-link" onClick={handleResend} disabled={loading}>
-                    Reenviar código
+                    {t('auth.code.resend')}
                   </button>
                 </div>
               </form>
             )}
 
-            {/* ── Recuperar cuenta (OFY-75) ── */}
             {mode === 'recover' && (
               <form onSubmit={handleRecover} className="auth-form" noValidate>
                 <div className="auth-field">
-                  <label className="auth-label" htmlFor="auth-recover">Correo o celular verificado</label>
-                  <input
-                    id="auth-recover"
-                    type="text"
-                    className="input-base auth-input"
-                    placeholder="tu@correo.com o +57 300 000 0000"
-                    value={recoverTarget}
-                    onChange={e => setRecoverTarget(e.target.value)}
-                    onFocus={handleFocus}
-                    onBlur={handleBlur}
-                    autoComplete="email"
-                  />
+                  <label className="auth-label" htmlFor="auth-recover">{t('auth.recover.target')}</label>
+                  <input type="text" className="input-base auth-input" placeholder={t('auth.recover.ph')} autoComplete="email" {...inputProps('recover')} />
+                  {fieldError('recover')}
                 </div>
 
-                {error && <p className="auth-error" role="alert">{error}</p>}
+                {messages}
 
-                <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
-                  {loading ? <span className="auth-spinner" aria-label="Cargando" /> : <>Enviar enlace <KeyRound size={16} /></>}
+                <button type="submit" className="auth-submit" disabled={loading}>
+                  {loading ? spinner : (
+                    <>
+                      <span>{t('auth.recover.submit')}</span>
+                      <span className="auth-submit__orb" aria-hidden="true"><KeyRound size={18} /></span>
+                    </>
+                  )}
                 </button>
 
                 <button type="button" className="auth-link auth-back" onClick={() => goTo('login')}>
-                  <ArrowLeft size={14} /> Volver a iniciar sesión
+                  <ArrowLeft size={14} aria-hidden="true" /> {t('auth.back')}
                 </button>
               </form>
             )}
@@ -549,98 +539,86 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialRole =
             {mode === 'recover-sent' && (
               <div className="auth-form">
                 <div className="auth-success" role="status">
-                  <CheckCircle2 size={22} />
+                  <CheckCircle2 size={22} aria-hidden="true" />
                   <p>
-                    Si <strong>{recoverTarget.trim()}</strong> está registrado, recibirás un enlace
-                    {EMAIL_RE.test(recoverTarget.trim()) ? ' en tu correo' : ' por SMS'} para crear una contraseña nueva.
-                    Expira en 30 minutos.
+                    {t('auth.recover.sent', {
+                      target: recoverTarget.trim(),
+                      via: t(EMAIL_RE.test(recoverTarget.trim()) ? 'auth.recover.viaEmail' : 'auth.recover.viaSms'),
+                    })}
                   </p>
                 </div>
                 {recoverAccount ? (
-                  <div className="auth-code-note auth-demo-link">
+                  <div className="auth-code-note">
                     <Mail size={18} aria-hidden="true" />
                     <span>
-                      Modo demostración: no enviamos mensajes reales.{' '}
+                      {t('auth.recover.demoLink')}{' '}
                       <button type="button" className="auth-link" onClick={openResetLink}>
-                        Abrir el enlace de recuperación <ArrowRight size={14} aria-hidden="true" />
+                        {t('auth.recover.open')} <ArrowRight size={14} aria-hidden="true" />
                       </button>
                     </span>
                   </div>
                 ) : (
-                  <p className="auth-code-note">
-                    Modo demostración: no hay ninguna cuenta con ese correo o celular. Revisa el dato o regístrate gratis.
-                  </p>
+                  <p className="auth-code-note">{t('auth.recover.none')}</p>
                 )}
-                <button type="button" className="btn btn-primary auth-submit" onClick={() => goTo('login')}>
-                  Volver a iniciar sesión <ArrowRight size={16} />
+                <button type="button" className="auth-submit" onClick={() => goTo('login')}>
+                  <span>{t('auth.back')}</span>
+                  <span className="auth-submit__orb" aria-hidden="true"><ArrowRight size={18} /></span>
                 </button>
                 <button type="button" className="auth-link auth-back" onClick={() => goTo('recover')}>
-                  No me llegó, intentar de nuevo
+                  {t('auth.recover.retry')}
                 </button>
               </div>
             )}
 
-            {/* ── Nueva contraseña desde el enlace (OFY-75) ── */}
             {mode === 'reset' && (
               <form onSubmit={handleReset} className="auth-form" noValidate>
                 <div className="auth-field">
-                  <label className="auth-label" htmlFor="auth-new-pass">Contraseña nueva</label>
+                  <label className="auth-label" htmlFor="auth-newPassword">{t('auth.reset.new')}</label>
                   <div className="auth-pass-wrap">
                     <input
-                      id="auth-new-pass"
                       type={showPass ? 'text' : 'password'}
                       className="input-base auth-input"
-                      placeholder="Mínimo 6 caracteres"
-                      value={newPassword}
-                      onChange={e => setNewPassword(e.target.value)}
-                      onFocus={handleFocus}
-                      onBlur={handleBlur}
+                      placeholder={t('auth.password.ph')}
                       autoComplete="new-password"
                       autoFocus
+                      {...inputProps('newPassword')}
                     />
-                    <button
-                      type="button"
-                      className="auth-pass-toggle"
-                      onClick={() => setShowPass(s => !s)}
-                      aria-label={showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                      aria-pressed={showPass}
-                    >
-                      {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
+                    {passToggle}
                   </div>
+                  {fieldError('newPassword')}
                 </div>
 
                 <div className="auth-field">
-                  <label className="auth-label" htmlFor="auth-confirm-pass">Confirma la contraseña</label>
+                  <label className="auth-label" htmlFor="auth-confirmPassword">{t('auth.reset.confirm')}</label>
                   <input
-                    id="auth-confirm-pass"
                     type={showPass ? 'text' : 'password'}
                     className="input-base auth-input"
-                    placeholder="Escríbela de nuevo"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    onFocus={handleFocus}
-                    onBlur={handleBlur}
+                    placeholder={t('auth.reset.confirm.ph')}
                     autoComplete="new-password"
+                    {...inputProps('confirmPassword')}
                   />
+                  {fieldError('confirmPassword')}
                 </div>
 
-                {error && <p className="auth-error" role="alert">{error}</p>}
+                {messages}
 
-                <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
-                  {loading ? <span className="auth-spinner" aria-label="Cargando" /> : <>Guardar contraseña <KeyRound size={16} /></>}
+                <button type="submit" className="auth-submit" disabled={loading}>
+                  {loading ? spinner : (
+                    <>
+                      <span>{t('auth.reset.submit')}</span>
+                      <span className="auth-submit__orb" aria-hidden="true"><KeyRound size={18} /></span>
+                    </>
+                  )}
                 </button>
 
                 <button type="button" className="auth-link auth-back" onClick={() => goTo('login')}>
-                  <ArrowLeft size={14} /> Volver a iniciar sesión
+                  <ArrowLeft size={14} aria-hidden="true" /> {t('auth.back')}
                 </button>
               </form>
             )}
-
-            <p className="auth-footer-note">
-              Proyecto DOSW · Escuela Colombiana de Ingeniería
-            </p>
           </div>
+
+          <p className="auth-footer-note">{t('auth.footer')}</p>
         </section>
       </div>
     </div>

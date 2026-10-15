@@ -1,7 +1,8 @@
 /* ============================================================
    Shredder · trituradora de tarjetas
-   Versión en CSS plano (el repo no usa Tailwind). La ranura es
-   Cacao, la sombra del arrastre es cálida y el foco usa el anillo
+   Versión en CSS plano (el repo no usa Tailwind). La ranura toma
+   el color del texto (Cacao en claro, crema en oscuro) con canto
+   de luz; la sombra del arrastre es cálida y el foco usa el anillo
    del manual.
    ============================================================ */
 
@@ -44,7 +45,7 @@
   user-select: none;
   -webkit-user-select: none;
   outline: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-card);
 }
 
 .shredder-item:focus-visible {
@@ -83,6 +84,7 @@
   height: var(--sh-slit-h);
   border-radius: var(--radius-full);
   background: var(--sh-slit);
+  box-shadow: 0 1px 0 var(--glass-edge), 0 6px 14px -6px rgba(30, 58, 138, 0.35);
   will-change: transform;
 }
 

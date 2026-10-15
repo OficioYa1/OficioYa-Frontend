@@ -5,10 +5,17 @@ import {
   ShieldAlert,
   Search,
   Paperclip,
+  AlertCircle,
+  Hourglass,
+  CheckCircle2,
+  MinusCircle,
+  PauseCircle,
+  Star,
+  type LucideIcon
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 import { useFlowModal } from '../requests/useFlowModal';
-import '../requests/Flows.css';
+import './Moderation.css';
 
 interface AdminModerationModalProps {
   workers: Worker[];
@@ -19,15 +26,18 @@ interface AdminModerationModalProps {
 }
 
 type TicketStatus = ComplaintTicket['status'];
+type Tab = 'tickets' | 'usuarios' | 'verificaciones';
 
 const STATUS_OPTIONS: TicketStatus[] = ['Abierto', 'En revisión', 'Resuelto', 'Desestimado'];
 
-const statusClass = (status: TicketStatus) => {
-  if (status === 'Resuelto') return 'oy-flow-status--resuelto';
-  if (status === 'En revisión') return 'oy-flow-status--revision';
-  if (status === 'Abierto') return 'oy-flow-status--abierto';
-  return '';
+const STATUS_TONE: Record<TicketStatus, { tone: string; icon: LucideIcon }> = {
+  Abierto: { tone: 'fuego', icon: AlertCircle },
+  'En revisión': { tone: 'marino', icon: Hourglass },
+  Resuelto: { tone: 'esmeralda', icon: CheckCircle2 },
+  Desestimado: { tone: 'gris', icon: MinusCircle }
 };
+
+const TABS: Tab[] = ['tickets', 'usuarios', 'verificaciones'];
 
 export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
   workers,
@@ -38,7 +48,7 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
   const uid = useId();
   const dialogRef = useFlowModal(onClose);
 
-  const [activeTab, setActiveTab] = useState<'tickets' | 'usuarios' | 'verificaciones'>('tickets');
+  const [activeTab, setActiveTab] = useState<Tab>('tickets');
   const [tickets, setTickets] = useState<ComplaintTicket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<ComplaintTicket | null>(null);
   const [searchWorker, setSearchWorker] = useState('');
@@ -78,7 +88,7 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
         setTickets(seedTickets);
         localStorage.setItem('oy-complaints', JSON.stringify(seedTickets));
       }
-    } catch (_e) {
+    } catch {
       setTickets([]);
     }
   }, []);
@@ -88,7 +98,9 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
     setTickets(updated);
     try {
       localStorage.setItem('oy-complaints', JSON.stringify(updated));
-    } catch (_e) {}
+    } catch {
+      /* sin almacenamiento: el cambio queda solo en memoria */
+    }
     if (selectedTicket && selectedTicket.id === ticketId) {
       setSelectedTicket({ ...selectedTicket, status: newStatus });
     }
@@ -142,129 +154,117 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
     w => w.name.toLowerCase().includes(query) || w.tradeLabel.toLowerCase().includes(query)
   );
 
+  const tabLabel: Record<Tab, string> = {
+    tickets: `Quejas y reseñas (${tickets.length})`,
+    usuarios: 'Cuentas',
+    verificaciones: `Verificaciones (${pendingVerifications})`
+  };
+
+  const onTabKey = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    e.preventDefault();
+    const dir = e.key === 'ArrowRight' ? 1 : -1;
+    const next = TABS[(TABS.indexOf(activeTab) + dir + TABS.length) % TABS.length];
+    setActiveTab(next);
+    document.getElementById(`${uid}-tab-${next}`)?.focus();
+  };
+
   return (
-    <div className="oy-modal-backdrop oy-flow-layer--top">
+    <div className="oy-modal-backdrop adm-layer" onClick={onClose}>
       <div
         ref={dialogRef}
-        className="oy-modal oy-flow oy-flow--wide"
+        className="oy-modal adm"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
+        onClick={e => e.stopPropagation()}
       >
-        {/* Encabezado del Panel de Moderación */}
-        <header className="oy-modal__head oy-flow-head oy-flow-head--gris">
-          <div className="oy-flow-head__main">
-            <span className="oy-flow-tile oy-flow-tile--marino" aria-hidden="true">
-              <ShieldAlert size={26} />
+        <header className="oy-modal__head adm-head">
+          <div className="adm-head__main">
+            <span className="adm-tile" aria-hidden="true">
+              <ShieldAlert size={24} />
             </span>
-            <div className="oy-flow-head__text">
-              <span className="oy-eyebrow oy-flow-kicker">Administración · demo</span>
-              <h2 id={titleId} className="oy-modal__title oy-display">Panel de Moderación y Auditoría</h2>
-              <p className="oy-flow-head__sub">
-                Gestión de quejas, reportes de reseñas falsas y suspensión preventiva de cuentas fraudulentas
+            <div className="adm-head__text">
+              <span className="adm-kicker">Administración · demo</span>
+              <h2 id={titleId} className="oy-modal__title adm-title">Moderación y auditoría</h2>
+              <p className="adm-sub">
+                Quejas, reportes de reseñas falsas, verificaciones y suspensión preventiva de cuentas.
               </p>
             </div>
           </div>
-          <button type="button" className="oy-icon-btn" onClick={onClose} aria-label="Cerrar">
+          <button type="button" className="oy-icon-btn" onClick={onClose} aria-label="Cerrar moderación">
             <X size={20} aria-hidden="true" />
           </button>
         </header>
 
-        <div className="oy-modal__body oy-flow-body">
-          {/* Pestañas de Moderación */}
-          <div className="oy-flow-tabs" role="tablist" aria-label="Secciones de moderación">
-            <button
-              type="button"
-              role="tab"
-              id={`${uid}-tab-tickets`}
-              aria-controls={`${uid}-panel-tickets`}
-              aria-selected={activeTab === 'tickets'}
-              data-active={activeTab === 'tickets' ? '' : undefined}
-              className="oy-chip"
-              onClick={() => setActiveTab('tickets')}
-            >
-              Tickets de Quejas y Reseñas ({tickets.length})
-            </button>
-            <button
-              type="button"
-              role="tab"
-              id={`${uid}-tab-usuarios`}
-              aria-controls={`${uid}-panel-usuarios`}
-              aria-selected={activeTab === 'usuarios'}
-              data-active={activeTab === 'usuarios' ? '' : undefined}
-              className="oy-chip"
-              onClick={() => setActiveTab('usuarios')}
-            >
-              Moderación de Cuentas
-            </button>
-            <button
-              type="button"
-              role="tab"
-              id={`${uid}-tab-verif`}
-              aria-controls={`${uid}-panel-verif`}
-              aria-selected={activeTab === 'verificaciones'}
-              data-active={activeTab === 'verificaciones' ? '' : undefined}
-              className="oy-chip"
-              onClick={() => setActiveTab('verificaciones')}
-            >
-              Verificaciones ({pendingVerifications})
-            </button>
+        <div className="oy-modal__body adm-body">
+          <div className="adm-tabs" role="tablist" aria-label="Secciones de moderación">
+            {TABS.map(tab => (
+              <button
+                key={tab}
+                type="button"
+                role="tab"
+                id={`${uid}-tab-${tab}`}
+                aria-controls={`${uid}-panel-${tab}`}
+                aria-selected={activeTab === tab}
+                tabIndex={activeTab === tab ? 0 : -1}
+                className="adm-tab"
+                onClick={() => setActiveTab(tab)}
+                onKeyDown={onTabKey}
+              >
+                {tabLabel[tab]}
+              </button>
+            ))}
           </div>
 
-          {/* Pestaña 3: Cédulas y referidos por revisar (OFY-41, OFY-42, OFY-68) */}
+          {/* Cédulas y referidos por revisar (OFY-41, OFY-42, OFY-68) */}
           {activeTab === 'verificaciones' && (
-            <div role="tabpanel" id={`${uid}-panel-verif`} aria-labelledby={`${uid}-tab-verif`}>
+            <div role="tabpanel" id={`${uid}-panel-verificaciones`} aria-labelledby={`${uid}-tab-verificaciones`} tabIndex={0}>
               {pendingVerifications === 0 ? (
-                <div className="oy-empty">
-                  <MascotAvatar size="sm" />
+                <div className="oy-empty adm-empty">
+                  <MascotAvatar size="sm" expression="alegre" />
                   <p className="oy-empty__title">Sin pendientes</p>
                   <p className="oy-empty__text">No hay cédulas ni referidos esperando revisión.</p>
                 </div>
               ) : (
-                <ul className="oy-flow-list">
+                <ul className="adm-list">
                   {pendingIdentity.map(w => (
-                    <li key={`id-${w.id}`} className="oy-flow-item">
-                      <div className="oy-flow-item__row">
-                        <div className="oy-flow-min0">
-                          <p className="oy-flow-item__title">
-                            {w.name}
-                            <span className="oy-flow-tag">Cédula</span>
-                          </p>
-                          <p className="oy-flow-item__meta">
-                            {w.identityVerification?.documentType ?? 'Documento'} {w.identityVerification?.documentNumber}
-                            {' • '}{w.completedJobsCount} trabajos completados
-                            {w.identityVerification?.documentFileUrl ? ' • con foto adjunta' : ' • sin foto adjunta'}
-                          </p>
-                        </div>
-                        <div className="oy-flow-item__actions">
-                          <button type="button" className="btn btn-secondary oy-flow-small" onClick={() => decideIdentity(w, false)}>
-                            Rechazar
-                          </button>
-                          <button type="button" className="btn oy-flow-small oy-btn-ok" onClick={() => decideIdentity(w, true)}>
-                            Aprobar
-                          </button>
-                        </div>
+                    <li key={`id-${w.id}`} className="adm-item">
+                      <div className="adm-item__main">
+                        <p className="adm-item__title">
+                          {w.name}
+                          <span className="adm-tag" data-tone="marino">Cédula</span>
+                        </p>
+                        <p className="adm-item__meta">
+                          {w.identityVerification?.documentType ?? 'Documento'} {w.identityVerification?.documentNumber}
+                          {' · '}{w.completedJobsCount} trabajos completados
+                          {w.identityVerification?.documentFileUrl ? ' · con foto adjunta' : ' · sin foto adjunta'}
+                        </p>
+                      </div>
+                      <div className="adm-item__actions">
+                        <button type="button" className="btn btn-secondary" onClick={() => decideIdentity(w, false)}>
+                          Rechazar
+                        </button>
+                        <button type="button" className="btn adm-btn-ok" onClick={() => decideIdentity(w, true)}>
+                          <CheckCircle2 size={16} aria-hidden="true" /> Aprobar
+                        </button>
                       </div>
                     </li>
                   ))}
                   {pendingReferrals.map(({ worker: w, ref, index }) => (
-                    <li key={`ref-${w.id}-${index}`} className="oy-flow-item">
-                      <div className="oy-flow-item__row">
-                        <div className="oy-flow-min0">
-                          <p className="oy-flow-item__title">
-                            {ref.name}
-                            <span className="oy-flow-tag oy-flow-tag--fuego">Referido</span>
-                          </p>
-                          <p className="oy-flow-item__meta">
-                            {ref.trade} • referido por {w.name}
-                          </p>
-                        </div>
-                        <div className="oy-flow-item__actions">
-                          <button type="button" className="btn oy-flow-small oy-btn-ok" onClick={() => approveReferral(w, index)}>
-                            Validar referido
-                          </button>
-                        </div>
+                    <li key={`ref-${w.id}-${index}`} className="adm-item">
+                      <div className="adm-item__main">
+                        <p className="adm-item__title">
+                          {ref.name}
+                          <span className="adm-tag" data-tone="fuego">Referido</span>
+                        </p>
+                        <p className="adm-item__meta">{ref.trade} · referido por {w.name}</p>
+                      </div>
+                      <div className="adm-item__actions">
+                        <button type="button" className="btn adm-btn-ok" onClick={() => approveReferral(w, index)}>
+                          <CheckCircle2 size={16} aria-hidden="true" /> Validar referido
+                        </button>
                       </div>
                     </li>
                   ))}
@@ -273,133 +273,126 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
             </div>
           )}
 
-          {/* Pestaña 1: Tickets de Quejas y Reseñas (OFY-64, OFY-73, OFY-38) */}
+          {/* Tickets de quejas y reseñas (OFY-64, OFY-73, OFY-38) */}
           {activeTab === 'tickets' && (
-            <div role="tabpanel" id={`${uid}-panel-tickets`} aria-labelledby={`${uid}-tab-tickets`}>
+            <div role="tabpanel" id={`${uid}-panel-tickets`} aria-labelledby={`${uid}-tab-tickets`} tabIndex={0}>
               {tickets.length === 0 ? (
-                <div className="oy-empty">
-                  <MascotAvatar size="sm" />
+                <div className="oy-empty adm-empty">
+                  <MascotAvatar size="sm" expression="alegre" />
                   <p className="oy-empty__title">Cola al día</p>
                   <p className="oy-empty__text">No hay reportes abiertos en la cola de moderación.</p>
                 </div>
               ) : (
-                <ul className="oy-flow-list">
-                  {tickets.map(ticket => (
-                    <li key={ticket.id} className="oy-flow-item">
-                      <div className="oy-flow-item__row">
-                        <div className="oy-flow-min0">
-                          <p className="oy-flow-item__title">
-                            Caso: {ticket.caseNumber}
-                            <span className={`oy-flow-tag ${ticket.type === 'Reseña Falsa' ? '' : 'oy-flow-tag--fuego'}`}>
+                <ul className="adm-list">
+                  {tickets.map(ticket => {
+                    const st = STATUS_TONE[ticket.status] ?? STATUS_TONE.Desestimado;
+                    const StatusIcon = st.icon;
+                    const selectId = `${uid}-st-${ticket.id}`;
+                    return (
+                      <li key={ticket.id} className="adm-item adm-item--ticket">
+                        <div className="adm-item__main">
+                          <p className="adm-item__title">
+                            <span className="adm-case">{ticket.caseNumber}</span>
+                            <span className="adm-tag" data-tone={ticket.type === 'Reseña Falsa' ? 'marino' : 'fuego'}>
                               {ticket.type}
                             </span>
                           </p>
-                          <p className="oy-flow-item__meta">
-                            Denunciado: <strong>{ticket.targetWorkerName}</strong> • {new Date(ticket.createdAt).toLocaleDateString()}
+                          <p className="adm-item__meta">
+                            Denunciado: <strong>{ticket.targetWorkerName}</strong> · {new Date(ticket.createdAt).toLocaleDateString('es-CO')}
                           </p>
+                          <p className="adm-quote">{ticket.description}</p>
+                          {ticket.evidenceFiles && ticket.evidenceFiles.length > 0 && (
+                            <p className="adm-item__meta adm-attach">
+                              <Paperclip size={13} aria-hidden="true" /> {ticket.evidenceFiles.map(f => f.name).join(', ')}
+                            </p>
+                          )}
                         </div>
 
-                        <div className="oy-flow-item__actions">
-                          <span className={`oy-flow-status ${statusClass(ticket.status)}`}>{ticket.status}</span>
+                        <div className="adm-item__side">
+                          <span className="adm-status" data-tone={st.tone}>
+                            <StatusIcon size={14} aria-hidden="true" /> {ticket.status}
+                          </span>
+                          <label htmlFor={selectId} className="adm-label">Cambiar estado</label>
                           <select
-                            className="input-base oy-flow-select"
+                            id={selectId}
+                            className="input-base adm-select"
                             value={ticket.status}
                             onChange={e => updateTicketStatus(ticket.id, e.target.value as TicketStatus)}
-                            aria-label={`Cambiar estado del caso ${ticket.caseNumber}`}
                           >
                             {STATUS_OPTIONS.map(opt => (
                               <option key={opt} value={opt}>{opt}</option>
                             ))}
                           </select>
                         </div>
-                      </div>
-
-                      <p className="oy-flow-item__quote">"{ticket.description}"</p>
-
-                      {ticket.evidenceFiles && ticket.evidenceFiles.length > 0 && (
-                        <p className="oy-flow-item__meta oy-flow-attach">
-                          <Paperclip size={12} aria-hidden="true" /> Adjuntos: {ticket.evidenceFiles.map(f => f.name).join(', ')}
-                        </p>
-                      )}
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>
           )}
 
-          {/* Pestaña 2: Moderación y Suspensión de Cuentas (OFY-39, OFY-54) */}
+          {/* Moderación y suspensión de cuentas (OFY-39, OFY-54) */}
           {activeTab === 'usuarios' && (
-            <div
-              role="tabpanel"
-              id={`${uid}-panel-usuarios`}
-              aria-labelledby={`${uid}-tab-usuarios`}
-              className="oy-flow-body"
-            >
-              <div className="oy-flow-field">
-                <div className="oy-flow-input-icon">
-                  <Search size={16} aria-hidden="true" />
-                  <input
-                    type="search"
-                    className="input-base"
-                    placeholder="Buscar profesional por nombre o oficio..."
-                    aria-label="Buscar profesional por nombre o oficio"
-                    value={searchWorker}
-                    onChange={e => setSearchWorker(e.target.value)}
-                  />
-                </div>
+            <div role="tabpanel" id={`${uid}-panel-usuarios`} aria-labelledby={`${uid}-tab-usuarios`}>
+              <label htmlFor={`${uid}-search`} className="adm-label">Buscar profesional</label>
+              <div className="adm-search">
+                <Search size={16} aria-hidden="true" />
+                <input
+                  id={`${uid}-search`}
+                  type="search"
+                  className="input-base"
+                  placeholder="Nombre u oficio"
+                  value={searchWorker}
+                  onChange={e => setSearchWorker(e.target.value)}
+                />
               </div>
 
-              <ul className="oy-flow-list">
+              <ul className="adm-list">
                 {filteredWorkers.map(w => {
                   const isPaused = !!w.isPaused;
                   const isLowRating = w.rating < 3.0;
 
                   return (
-                    <li key={w.id} className={`oy-flow-item ${isPaused ? 'oy-flow-item--paused' : ''}`}>
-                      <div className="oy-flow-item__row">
-                        <div className="oy-flow-item__who">
-                          <div
-                            className="oy-flow-avatar oy-flow-avatar--round oy-flow-avatar--sm"
-                            style={{ background: w.avatarColor }}
-                            aria-hidden="true"
-                          >
-                            {w.initials}
-                          </div>
-                          <div className="oy-flow-min0">
-                            <p className="oy-flow-item__title">
-                              {w.name}
-                              {isLowRating && (
-                                <span className="oy-flow-tag oy-flow-tag--danger">
-                                  ⭐ {w.rating} (crítico)
-                                </span>
-                              )}
-                            </p>
-                            <p className="oy-flow-item__meta">
-                              {w.tradeLabel} • {w.location.zoneName}
-                            </p>
-                          </div>
+                    <li key={w.id} className="adm-item" data-paused={isPaused ? '' : undefined}>
+                      <div className="adm-who">
+                        <span className="adm-avatar" style={{ background: w.avatarColor }} aria-hidden="true">
+                          {w.initials}
+                        </span>
+                        <div className="adm-item__main">
+                          <p className="adm-item__title">
+                            {w.name}
+                            {isLowRating && (
+                              <span className="adm-tag" data-tone="fuego">
+                                <Star size={12} aria-hidden="true" /> {w.rating} · crítico
+                              </span>
+                            )}
+                          </p>
+                          <p className="adm-item__meta">{w.tradeLabel} · {w.location.zoneName}</p>
                         </div>
+                      </div>
 
-                        <div className="oy-flow-item__actions">
-                          <span className={`oy-flow-status ${isPaused ? 'oy-flow-status--danger' : 'oy-flow-status--resuelto'}`}>
-                            {isPaused ? 'Suspendido / Pausado' : 'Activo'}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleTogglePause(w)}
-                            className={`btn oy-flow-small ${isPaused ? 'oy-btn-ok' : 'btn-danger'}`}
-                          >
-                            {isPaused ? 'Reactivar Cuenta' : 'Suspender Cuenta'}
-                          </button>
-                        </div>
+                      <div className="adm-item__actions">
+                        <span className="adm-status" data-tone={isPaused ? 'fuego' : 'esmeralda'}>
+                          {isPaused
+                            ? <><PauseCircle size={14} aria-hidden="true" /> Suspendido</>
+                            : <><CheckCircle2 size={14} aria-hidden="true" /> Activo</>}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleTogglePause(w)}
+                          className={`btn ${isPaused ? 'adm-btn-ok' : 'btn-secondary adm-btn-warn'}`}
+                          aria-label={`${isPaused ? 'Reactivar' : 'Suspender'} la cuenta de ${w.name}`}
+                        >
+                          {isPaused ? 'Reactivar' : 'Suspender'}
+                        </button>
                       </div>
                     </li>
                   );
                 })}
               </ul>
               {filteredWorkers.length === 0 && (
-                <div className="oy-flow-empty-line">Ningún profesional coincide con “{searchWorker}”.</div>
+                <p className="adm-none" role="status">Ningún profesional coincide con “{searchWorker}”.</p>
               )}
             </div>
           )}

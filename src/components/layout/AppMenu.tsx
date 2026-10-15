@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   Home,
   Search,
@@ -11,10 +11,14 @@ import {
   Bell,
   Moon,
   LogOut,
-  ShieldAlert
+  ShieldAlert,
+  Languages
 } from 'lucide-react';
 import type { UserRole } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 import { BranchedMenu, SquishSwitch, type BranchedMenuItem } from '../ui';
+import { LanguageSwitch } from './LanguageSwitch';
+import { usePopover } from './usePopover';
 import './AppMenu.css';
 
 interface AppMenuProps {
@@ -37,26 +41,7 @@ interface AppMenuProps {
 
 const ICON = 16;
 
-const exploreFor = (role: UserRole, unread: number): BranchedMenuItem => ({
-  label: 'Explorar',
-  children:
-    role === 'seeker'
-      ? [
-          { value: 'inicio_seeker', label: 'Inicio', icon: <Home size={ICON} /> },
-          { value: 'buscar', label: 'Buscar profesionales', icon: <Search size={ICON} /> },
-          { value: 'solicitudes', label: 'Mis solicitudes', icon: <FileText size={ICON} /> },
-          { value: 'mensajes', label: 'Mensajes', icon: <MessageCircle size={ICON} />, badge: unread }
-        ]
-      : [
-          { value: 'inicio_pro', label: 'Inicio', icon: <Home size={ICON} /> },
-          { value: 'oportunidades', label: 'Oportunidades', icon: <Search size={ICON} /> },
-          { value: 'clientes', label: 'Mis clientes', icon: <Briefcase size={ICON} /> },
-          { value: 'alertas', label: 'Alertas', icon: <Inbox size={ICON} /> },
-          { value: 'mensajes', label: 'Mensajes', icon: <MessageCircle size={ICON} />, badge: unread }
-        ]
-});
-
-/** Menú principal de la cuenta: rol, navegación con ramas y ajustes. */
+/** Menú de la cuenta: rol, navegación con ramas, idioma, tema y sesión. */
 export const AppMenu: React.FC<AppMenuProps> = ({
   role,
   theme,
@@ -73,26 +58,40 @@ export const AppMenu: React.FC<AppMenuProps> = ({
   onToggleTheme,
   onLogout
 }) => {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  const { t } = useLanguage();
+  const panelRef = usePopover<HTMLDivElement>(onClose);
+
+  const explore: BranchedMenuItem = {
+    label: t('app.menu.explore'),
+    children:
+      role === 'seeker'
+        ? [
+            { value: 'inicio_seeker', label: t('app.nav.home'), icon: <Home size={ICON} /> },
+            { value: 'buscar', label: t('app.nav.search'), icon: <Search size={ICON} /> },
+            { value: 'solicitudes', label: t('app.nav.requests'), icon: <FileText size={ICON} /> },
+            { value: 'mensajes', label: t('app.nav.messages'), icon: <MessageCircle size={ICON} />, badge: unreadCount }
+          ]
+        : [
+            { value: 'inicio_pro', label: t('app.nav.home'), icon: <Home size={ICON} /> },
+            { value: 'oportunidades', label: t('app.nav.opportunities'), icon: <Search size={ICON} /> },
+            { value: 'clientes', label: t('app.nav.clients'), icon: <Briefcase size={ICON} /> },
+            { value: 'alertas', label: t('app.nav.alerts'), icon: <Inbox size={ICON} /> },
+            { value: 'mensajes', label: t('app.nav.messages'), icon: <MessageCircle size={ICON} />, badge: unreadCount }
+          ]
+  };
 
   const items: BranchedMenuItem[] = [
-    exploreFor(role, unreadCount),
+    explore,
     {
-      label: 'Mi cuenta',
+      label: t('app.menu.account'),
       children: [
-        { value: 'perfil', label: 'Mi perfil', icon: <User size={ICON} /> },
+        { value: 'perfil', label: t('app.nav.profile'), icon: <User size={ICON} /> },
         ...(onOpenNotifications
-          ? [{ value: 'notificaciones', label: 'Notificaciones', icon: <Bell size={ICON} />, badge: notificationCount }]
+          ? [{ value: 'notificaciones', label: t('app.nav.notifications'), icon: <Bell size={ICON} />, badge: notificationCount }]
           : []),
-        { value: 'configuracion', label: 'Configuración', icon: <Settings size={ICON} /> },
+        { value: 'configuracion', label: t('app.menu.settings'), icon: <Settings size={ICON} /> },
         ...(onOpenAdminModeration
-          ? [{ value: 'moderacion', label: 'Moderación (demo)', icon: <ShieldAlert size={ICON} /> }]
+          ? [{ value: 'moderacion', label: t('app.menu.moderation'), icon: <ShieldAlert size={ICON} /> }]
           : [])
       ]
     }
@@ -109,9 +108,9 @@ export const AppMenu: React.FC<AppMenuProps> = ({
 
   return (
     <>
-      <div className="app-menu-backdrop" onClick={onClose} />
-      <div className="app-menu" id="app-menu">
-        <div className="app-menu-roles" role="radiogroup" aria-label="Usar OficioYa como">
+      <div className="app-menu-backdrop" onClick={onClose} aria-hidden="true" />
+      <div className="app-menu" id="app-menu" ref={panelRef} role="group" aria-label={t('app.menu.label')} tabIndex={-1}>
+        <div className="app-menu-roles" role="radiogroup" aria-label={t('app.menu.useAs')}>
           {(['seeker', 'provider'] as const).map(r => (
             <button
               key={r}
@@ -122,7 +121,7 @@ export const AppMenu: React.FC<AppMenuProps> = ({
               data-active={role === r ? '' : undefined}
               onClick={() => onSwitchRole(r)}
             >
-              {r === 'seeker' ? 'Contratante' : 'Profesional'}
+              {r === 'seeker' ? t('app.role.seeker') : t('app.role.provider')}
             </button>
           ))}
         </div>
@@ -133,15 +132,22 @@ export const AppMenu: React.FC<AppMenuProps> = ({
           defaultOpen={[0, 1]}
           active={currentTab}
           onSelect={handleSelect}
-          width={280}
-          ariaLabel="Menú principal"
+          width={268}
+          ariaLabel={t('app.menu.main')}
         />
 
         <div className="app-menu-foot">
           <div className="app-menu-switch">
+            <span className="app-menu-switch-label" id="app-menu-lang">
+              <Languages size={15} aria-hidden="true" />
+              {t('lang.label')}
+            </span>
+            <LanguageSwitch labelledBy="app-menu-lang" />
+          </div>
+          <div className="app-menu-switch">
             <label htmlFor="app-menu-theme" className="app-menu-switch-label">
               <Moon size={15} aria-hidden="true" />
-              Modo oscuro
+              {t('app.settings.darkMode')}
             </label>
             <SquishSwitch
               id="app-menu-theme"
@@ -153,8 +159,8 @@ export const AppMenu: React.FC<AppMenuProps> = ({
             />
           </div>
           <button type="button" className="app-menu-action app-menu-action--danger" onClick={onLogout}>
-            <LogOut size={15} />
-            Cerrar sesión
+            <LogOut size={15} aria-hidden="true" />
+            {t('app.menu.logout')}
           </button>
         </div>
       </div>

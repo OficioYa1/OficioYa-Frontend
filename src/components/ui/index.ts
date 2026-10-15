@@ -32,6 +32,6 @@ export type { BorderGlowProps } from './BorderGlow';
 export { DriftWall } from './DriftWall';
 export type { DriftWallItem, DriftWallProps } from './DriftWall';
 export { ProfileCard } from './ProfileCard';
-export type { ProfileCardProps, ProfileCardFrame } from './ProfileCard';
+export type { ProfileCardProps } from './ProfileCard';
 export { StaggeredMenu } from './StaggeredMenu';
 export type { StaggeredMenuItem, StaggeredMenuProps } from './StaggeredMenu';

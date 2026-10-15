@@ -1,0 +1,57 @@
+/* Campo líquido: degradado CSS de respaldo + lienzo WebGL opcional encima. */
+.lq-field {
+  --lq-base: var(--canvas);
+  --lq-1: var(--oy-almendra-claro);
+  --lq-2: var(--oy-amarillo-canario);
+  --lq-3: var(--oy-verde-esmeralda);
+  --lq-4: var(--oy-ambar-calido);
+  --lq-alpha: 0.85;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--lq-base);
+  pointer-events: none;
+}
+
+html.theme-dark .lq-field {
+  --lq-1: var(--oy-azul-marino);
+  --lq-2: var(--oy-naranja-many);
+  --lq-3: var(--oy-verde-esmeralda);
+  --lq-4: var(--oy-ambar-calido);
+  --lq-alpha: 0.55;
+}
+
+.lq-blob {
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+  opacity: var(--lq-alpha);
+  filter: blur(80px);
+  will-change: transform;
+  animation: lq-drift 26s var(--ease-in-out) infinite alternate;
+}
+
+.lq-blob--a { top: -30vmax; left: -20vmax; background: var(--lq-1); }
+.lq-blob--b { top: -25vmax; right: -30vmax; background: var(--lq-2); animation-duration: 31s; animation-delay: -9s; }
+.lq-blob--c { bottom: -40vmax; left: 0; background: var(--lq-3); opacity: calc(var(--lq-alpha) * 0.7); animation-duration: 36s; animation-delay: -18s; }
+.lq-blob--d { bottom: -35vmax; right: -15vmax; width: 55vmax; height: 55vmax; background: var(--lq-4); animation-duration: 29s; animation-delay: -4s; }
+
+.lq-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+@keyframes lq-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(9vmax, 5vmax, 0) scale(1.1); }
+  100% { transform: translate3d(-6vmax, 9vmax, 0) scale(0.95); }
+}
+
+@media (max-width: 767px) {
+  .lq-blob { filter: blur(56px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lq-blob { animation: none; }
+}

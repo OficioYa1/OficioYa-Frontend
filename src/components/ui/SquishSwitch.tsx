@@ -16,7 +16,7 @@ export interface SquishSwitchProps {
   onChange?: (checked: boolean) => void;
   label?: string;
   disabled?: boolean;
-  /** Pista apagada. Por defecto, gris neutro con contorno Cacao. */
+  /** Pista apagada. Por defecto, vidrio hundido translúcido. */
   trackColor?: string;
   /** Pista encendida. Por defecto, el color del rol. */
   trackOnColor?: string;

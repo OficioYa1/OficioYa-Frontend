@@ -3,25 +3,20 @@ import type { CSSProperties } from 'react';
 import { Renderer, Program, Mesh, Triangle, Color } from 'ogl';
 
 /*
-  PlasmaWarp · plasma de bloques con líneas de barrido, inspirado en
-  CRTWarp pero hecho con ogl en
-  vez de three.js. Pensado para paneles de marca, no para todo el fondo:
-  la intensidad está limitada para que el texto encima siga en AA.
+  PlasmaWarp · fondo líquido iridiscente (domain warping sobre ruido fbm)
+  hecho con ogl. Mezcla un color base con cuatro colores del manual en
+  corrientes lentas. Se renderiza a media resolución (el líquido es suave,
+  el reescalado no se nota), a 30 fps como máximo, solo mientras está en
+  pantalla y nunca con movimiento reducido. Se carga con React.lazy.
 */
 
 export interface PlasmaWarpProps {
-  color?: string;
-  backgroundColor?: string;
-  /** Cuánto se mezcla la onda con el fondo (0–1). */
+  /** Color base y cuatro colores de corriente, en hex. */
+  colors: [string, string, string, string, string];
+  /** Cuánto se mezclan las corrientes con la base (0–1). */
   intensity?: number;
   speed?: number;
-  curvature?: number;
-  scanlineStrength?: number;
-  scanlineFrequency?: number;
-  waveAmplitude?: number;
-  waveFrequency?: number;
-  bloom?: number;
-  bloomRadius?: number;
+  /** Desplazamiento del líquido hacia el puntero (solo puntero fino). */
   mouseStrength?: number;
   fps?: number;
   className?: string;
@@ -42,81 +37,73 @@ const fragment = /* glsl */ `
 precision highp float;
 varying vec2 vUv;
 uniform float uTime;
-uniform vec3 uColor;
-uniform vec3 uBackground;
+uniform float uAspect;
 uniform float uIntensity;
-uniform float uCurvature;
-uniform float uScanlineStrength;
-uniform float uScanlineFrequency;
-uniform float uWaveAmplitude;
-uniform float uWaveFrequency;
-uniform float uBloom;
-uniform float uBloomRadius;
 uniform vec2 uPointer;
-uniform float uMouseStrength;
+uniform vec3 uBase;
+uniform vec3 uC1;
+uniform vec3 uC2;
+uniform vec3 uC3;
+uniform vec3 uC4;
 
-vec2 crtCurve(vec2 uv, float radius) {
-  vec2 p = (uv - 0.5) * 2.0;
-  float r = max(radius, 1.415);
-  float corner = r / sqrt(max(r * r - 2.0, 0.001));
-  p = r * p / sqrt(max(r * r - dot(p, p), 0.001));
-  p /= corner;
-  return p * 0.5 + 0.5;
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
-float plasma(vec2 uv, float t) {
-  float fs = max(uWaveFrequency / 2.2, 0.001);
-  uv = (uv - 0.5) * fs + 0.5;
-  float scan = 0.5 - 0.5 * cos(uv.y * 3.14159265 * uScanlineFrequency);
-  scan = mix(1.0, scan, uScanlineStrength);
-  uv = ceil(uv * vec2(80.0, 24.0)) / vec2(80.0, 24.0);
-  float amp = uWaveAmplitude / 0.28;
-  float f = 0.7 * sin(0.5 * uv.x + t / 5.0);
-  f += 3.0 * sin(1.6 * uv.y + t / 5.0);
-  f += sin(10.0 * (uv.y * sin(t / 2.0) + uv.x * cos(t / 5.0)) + t / 2.0);
-  float cx = uv.x + 0.5 * sin(t / 2.0);
-  float cy = uv.y + 0.5 * cos(t / 4.0);
-  f += 0.4 * sin(sqrt(100.0 * cx * cx + 100.0 * cy * cy + 1.0) + t);
-  f += 0.9 * sin(sqrt(75.0 * cx * cx + 25.0 * cy * cy + 1.0) + t);
-  f -= 1.4 * sin(sqrt(256.0 * cx * cx + 25.0 * cy * cy + 1.0) + t);
-  f += 0.3 * sin(0.5 * uv.y + uv.x + sin(t));
-  return scan * floor(3.0 * (0.5 + 0.499 * sin(f * amp))) / 3.0;
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
+             mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+
+float fbm(vec2 p) {
+  float v = 0.0;
+  float a = 0.5;
+  mat2 m = mat2(1.6, 1.2, -1.2, 1.6);
+  for (int i = 0; i < 5; i++) {
+    v += a * noise(p);
+    p = m * p;
+    a *= 0.5;
+  }
+  return v;
 }
 
 void main() {
-  float radius = (1.1 + 0.42 / max(uCurvature, 0.001)) * exp(-uPointer.y * uMouseStrength * 0.4);
-  vec2 uv = crtCurve(vUv, radius);
-  uv.x -= uPointer.x * uMouseStrength * 0.035;
+  vec2 p = vec2(vUv.x * uAspect, vUv.y) * 1.35;
+  p += uPointer * 0.12;
+  float t = uTime * 0.07;
 
-  float s = plasma(uv, uTime);
-  float r = 0.01 * uBloomRadius;
-  float glow = s * 0.2;
-  glow += (plasma(uv + vec2(r, 0.0), uTime) + plasma(uv - vec2(r, 0.0), uTime)) * 0.12;
-  glow += (plasma(uv + vec2(0.0, r), uTime) + plasma(uv - vec2(0.0, r), uTime)) * 0.12;
+  vec2 q = vec2(fbm(p + vec2(0.0, t)), fbm(p + vec2(5.2, 1.3) - t));
+  vec2 r = vec2(fbm(p + 3.2 * q + vec2(1.7, 9.2) + 1.2 * t),
+                fbm(p + 3.2 * q + vec2(8.3, 2.8) - t));
+  float f = fbm(p + 3.0 * r);
 
-  float mask = clamp(s * 0.82 + glow * 0.52 * uBloom, 0.0, 1.0) * uIntensity;
-  gl_FragColor = vec4(mix(uBackground, uColor, mask), 1.0);
+  vec3 col = uBase;
+  col = mix(col, uC1, smoothstep(0.25, 0.85, f));
+  col = mix(col, uC2, smoothstep(0.45, 1.05, length(q)) * 0.85);
+  col = mix(col, uC3, smoothstep(0.5, 0.95, r.x));
+  col = mix(col, uC4, smoothstep(0.58, 1.0, r.y) * 0.8);
+
+  float sheen = pow(0.5 + 0.5 * sin(f * 11.0 + t * 5.0), 8.0);
+  col += sheen * 0.05;
+
+  gl_FragColor = vec4(mix(uBase, col, uIntensity), 1.0);
 }
 `;
 
 export default function PlasmaWarp({
-  color = '#F59E0B',
-  backgroundColor = '#1E3A8A',
-  intensity = 0.24,
-  speed = 0.5,
-  curvature = 0.25,
-  scanlineStrength = 0.3,
-  scanlineFrequency = 200,
-  waveAmplitude = 0.3,
-  waveFrequency = 2.5,
-  bloom = 1.2,
-  bloomRadius = 1,
-  mouseStrength = 0.5,
+  colors,
+  intensity = 1,
+  speed = 1,
+  mouseStrength = 1,
   fps = 30,
   className,
-  style
+  style,
 }: PlasmaWarpProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const [base, c1, c2, c3, c4] = colors;
 
   useEffect(() => {
     const host = ref.current;
@@ -124,38 +111,40 @@ export default function PlasmaWarp({
 
     let renderer: Renderer;
     try {
-      renderer = new Renderer({ dpr: 1, alpha: false, antialias: false, powerPreference: 'low-power' });
+      renderer = new Renderer({ dpr: 0.5, alpha: false, antialias: false, powerPreference: 'low-power' });
     } catch {
-      return undefined; // sin WebGL queda el color de fondo del contenedor
+      return undefined; // sin WebGL queda el degradado CSS del contenedor
     }
     const gl = renderer.gl;
-    gl.canvas.style.width = '100%';
-    gl.canvas.style.height = '100%';
-    gl.canvas.style.display = 'block';
-    host.appendChild(gl.canvas);
+    const canvas = gl.canvas;
+    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity 1200ms cubic-bezier(0.19,1,0.22,1)';
+    host.appendChild(canvas);
 
     const program = new Program(gl, {
       vertex,
       fragment,
       uniforms: {
         uTime: { value: 0 },
-        uColor: { value: new Color(color) },
-        uBackground: { value: new Color(backgroundColor) },
+        uAspect: { value: 1 },
         uIntensity: { value: intensity },
-        uCurvature: { value: curvature },
-        uScanlineStrength: { value: scanlineStrength },
-        uScanlineFrequency: { value: scanlineFrequency },
-        uWaveAmplitude: { value: waveAmplitude },
-        uWaveFrequency: { value: waveFrequency },
-        uBloom: { value: bloom },
-        uBloomRadius: { value: bloomRadius },
         uPointer: { value: [0, 0] },
-        uMouseStrength: { value: mouseStrength }
-      }
+        uBase: { value: new Color(base) },
+        uC1: { value: new Color(c1) },
+        uC2: { value: new Color(c2) },
+        uC3: { value: new Color(c3) },
+        uC4: { value: new Color(c4) },
+      },
     });
     const mesh = new Mesh(gl, { geometry: new Triangle(gl), program });
+    const draw = () => renderer.render({ scene: mesh });
 
-    const resize = () => renderer.setSize(Math.max(host.clientWidth, 1), Math.max(host.clientHeight, 1));
+    const resize = () => {
+      const w = Math.max(host.clientWidth, 1);
+      const h = Math.max(host.clientHeight, 1);
+      renderer.setSize(w, h);
+      program.uniforms.uAspect.value = w / h;
+      draw();
+    };
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(host);
@@ -166,16 +155,16 @@ export default function PlasmaWarp({
     const pointer = program.uniforms.uPointer.value as number[];
     const onMove = (e: PointerEvent) => {
       const rect = host.getBoundingClientRect();
-      target[0] = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      target[1] = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+      target[0] = (((e.clientX - rect.left) / rect.width) * 2 - 1) * mouseStrength;
+      target[1] = (-(((e.clientY - rect.top) / rect.height) * 2 - 1)) * mouseStrength;
     };
     const onLeave = () => {
       target[0] = 0;
       target[1] = 0;
     };
-    // El contenido va encima del canvas, así que el puntero se lee en el panel
+    // El contenido va encima del canvas, así que el puntero se lee en el contenedor padre
     const area = host.parentElement ?? host;
-    if (finePointer && !reduce) {
+    if (finePointer && !reduce && mouseStrength > 0) {
       area.addEventListener('pointermove', onMove);
       area.addEventListener('pointerleave', onLeave);
     }
@@ -183,10 +172,9 @@ export default function PlasmaWarp({
     let visible = false;
     let raf = 0;
     let last = 0;
-    let time = 4; // arranca en un punto con forma, no en el patrón plano de t = 0
+    let time = 12; // arranca en un punto con forma, no en el patrón de t = 0
     const frameMs = 1000 / Math.max(1, fps);
 
-    const draw = () => renderer.render({ scene: mesh });
     const tick = (now: number) => {
       raf = 0;
       if (!visible) return;
@@ -195,16 +183,16 @@ export default function PlasmaWarp({
       const dt = last ? Math.min((now - last) / 1000, 0.1) : 0;
       last = now;
       time += dt * speed;
-      pointer[0] += (target[0] - pointer[0]) * 0.08;
-      pointer[1] += (target[1] - pointer[1]) * 0.08;
+      pointer[0] += (target[0] - pointer[0]) * 0.04;
+      pointer[1] += (target[1] - pointer[1]) * 0.04;
       program.uniforms.uTime.value = time;
       draw();
     };
 
     program.uniforms.uTime.value = time;
     draw();
+    const fadeIn = requestAnimationFrame(() => { canvas.style.opacity = '1'; });
 
-    // Solo se anima cuando el panel está en pantalla y sin movimiento reducido
     const io = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting && !reduce;
       if (visible && !raf) {
@@ -217,13 +205,14 @@ export default function PlasmaWarp({
     return () => {
       io.disconnect();
       ro.disconnect();
+      cancelAnimationFrame(fadeIn);
       if (raf) cancelAnimationFrame(raf);
       area.removeEventListener('pointermove', onMove);
       area.removeEventListener('pointerleave', onLeave);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
-      gl.canvas.remove();
+      canvas.remove();
     };
-  }, [color, backgroundColor, intensity, speed, curvature, scanlineStrength, scanlineFrequency, waveAmplitude, waveFrequency, bloom, bloomRadius, mouseStrength, fps]);
+  }, [base, c1, c2, c3, c4, intensity, speed, mouseStrength, fps]);
 
   return <div ref={ref} className={className} style={style} aria-hidden="true" />;
 }

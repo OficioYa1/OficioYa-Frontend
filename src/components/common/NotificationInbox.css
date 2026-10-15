@@ -1,31 +1,33 @@
 /* ============================================================
-   Bandeja de notificaciones con trituradora — lenguaje sticker:
-   contorno Cacao, esquinas grandes, lavados planos, sin sombras.
+   Bandeja de notificaciones con trituradora — vidrio elevado que
+   nace de la campana del header (arriba a la derecha).
+   Material (fondo, borde, sombra, blur): glass.css (.inbox-panel).
    ============================================================ */
 .inbox-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 900;
+  z-index: 944; /* bajo el header (950): la campana sigue a mano para cerrar */
 }
 
 .inbox-panel {
   position: fixed;
-  top: 68px;
-  right: 16px;
-  z-index: 901;
-  width: min(380px, calc(100vw - 32px));
-  max-height: calc(100dvh - 84px);
+  top: calc(84px + env(safe-area-inset-top, 0px));
+  right: max(12px, calc((100vw - 1200px) / 2));
+  z-index: 945;
+  width: min(380px, calc(100vw - 24px));
+  max-height: calc(100dvh - 100px - env(safe-area-inset-top, 0px));
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: var(--space-4) var(--space-4) 0;
-  border: var(--stroke-w) solid var(--stroke-ink);
   border-radius: var(--radius-frame);
-  background: var(--color-surface);
-  box-shadow: none;
+  background: var(--glass-3);
+  color: var(--color-text-main);
   transform-origin: top right;
-  animation: inbox-in 200ms var(--ease-out);
+  animation: inbox-in 320ms var(--ease-out);
 }
+
+.inbox-panel:focus { outline: none; }
 
 .inbox-head {
   display: flex;
@@ -34,35 +36,35 @@
   gap: var(--space-3);
   margin-bottom: var(--space-4);
   padding-bottom: var(--space-3);
-  border-bottom: var(--stroke-w) solid var(--stroke-ink);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .inbox-title {
-  margin: 4px 0 0;
-  color: var(--color-trust);
+  margin: 6px 0 0;
+  color: var(--color-text-main);
   font-size: 1.75rem;
-  line-height: 0.95;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.04em;
 }
-
-html.role-provider .inbox-title { color: var(--oy-cacao-profundo); }
-html.theme-dark .inbox-title { color: var(--color-text-main); }
 
 .inbox-hint {
   margin: var(--space-2) 0 0;
   color: var(--color-text-muted);
   font-size: 12.5px;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .inbox-close {
   display: grid;
   flex-shrink: 0;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border: var(--stroke-w) solid var(--stroke-ink);
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-pill);
-  background: var(--color-surface);
+  background: var(--glass-1);
+  box-shadow: var(--glass-shine);
   color: var(--color-text-main);
   cursor: pointer;
   transition: background-color 160ms ease, transform 160ms var(--ease-out);
@@ -81,7 +83,7 @@ html.theme-dark .inbox-title { color: var(--color-text-main); }
 
 .inbox-shredder { margin: 0 auto; }
 
-/* Tarjeta: fondo opaco para que las tiras se vean como papel */
+/* Tarjeta: superficie casi opaca para que las tiras se lean como papel */
 .inbox-card {
   display: flex;
   align-items: flex-start;
@@ -89,15 +91,12 @@ html.theme-dark .inbox-title { color: var(--color-text-main); }
   height: 76px;
   padding: 12px 14px;
   overflow: hidden;
-  border: var(--stroke-w) solid var(--stroke-ink);
   border-radius: var(--radius-card);
-  background: var(--color-surface);
-  box-shadow: none;
+  background: var(--color-surface-elevated);
 }
 
 .inbox-card[data-unread] {
-  border-color: var(--stroke-ink);
-  background: var(--wash-almendra);
+  background: linear-gradient(var(--wash-amarillo), var(--wash-amarillo)), var(--color-surface-elevated);
 }
 
 .inbox-icon {
@@ -106,9 +105,10 @@ html.theme-dark .inbox-title { color: var(--color-text-main); }
   place-items: center;
   width: 34px;
   height: 34px;
-  border: 1px solid var(--stroke-ink);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-pill);
-  background: var(--color-surface);
+  background: var(--glass-1);
+  box-shadow: var(--glass-shine);
 }
 
 .inbox-text { flex: 1; min-width: 0; }
@@ -121,7 +121,8 @@ html.theme-dark .inbox-title { color: var(--color-text-main); }
   color: var(--color-text-main);
   font-family: var(--font-display);
   font-size: 13.5px;
-  font-weight: 800;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .inbox-card-title span:first-child {
@@ -132,7 +133,7 @@ html.theme-dark .inbox-title { color: var(--color-text-main); }
 
 .inbox-time {
   flex-shrink: 0;
-  color: var(--color-text-muted);
+  color: var(--color-text-subtle);
   font-family: var(--font-text);
   font-size: 11.5px;
   font-weight: 500;
@@ -156,9 +157,9 @@ html.theme-dark .inbox-title { color: var(--color-text-main); }
   gap: var(--space-2);
   margin-bottom: var(--space-4);
   padding: var(--space-6) var(--space-4) var(--space-8);
-  border: var(--stroke-w) dashed var(--stroke-ink);
+  border: 1px dashed var(--color-border);
   border-radius: var(--radius-card);
-  background: var(--wash-almendra);
+  background: var(--glass-1);
   text-align: center;
 }
 
@@ -166,8 +167,8 @@ html.theme-dark .inbox-title { color: var(--color-text-main); }
   color: var(--color-text-main);
   font-family: var(--font-display);
   font-size: 1.25rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-weight: 500;
+  letter-spacing: -0.03em;
 }
 
 .inbox-empty p {
@@ -177,8 +178,15 @@ html.theme-dark .inbox-title { color: var(--color-text-main); }
 }
 
 @keyframes inbox-in {
-  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 767px) {
+  .inbox-panel {
+    top: calc(76px + env(safe-area-inset-top, 0px));
+    right: 12px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -38,6 +38,13 @@
   animation: settings-photo-spin 0.9s linear infinite;
 }
 
+/* Fila de idioma: etiqueta con icono y segmentado ES | EN */
+.settings-lang__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 @keyframes settings-photo-spin {
   to { transform: rotate(360deg); }
 }

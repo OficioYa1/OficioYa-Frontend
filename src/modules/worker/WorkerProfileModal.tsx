@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import type { Worker, Review } from '../../types';
-import { CircularCarousel, PeekRating } from '../../components/ui';
+import { PeekRating } from '../../components/ui';
 import {
   X,
   Star,
@@ -17,9 +17,12 @@ import {
   CreditCard,
   Wrench,
   Tag,
-  Flag
+  Flag,
+  PawPrint
 } from 'lucide-react';
 import { TRADE_LABELS, rateUnitShort } from '../../utils/workerProfile';
+import { MascotAvatar } from '../../components/mascot/MascotAvatar';
+import { useFlowModal } from '../requests/useFlowModal';
 import './Worker.css';
 
 interface WorkerProfileModalProps {
@@ -31,6 +34,10 @@ interface WorkerProfileModalProps {
   onOpenReport: (worker: Worker) => void;
 }
 
+type TabId = 'info' | 'oficios' | 'resenas' | 'galeria';
+
+const formatCop = (value: number) => `$${value.toLocaleString('es-CO')}`;
+
 export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
   worker,
   onClose,
@@ -39,14 +46,21 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
   onOpenSendRequest,
   onOpenReport
 }) => {
-  const [activeTab, setActiveTab] = useState<'info' | 'oficios' | 'resenas' | 'galeria'>('info');
+  const uid = useId();
+  const dialogRef = useFlowModal(onClose);
+  const [activeTab, setActiveTab] = useState<TabId>('info');
   const [reportedReviews, setReportedReviews] = useState<Record<string, boolean>>({});
   const [reportingReviewId, setReportingReviewId] = useState<string | null>(null);
   const [reportReasonText, setReportReasonText] = useState('');
+  const [reportError, setReportError] = useState(false);
+  const [photoFailed, setPhotoFailed] = useState(false);
 
   // RF-38: Reportar reseña potencialmente falsa
   const handleReportFakeReview = (review: Review) => {
-    if (!reportReasonText.trim()) return;
+    if (!reportReasonText.trim()) {
+      setReportError(true);
+      return;
+    }
 
     try {
       const existing = JSON.parse(localStorage.getItem('oy-complaints') || '[]');
@@ -64,438 +78,485 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
         reviewId: review.id
       };
       localStorage.setItem('oy-complaints', JSON.stringify([fakeReviewTicket, ...existing]));
-    } catch (_e) {}
+    } catch {
+      /* sin almacenamiento: el reporte queda solo en esta sesión */
+    }
 
     setReportedReviews(prev => ({ ...prev, [review.id]: true }));
     setReportingReviewId(null);
     setReportReasonText('');
+    setReportError(false);
   };
 
   const canBook = worker.available && !worker.isPaused;
   const primaryRep = worker.ratingByTrade?.[worker.trade];
   const unit = rateUnitShort(worker.rateUnit);
   const formatRating = (rating: number, count: number) => (count > 0 ? rating.toFixed(1) : '—');
+  const statusLabel = worker.isPaused ? 'Pausado' : worker.available ? 'Disponible ahora' : 'Fuera de línea';
 
-  const tabs: { id: typeof activeTab; label: string }[] = [
-    { id: 'info', label: 'Detalles & Horarios' },
-    { id: 'oficios', label: 'Oficios & Reputación' },
+  const tabs: { id: TabId; label: string }[] = [
+    { id: 'info', label: 'Detalles' },
     { id: 'resenas', label: `Reseñas (${worker.reviews.length})` },
-    { id: 'galeria', label: `Portafolio (${worker.gallery.length})` }
+    { id: 'galeria', label: `Portafolio (${worker.gallery.length})` },
+    { id: 'oficios', label: 'Oficios' }
   ];
+  const tabId = (id: TabId) => `${uid}-tab-${id}`;
+  const panelId = `${uid}-panel`;
+
+  const onTabKey = (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft' && e.key !== 'Home' && e.key !== 'End') return;
+    e.preventDefault();
+    const last = tabs.length - 1;
+    const next =
+      e.key === 'Home' ? 0 : e.key === 'End' ? last : e.key === 'ArrowRight' ? (index === last ? 0 : index + 1) : (index === 0 ? last : index - 1);
+    setActiveTab(tabs[next].id);
+    document.getElementById(tabId(tabs[next].id))?.focus();
+  };
+
+  // Distribución de estrellas de las reseñas verificadas
+  const distribution = [5, 4, 3, 2, 1].map(stars => ({
+    stars,
+    count: worker.reviews.filter(r => Math.round(r.rating) === stars).length
+  }));
+  const maxCount = Math.max(1, ...distribution.map(d => d.count));
 
   return (
-    <div className="oy-modal-backdrop">
+    <div className="oy-modal-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}>
       <div
+        ref={dialogRef}
         className="oy-modal wk-modal"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="wk-name"
+        aria-labelledby={`${uid}-name`}
+        tabIndex={-1}
       >
-        {/* Banda de cabecera con lavado y foto en círculo */}
-        <div className="oy-modal__head wk-head">
-          <div className="wk-head__id">
-            <div
-              className="wk-avatar"
-              style={{ '--wk-avatar-bg': worker.avatarColor } as React.CSSProperties}
-              aria-hidden="true"
-            >
-              {worker.photoUrl ? <img src={worker.photoUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : worker.initials}
-            </div>
-
-            <div className="wk-head__text">
-              <span className="wk-trade-label">{worker.tradeLabel}</span>
-              <h2 id="wk-name" className="oy-display wk-name">{worker.name}</h2>
-              <div className="wk-badges">
-                {worker.verified && (
-                  <span className="badge badge-verified wk-sticker wk-sticker--tilt-l" title="Identidad validada con documento">
-                    <ShieldCheck size={14} aria-hidden="true" /> Verificado
-                  </span>
-                )}
-                {worker.referrals?.isCommunityReferrer && (
-                  <span
-                    className="badge wk-sticker wk-sticker--almendra wk-sticker--tilt-r"
-                    title="Referente Comunitario Verificado: referidos activos en >= 3 oficios"
-                  >
-                    <Award size={13} aria-hidden="true" /> Referente Comunitario
-                  </span>
-                )}
-                <span className={`badge wk-sticker ${canBook ? 'badge-available' : 'wk-sticker--off'}`}>
-                  {worker.isPaused ? 'Pausado' : worker.available ? 'Disponible Ahora' : 'Fuera de línea'}
-                </span>
-              </div>
-            </div>
-          </div>
-
+        <header className="wk-head">
           <div className="wk-head__tools">
             <button
-              onClick={onClose}
-              className="oy-icon-btn"
-              title="Cerrar ventana"
-              aria-label="Cerrar ventana"
-            >
-              <X size={18} />
-            </button>
-            <button
+              type="button"
               onClick={() => onOpenReport(worker)}
-              className="btn btn-secondary wk-report-btn"
-              title="Reportar anomalía o queja ante administración"
+              className="wk-report-btn"
             >
               <AlertTriangle size={14} aria-hidden="true" /> Reportar
             </button>
+            <button type="button" onClick={onClose} className="oy-icon-btn" aria-label="Cerrar perfil">
+              <X size={18} aria-hidden="true" />
+            </button>
           </div>
-        </div>
 
-        <div className="oy-modal__body wk-body">
-          {/* Banner de Pausa Automática por Bajas Calificaciones (RF-39) */}
+          <div className="wk-hero">
+            <div
+              className="wk-photo"
+              style={{ '--wk-avatar-bg': worker.avatarColor } as React.CSSProperties}
+            >
+              {worker.photoUrl && !photoFailed ? (
+                <img src={worker.photoUrl} alt={`Foto de ${worker.name}`} onError={() => setPhotoFailed(true)} />
+              ) : (
+                <span aria-hidden="true">{worker.initials}</span>
+              )}
+            </div>
+
+            <div className="wk-hero__text">
+              <span className="wk-trade-label">{worker.tradeLabel}</span>
+              <h2 id={`${uid}-name`} className="wk-name">{worker.name}</h2>
+              <p className="wk-zone">
+                <MapPin size={14} aria-hidden="true" /> {worker.location.zoneName}
+                {worker.maxDistanceKm ? ` · atiende hasta ${worker.maxDistanceKm} km` : ''}
+              </p>
+              <div className="wk-badges">
+                {worker.verified && (
+                  <span className="wk-pill wk-pill--verified" title="Identidad validada con documento">
+                    <ShieldCheck size={14} aria-hidden="true" /> Verificado
+                  </span>
+                )}
+                <span className={`wk-pill ${canBook ? 'wk-pill--available' : 'wk-pill--off'}`}>
+                  <span className="wk-pill__dot" aria-hidden="true" /> {statusLabel}
+                </span>
+                {worker.referrals?.isCommunityReferrer && (
+                  <span className="wk-pill wk-pill--warm" title="Referidos activos en 3 o más oficios">
+                    <Award size={14} aria-hidden="true" /> Referente comunitario
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Reputación y métricas clave (RF-08, RF-10) */}
+          <dl className="wk-rep">
+            <div className="wk-rep__item">
+              <dt>Calificación</dt>
+              <dd>
+                <Star size={20} fill="var(--color-star)" color="var(--color-star)" aria-hidden="true" />
+                {formatRating(worker.rating, worker.reviewCount)}
+                <span className="wk-rep__aside">{worker.reviewCount} reseñas</span>
+              </dd>
+            </div>
+            <div className="wk-rep__item">
+              <dt>Trabajos</dt>
+              <dd>
+                {worker.completedJobsCount}
+                <span className="wk-rep__aside">completados</span>
+              </dd>
+            </div>
+            <div className="wk-rep__item">
+              <dt>Tarifa aprox.</dt>
+              <dd>
+                {formatCop(worker.hourlyRate)}
+                <span className="wk-rep__aside">COP/{unit}</span>
+              </dd>
+            </div>
+          </dl>
+        </header>
+
+        <div className="wk-body">
+          {/* Banner de pausa automática por bajas calificaciones (RF-39) */}
           {worker.isPaused && (
             <div className="wk-alert" role="status">
               <AlertTriangle size={20} aria-hidden="true" />
-              <div>
-                <strong>Perfil suspendido automáticamente:</strong> {worker.pauseReason || 'Promedio menor a 3.0 estrellas en sus últimas 5 reseñas. Se han bloqueado nuevas solicitudes.'}
-              </div>
+              <p>
+                <strong>Perfil suspendido automáticamente.</strong>{' '}
+                {worker.pauseReason || 'Promedio menor a 3.0 estrellas en sus últimas 5 reseñas. Se bloquearon nuevas solicitudes.'}
+              </p>
             </div>
           )}
 
-          {/* Calificación y Métricas Clave (RF-08, RF-10) */}
-          <div className="wk-stats">
-            <div className="oy-stat wk-stat--amarillo">
-              <span className="oy-stat__label">Calificación</span>
-              <span className="oy-stat__value wk-stat__row">
-                <Star size={22} fill="var(--color-star)" color="var(--stroke-ink)" aria-hidden="true" /> {formatRating(worker.rating, worker.reviewCount)}
-                <span className="wk-stat__aside">({worker.reviewCount})</span>
-              </span>
-            </div>
-
-            <div className="oy-stat wk-stat--esmeralda">
-              <span className="oy-stat__label">Trabajos Completados</span>
-              <span className="oy-stat__value">{worker.completedJobsCount}</span>
-              <span className="wk-stat__aside">servicios</span>
-            </div>
-
-            <div className="oy-stat wk-stat--marino">
-              <span className="oy-stat__label">Tarifa Aprox.</span>
-              <span className="oy-stat__value wk-stat__value--sm">${worker.hourlyRate.toLocaleString()}</span>
-              <span className="wk-stat__aside">COP /{unit}</span>
-            </div>
-
-            <div className="oy-stat">
-              <span className="oy-stat__label">Zona</span>
-              <span className="wk-stat__zone">
-                <MapPin size={15} aria-hidden="true" /> {worker.location.zoneName}
-              </span>
-              {worker.maxDistanceKm && <span className="wk-stat__aside">Hasta {worker.maxDistanceKm} km</span>}
-            </div>
-          </div>
-
-          {/* Selector de Pestañas Internas */}
-          <div className="wk-tabs" role="group" aria-label="Secciones del perfil">
-            {tabs.map(tab => (
+          <div className="wk-tabs" role="tablist" aria-label="Secciones del perfil">
+            {tabs.map((tab, i) => (
               <button
                 key={tab.id}
+                id={tabId(tab.id)}
                 type="button"
-                className="oy-chip"
-                aria-pressed={activeTab === tab.id}
+                role="tab"
+                className="wk-tab"
+                aria-selected={activeTab === tab.id}
+                aria-controls={panelId}
+                tabIndex={activeTab === tab.id ? 0 : -1}
                 onClick={() => setActiveTab(tab.id)}
+                onKeyDown={e => onTabKey(e, i)}
               >
                 {tab.label}
               </button>
             ))}
           </div>
 
-          {/* Contenido Pestaña 1: Detalles & Horarios (RF-04, RF-06, RF-09, RF-60) */}
-          {activeTab === 'info' && (
-            <div className="wk-pane">
-              <section className="wk-block">
-                <h3 className="wk-block__title">Biografía y Experiencia</h3>
-                <p className="wk-text">{worker.bio}</p>
-                <span className="wk-chip-line">
-                  <Phone size={13} aria-hidden="true" /> {worker.phone}
-                </span>
-              </section>
-
-              {/* RF-60: Métodos de Pago Aceptados */}
-              <section className="wk-card wk-card--almendra">
-                <h3 className="wk-block__title wk-block__title--icon">
-                  <CreditCard size={16} aria-hidden="true" /> Métodos de Pago Aceptados
-                </h3>
-                <div className="wk-tags">
-                  {(worker.acceptedPaymentMethods || ['efectivo', 'nequi', 'daviplata']).map(method => (
-                    <span key={method} className="wk-tag wk-tag--upper">
-                      ✓ {method}
-                    </span>
-                  ))}
-                </div>
-              </section>
-
-              {/* RF-09: Equipamiento, Marcas y Especies */}
-              {(worker.equipment?.length || worker.brands?.length || worker.species?.length) ? (
-                <div className="wk-grid">
-                  {worker.equipment && (
-                    <section className="wk-card">
-                      <h3 className="wk-block__title wk-block__title--icon">
-                        <Wrench size={14} aria-hidden="true" /> Equipo & Herramientas
-                      </h3>
-                      <ul className="wk-list">
-                        {worker.equipment.map((eq, i) => (
-                          <li key={i}>{eq}</li>
-                        ))}
-                      </ul>
-                    </section>
-                  )}
-
-                  {worker.brands && (
-                    <section className="wk-card">
-                      <h3 className="wk-block__title wk-block__title--icon">
-                        <Tag size={14} aria-hidden="true" /> Marcas Atendidas
-                      </h3>
-                      <div className="wk-tags">
-                        {worker.brands.map((b, i) => (
-                          <span key={i} className="wk-tag">{b}</span>
-                        ))}
-                      </div>
-                    </section>
-                  )}
-
-                  {worker.species && (
-                    <section className="wk-card">
-                      <h3 className="wk-block__title">🐾 Especies Atendidas</h3>
-                      <div className="wk-tags">
-                        {worker.species.map((sp, i) => (
-                          <span key={i} className="wk-tag">{sp}</span>
-                        ))}
-                      </div>
-                    </section>
-                  )}
-                </div>
-              ) : null}
-
-              {/* Slots de Disponibilidad Semanal (RF-06) */}
-              <section className="wk-block">
-                <h3 className="wk-block__title wk-block__title--icon">
-                  <Calendar size={16} aria-hidden="true" /> Horarios y Disponibilidad Semanal
-                </h3>
-                <ul className="wk-schedule">
-                  {worker.schedule.map((item, idx) => (
-                    <li key={idx} className="wk-schedule__row">
-                      <span className="wk-schedule__day">{item.day}</span>
-                      <span className="wk-schedule__slots">{item.slots.join(' | ')}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            </div>
-          )}
-
-          {/* Contenido Pestaña 2: Oficios & Reputación Diferenciada (RF-02, RF-03, RF-56, RF-66, RF-71, RF-74) */}
-          {activeTab === 'oficios' && (
-            <div className="wk-pane">
-              <div className="wk-block">
-                <h3 className="wk-block__title">Reputación Diferenciada por Oficio</h3>
-                <p className="wk-text">
-                  Las calificaciones y trabajos no se promedian entre oficios distintos para proteger la reputación especializada.
-                </p>
-              </div>
-
-              {/* Oficio Principal (RF-02) */}
-              <section className="wk-trade wk-trade--primary">
-                <div className="wk-trade__head">
-                  <span className="oy-sticker oy-sticker--pill oy-sticker--amarillo wk-trade__pill">Oficio principal</span>
-                  <h4 className="oy-display wk-trade__name">{worker.tradeLabel}</h4>
-                </div>
-
-                <div className="wk-trade__stats">
-                  <div className="oy-stat wk-stat--amarillo">
-                    <span className="oy-stat__label">Calificación</span>
-                    <span className="oy-stat__value wk-stat__row">
-                      <Star size={20} fill="var(--color-star)" color="var(--stroke-ink)" aria-hidden="true" />
-                      {primaryRep
-                        ? formatRating(primaryRep.rating, primaryRep.reviewCount)
-                        : formatRating(worker.rating, worker.reviewCount)}
-                    </span>
-                    <span className="wk-stat__aside">{primaryRep?.reviewCount ?? worker.reviewCount} reseñas</span>
-                  </div>
-                  <div className="oy-stat wk-stat--esmeralda">
-                    <span className="oy-stat__label">Trabajos completados</span>
-                    <span className="oy-stat__value">{primaryRep?.completedJobs ?? worker.completedJobsCount}</span>
-                  </div>
-                  <div className="oy-stat wk-stat--marino">
-                    <span className="oy-stat__label">Tarifa</span>
-                    <span className="oy-stat__value wk-stat__value--sm">${worker.hourlyRate.toLocaleString()}</span>
-                    <span className="wk-stat__aside">COP/{unit}</span>
-                  </div>
-                </div>
-
-                {/* Especializaciones (RF-66) */}
-                {worker.specializations && worker.specializations.length > 0 && (
-                  <div className="wk-specs">
-                    <span className="oy-label wk-specs__label">Especializaciones registradas</span>
-                    <div className="wk-tags">
-                      {worker.specializations.map((spec, i) => (
-                        <span key={i} className="wk-tag wk-tag--role">{spec}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </section>
-
-              {/* Oficios Secundarios (RF-03) */}
-              {worker.secondaryTrades && worker.secondaryTrades.length > 0 && worker.secondaryTrades.map(secTrade => {
-                const secRep = worker.ratingByTrade?.[secTrade] ?? { rating: 0, reviewCount: 0, completedJobs: 0 };
-                const secService = worker.services.find(sv => sv.trade === secTrade);
-                return (
-                  <section key={secTrade} className="wk-trade">
-                    <div className="wk-trade__head">
-                      <span className="oy-sticker oy-sticker--pill oy-sticker--blanco wk-trade__pill">Oficio secundario</span>
-                      <h4 className="oy-display wk-trade__name wk-trade__name--cap">{secService?.tradeLabel ?? TRADE_LABELS[secTrade] ?? secTrade}</h4>
-                    </div>
-                    <div className="wk-trade__stats">
-                      <div className="oy-stat wk-stat--amarillo">
-                        <span className="oy-stat__label">Calificación</span>
-                        <span className="oy-stat__value wk-stat__row">
-                          <Star size={20} fill="var(--color-star)" color="var(--stroke-ink)" aria-hidden="true" /> {formatRating(secRep.rating, secRep.reviewCount)}
-                        </span>
-                        <span className="wk-stat__aside">{secRep.reviewCount} reseñas</span>
-                      </div>
-                      <div className="oy-stat wk-stat--esmeralda">
-                        <span className="oy-stat__label">Trabajos completados</span>
-                        <span className="oy-stat__value">{secRep.completedJobs}</span>
-                      </div>
-                      {secService && (
-                        <div className="oy-stat wk-stat--marino">
-                          <span className="oy-stat__label">Tarifa</span>
-                          <span className="oy-stat__value wk-stat__value--sm">${secService.hourlyRate.toLocaleString()}</span>
-                          <span className="wk-stat__aside">COP/{rateUnitShort(secService.rateUnit)}</span>
-                        </div>
-                      )}
-                    </div>
-                  </section>
-                );
-              })}
-
-              {/* Referente Comunitario Verificado (RF-68, RF-69) */}
-              {worker.referrals && (
-                <section className="wk-card wk-card--amarillo">
-                  <h3 className="wk-block__title wk-block__title--icon">
-                    <Award size={18} aria-hidden="true" /> Crecimiento Comunitario & Referidos
-                  </h3>
-                  <p className="wk-text wk-text--main">
-                    Código de referente: <strong>{worker.referrals.code}</strong>. Ha referido a {worker.referrals.count} colegas técnicos en {worker.referrals.distinctTradesCount} oficios distintos.
-                  </p>
-                  {worker.referrals.isCommunityReferrer && (
-                    <span className="oy-sticker oy-sticker--pill oy-sticker--amarillo wk-badge-perm">
-                      <Award size={14} aria-hidden="true" /> Insignia Permanente: Referente Comunitario Verificado
-                    </span>
-                  )}
+          <div id={panelId} role="tabpanel" aria-labelledby={tabId(activeTab)} className="wk-pane" key={activeTab}>
+            {/* Detalles y horarios (RF-04, RF-06, RF-09, RF-60) */}
+            {activeTab === 'info' && (
+              <>
+                <section className="wk-block">
+                  <h3 className="wk-block__title">Sobre {worker.name.split(' ')[0]}</h3>
+                  <p className="wk-text">{worker.bio}</p>
+                  <span className="wk-chip-line">
+                    <Phone size={13} aria-hidden="true" /> {worker.phone}
+                  </span>
                 </section>
-              )}
-            </div>
-          )}
 
-          {/* Contenido Pestaña 3: Reseñas & Reporte de Falsas (RF-36, RF-38) */}
-          {activeTab === 'resenas' && (
-            <div className="wk-pane">
-              {worker.reviews.length === 0 ? (
+                <section className="wk-card">
+                  <h3 className="wk-block__title wk-block__title--icon">
+                    <CreditCard size={16} aria-hidden="true" /> Medios de pago
+                  </h3>
+                  <div className="wk-tags">
+                    {(worker.acceptedPaymentMethods || ['efectivo', 'nequi', 'daviplata']).map(method => (
+                      <span key={method} className="wk-tag wk-tag--cap">
+                        <CheckCircle2 size={12} aria-hidden="true" /> {method.replace('_', '-')}
+                      </span>
+                    ))}
+                  </div>
+                </section>
+
+                {(worker.equipment?.length || worker.brands?.length || worker.species?.length) ? (
+                  <div className="wk-grid">
+                    {worker.equipment && (
+                      <section className="wk-card">
+                        <h3 className="wk-block__title wk-block__title--icon">
+                          <Wrench size={15} aria-hidden="true" /> Equipo y herramientas
+                        </h3>
+                        <ul className="wk-list">
+                          {worker.equipment.map((eq, i) => (
+                            <li key={i}>{eq}</li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+                    {worker.brands && (
+                      <section className="wk-card">
+                        <h3 className="wk-block__title wk-block__title--icon">
+                          <Tag size={15} aria-hidden="true" /> Marcas que atiende
+                        </h3>
+                        <div className="wk-tags">
+                          {worker.brands.map((b, i) => (
+                            <span key={i} className="wk-tag">{b}</span>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+                    {worker.species && (
+                      <section className="wk-card">
+                        <h3 className="wk-block__title wk-block__title--icon">
+                          <PawPrint size={15} aria-hidden="true" /> Especies que atiende
+                        </h3>
+                        <div className="wk-tags">
+                          {worker.species.map((sp, i) => (
+                            <span key={i} className="wk-tag">{sp}</span>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+                  </div>
+                ) : null}
+
+                {/* Disponibilidad semanal (RF-06) */}
+                <section className="wk-block">
+                  <h3 className="wk-block__title wk-block__title--icon">
+                    <Calendar size={16} aria-hidden="true" /> Horarios
+                  </h3>
+                  <ul className="wk-schedule">
+                    {worker.schedule.map((item, idx) => (
+                      <li key={idx} className="wk-schedule__row">
+                        <span className="wk-schedule__day">{item.day}</span>
+                        <span className="wk-schedule__slots">{item.slots.join(' · ')}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              </>
+            )}
+
+            {/* Reseñas verificadas y reporte de falsas (RF-36, RF-38) */}
+            {activeTab === 'resenas' && (
+              worker.reviews.length === 0 ? (
                 <div className="oy-empty wk-empty">
+                  <MascotAvatar size="md" />
                   <p className="oy-empty__title">Sin reseñas todavía</p>
-                  <p className="oy-empty__text">Aún no tiene reseñas registradas. ¡Sé el primero en calificarlo!</p>
+                  <p className="oy-empty__text">Cuando complete su primer servicio contigo podrás calificarlo.</p>
                 </div>
               ) : (
-                worker.reviews.map(rev => {
-                  const isReported = reportedReviews[rev.id] || rev.isReported;
-                  return (
-                    <article key={rev.id} className="wk-review">
-                      <div className="wk-review__head">
-                        <div className="wk-review__who">
-                          <span className="wk-review__author">{rev.author}</span>
+                <>
+                  <section className="wk-summary" aria-label="Resumen de reseñas">
+                    <div className="wk-summary__score">
+                      <span className="wk-summary__value">{formatRating(worker.rating, worker.reviewCount)}</span>
+                      <PeekRating value={Math.round(worker.rating)} readOnly size={16} ariaLabel={`${worker.rating.toFixed(1)} de 5 estrellas`} />
+                      <span className="wk-summary__count">{worker.reviewCount} reseñas verificadas</span>
+                    </div>
+                    <ul className="wk-summary__bars">
+                      {distribution.map(d => (
+                        <li key={d.stars}>
+                          <span className="wk-summary__stars">{d.stars} <Star size={11} aria-hidden="true" /></span>
+                          <span className="wk-summary__track" aria-hidden="true">
+                            <span style={{ transform: `scaleX(${d.count / maxCount})` }} />
+                          </span>
+                          <span className="wk-summary__num">
+                            {d.count}<span className="wk-sr"> reseñas de {d.stars} estrellas</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+
+                  {worker.reviews.map(rev => {
+                    const isReported = reportedReviews[rev.id] || rev.isReported;
+                    const reasonId = `${uid}-report-${rev.id}`;
+                    return (
+                      <article key={rev.id} className="wk-review">
+                        <div className="wk-review__head">
+                          <span className="wk-review__avatar" aria-hidden="true">{rev.author.charAt(0)}</span>
+                          <div className="wk-review__who">
+                            <span className="wk-review__author">{rev.author}</span>
+                            <span className="wk-review__date">{rev.date}</span>
+                          </div>
+                          <PeekRating value={rev.rating} readOnly size={13} ariaLabel={`${rev.rating} de 5 estrellas`} />
+                        </div>
+                        <div className="wk-review__tags">
                           {rev.verifiedWork && (
-                            <span className="wk-review__verified">
-                              <CheckCircle2 size={12} aria-hidden="true" /> Trabajo Verificado
+                            <span className="wk-pill wk-pill--available wk-pill--sm">
+                              <CheckCircle2 size={12} aria-hidden="true" /> Trabajo verificado
                             </span>
                           )}
                           {rev.tradeCategory && (
-                            <span className="wk-tag wk-tag--sm wk-tag--cap">{rev.tradeCategory}</span>
+                            <span className="wk-tag wk-tag--cap">{TRADE_LABELS[rev.tradeCategory] ?? rev.tradeCategory}</span>
                           )}
                         </div>
-                        <span className="wk-review__date">{rev.date}</span>
-                      </div>
 
-                      <div className="wk-review__rating">
-                        <PeekRating value={rev.rating} readOnly size={13} />
+                        <p className="wk-review__comment">{rev.comment}</p>
 
-                        {/* Botón Reportar Reseña Falsa (RF-38) */}
-                        {isReported ? (
-                          <span className="wk-review__reported">Reseña reportada para moderación</span>
-                        ) : (
-                          <button
-                            onClick={() => setReportingReviewId(reportingReviewId === rev.id ? null : rev.id)}
-                            className="wk-link-btn"
-                            title="Reportar reseña potencialmente falsa ante el administrador"
-                            aria-expanded={reportingReviewId === rev.id}
-                          >
-                            <Flag size={12} aria-hidden="true" /> Reportar sospechosa
-                          </button>
-                        )}
-                      </div>
-
-                      <p className="wk-review__comment">"{rev.comment}"</p>
-
-                      {/* Formulario desplegable para reportar reseña falsa */}
-                      {reportingReviewId === rev.id && (
-                        <div className="wk-report-form">
-                          <label className="wk-report-form__label" htmlFor={`wk-report-${rev.id}`}>
-                            Motivo del reporte (lo revisa nuestro equipo; no se borra automáticamente):
-                          </label>
-                          <input
-                            id={`wk-report-${rev.id}`}
-                            type="text"
-                            className="input-base wk-report-form__input"
-                            placeholder="Ej. Reseña fraudulenta, conflicto de interés o suplantación"
-                            value={reportReasonText}
-                            onChange={e => setReportReasonText(e.target.value)}
-                          />
-                          <div className="wk-report-form__actions">
-                            <button onClick={() => setReportingReviewId(null)} className="btn btn-secondary wk-btn-sm">
-                              Cancelar
+                        <div className="wk-review__foot">
+                          {isReported ? (
+                            <span className="wk-review__reported">Reportada para moderación</span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setReportingReviewId(reportingReviewId === rev.id ? null : rev.id);
+                                setReportError(false);
+                              }}
+                              className="wk-link-btn"
+                              aria-expanded={reportingReviewId === rev.id}
+                            >
+                              <Flag size={12} aria-hidden="true" /> Reportar reseña sospechosa
                             </button>
-                            <button onClick={() => handleReportFakeReview(rev)} className="btn btn-danger wk-btn-sm wk-btn-danger">
-                              Enviar Reporte
-                            </button>
-                          </div>
+                          )}
                         </div>
-                      )}
-                    </article>
-                  );
-                })
-              )}
-            </div>
-          )}
 
-          {/* Contenido Pestaña 4: Portafolio de Trabajos (RF-07, RF-65) */}
-          {activeTab === 'galeria' && <WorkerGallery images={worker.gallery} />}
+                        {reportingReviewId === rev.id && (
+                          <div className="wk-report-form">
+                            <label className="wk-report-form__label" htmlFor={reasonId}>
+                              Motivo del reporte
+                            </label>
+                            <input
+                              id={reasonId}
+                              type="text"
+                              className="input-base"
+                              placeholder="Ej. reseña falsa, conflicto de interés o suplantación"
+                              value={reportReasonText}
+                              aria-invalid={reportError || undefined}
+                              aria-describedby={`${reasonId}-hint`}
+                              onChange={e => {
+                                setReportReasonText(e.target.value);
+                                if (e.target.value.trim()) setReportError(false);
+                              }}
+                            />
+                            <p id={`${reasonId}-hint`} className={`wk-field-hint${reportError ? ' is-error' : ''}`}>
+                              {reportError
+                                ? 'Cuéntanos el motivo para poder revisarla.'
+                                : 'Lo revisa nuestro equipo; la reseña no se borra automáticamente.'}
+                            </p>
+                            <div className="wk-report-form__actions">
+                              <button type="button" onClick={() => setReportingReviewId(null)} className="btn btn-secondary wk-btn-sm">
+                                Cancelar
+                              </button>
+                              <button type="button" onClick={() => handleReportFakeReview(rev)} className="btn wk-btn-sm wk-btn-danger">
+                                Enviar reporte
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
+                </>
+              )
+            )}
+
+            {/* Portafolio de trabajos (RF-07, RF-65) */}
+            {activeTab === 'galeria' && <WorkerGallery images={worker.gallery} name={worker.name} />}
+
+            {/* Oficios y reputación diferenciada (RF-02, RF-03, RF-56, RF-66, RF-68, RF-69) */}
+            {activeTab === 'oficios' && (
+              <>
+                <p className="wk-text">
+                  Las calificaciones no se promedian entre oficios distintos para proteger la reputación especializada.
+                </p>
+
+                <section className="wk-trade wk-trade--primary">
+                  <div className="wk-trade__head">
+                    <span className="wk-pill wk-pill--sm">Oficio principal</span>
+                    <h3 className="wk-trade__name">{worker.tradeLabel}</h3>
+                  </div>
+                  <dl className="wk-trade__stats">
+                    <div>
+                      <dt>Calificación</dt>
+                      <dd>
+                        <Star size={16} fill="var(--color-star)" color="var(--color-star)" aria-hidden="true" />
+                        {primaryRep
+                          ? formatRating(primaryRep.rating, primaryRep.reviewCount)
+                          : formatRating(worker.rating, worker.reviewCount)}
+                        <span className="wk-rep__aside">{primaryRep?.reviewCount ?? worker.reviewCount} reseñas</span>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Trabajos</dt>
+                      <dd>{primaryRep?.completedJobs ?? worker.completedJobsCount}</dd>
+                    </div>
+                    <div>
+                      <dt>Tarifa</dt>
+                      <dd>{formatCop(worker.hourlyRate)}<span className="wk-rep__aside">/{unit}</span></dd>
+                    </div>
+                  </dl>
+                  {worker.specializations && worker.specializations.length > 0 && (
+                    <div className="wk-specs">
+                      <span className="wk-specs__label">Especializaciones</span>
+                      <div className="wk-tags">
+                        {worker.specializations.map((spec, i) => (
+                          <span key={i} className="wk-tag wk-tag--role">{spec}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </section>
+
+                {worker.secondaryTrades?.map(secTrade => {
+                  const secRep = worker.ratingByTrade?.[secTrade] ?? { rating: 0, reviewCount: 0, completedJobs: 0 };
+                  const secService = worker.services.find(sv => sv.trade === secTrade);
+                  return (
+                    <section key={secTrade} className="wk-trade">
+                      <div className="wk-trade__head">
+                        <span className="wk-pill wk-pill--sm">Oficio secundario</span>
+                        <h3 className="wk-trade__name wk-trade__name--cap">{secService?.tradeLabel ?? TRADE_LABELS[secTrade] ?? secTrade}</h3>
+                      </div>
+                      <dl className="wk-trade__stats">
+                        <div>
+                          <dt>Calificación</dt>
+                          <dd>
+                            <Star size={16} fill="var(--color-star)" color="var(--color-star)" aria-hidden="true" />
+                            {formatRating(secRep.rating, secRep.reviewCount)}
+                            <span className="wk-rep__aside">{secRep.reviewCount} reseñas</span>
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Trabajos</dt>
+                          <dd>{secRep.completedJobs}</dd>
+                        </div>
+                        {secService && (
+                          <div>
+                            <dt>Tarifa</dt>
+                            <dd>{formatCop(secService.hourlyRate)}<span className="wk-rep__aside">/{rateUnitShort(secService.rateUnit)}</span></dd>
+                          </div>
+                        )}
+                      </dl>
+                    </section>
+                  );
+                })}
+
+                {worker.referrals && (
+                  <section className="wk-card">
+                    <h3 className="wk-block__title wk-block__title--icon">
+                      <Award size={16} aria-hidden="true" /> Crecimiento comunitario
+                    </h3>
+                    <p className="wk-text">
+                      Código de referente <strong>{worker.referrals.code}</strong>. Ha referido a {worker.referrals.count} colegas en {worker.referrals.distinctTradesCount} oficios distintos.
+                    </p>
+                    {worker.referrals.isCommunityReferrer && (
+                      <span className="wk-pill wk-pill--warm wk-pill--start">
+                        <Award size={14} aria-hidden="true" /> Insignia permanente: Referente comunitario verificado
+                      </span>
+                    )}
+                  </section>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Barra de Acciones: Chat, Enviar Petición, Contratar / No disponible */}
+        {/* CTA fija al pie: solicitar, reservar y chatear */}
         <div className="wk-actions">
-          <button onClick={() => onOpenChat(worker)} className="btn btn-secondary wk-actions__btn">
-            <MessageCircle size={16} aria-hidden="true" /> Chatear
+          <button type="button" onClick={() => onOpenChat(worker)} className="btn btn-secondary wk-actions__btn">
+            <MessageCircle size={18} aria-hidden="true" /> Chatear
           </button>
-
           <button
-            onClick={() => onOpenSendRequest(worker)}
+            type="button"
+            onClick={() => canBook && onOpenBooking(worker)}
             className="btn btn-secondary wk-actions__btn"
+            disabled={!canBook}
+          >
+            <Calendar size={18} aria-hidden="true" /> {canBook ? 'Reservar cita' : 'Sin agenda hoy'}
+          </button>
+          <button
+            type="button"
+            onClick={() => onOpenSendRequest(worker)}
+            className="btn btn-primary wk-actions__btn wk-actions__btn--main"
             disabled={worker.isPaused}
           >
-            <Send size={16} aria-hidden="true" /> Enviar petición
-          </button>
-
-          <button
-            onClick={() => {
-              if (worker.available && !worker.isPaused) onOpenBooking(worker);
-            }}
-            disabled={!canBook}
-            className="btn btn-primary wk-actions__btn wk-actions__btn--main"
-          >
-            <Calendar size={16} aria-hidden="true" /> {worker.isPaused ? 'Pausado' : worker.available ? 'Contratar Servicio' : 'No disponible'}
+            <Send size={18} aria-hidden="true" /> {worker.isPaused ? 'Perfil pausado' : 'Solicitar servicio'}
           </button>
         </div>
       </div>
@@ -503,44 +564,23 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
   );
 };
 
-/** Portafolio en carrusel 3D; repite las fotos para que el anillo se vea lleno. */
-const MIN_RING_ITEMS = 6;
-
-const WorkerGallery: React.FC<{ images: string[] }> = ({ images }) => {
-  const [current, setCurrent] = useState(0);
-
+const WorkerGallery: React.FC<{ images: string[]; name: string }> = ({ images, name }) => {
   if (images.length === 0) {
     return (
       <div className="oy-empty wk-empty">
         <ImageIcon size={28} aria-hidden="true" />
-        <p className="oy-empty__text">Este trabajador aún no ha subido evidencias de trabajo.</p>
+        <p className="oy-empty__text">{name.split(' ')[0]} aún no ha subido fotos de sus trabajos.</p>
       </div>
     );
   }
 
-  const repeats = Math.max(1, Math.ceil(MIN_RING_ITEMS / images.length));
-  const items = Array.from({ length: images.length * repeats }, (_, i) => ({
-    src: images[i % images.length],
-    alt: `Evidencia de trabajo ${(i % images.length) + 1}`,
-  }));
-
   return (
-    <div className="wk-gallery">
-      <div className="wk-gallery__stage">
-        <CircularCarousel
-          items={items}
-          preset="cylinder"
-          intro="rise"
-          cardWidth={220}
-          aspectRatio={4 / 3}
-          captions={false}
-          ariaLabel="Portafolio de trabajos"
-          onChange={(i) => setCurrent(i % images.length)}
-        />
-      </div>
-      <p aria-live="polite" className="wk-gallery__counter">
-        Trabajo {current + 1} de {images.length} · arrastra o usa las flechas
-      </p>
-    </div>
+    <ul className="wk-gallery" aria-label="Portafolio de trabajos">
+      {images.map((src, i) => (
+        <li key={`${src}-${i}`} className="wk-gallery__item">
+          <img src={src} alt={`Trabajo ${i + 1} de ${name}`} loading="lazy" />
+        </li>
+      ))}
+    </ul>
   );
 };

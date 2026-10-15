@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type {
   Worker,
   WorkerServiceProfile,
@@ -35,11 +35,13 @@ import {
   Zap,
   MapPin,
   ArrowUpCircle,
-  Hourglass
+  Hourglass,
+  Sparkles
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 import { SquishSwitch } from '../../components/ui/SquishSwitch';
 import { PageHero } from '../../components/layout/PageHero';
+import { useReveal } from '../../hooks/useReveal';
 import { mediaService, MediaUploadError } from '../../services/mock/mediaService';
 import { computeClientReputation, monthlyIncome, topRequested } from '../../utils/reputation';
 import {
@@ -91,6 +93,8 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
   onUpdateWorker
 }) => {
   const update = (patch: Partial<Worker>) => onUpdateWorker?.(patch);
+  const rootRef = useRef<HTMLDivElement>(null);
+  useReveal(rootRef, [worker?.id, incomingRequests.length, worker?.services.length]);
 
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -145,6 +149,24 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, [incomingRequests]);
+
+  const anyModalOpen =
+    !!selectedClientForProfile || showPhotoModal || showVerificationModal || showReferralModal || showAddModal;
+
+  useEffect(() => {
+    if (!anyModalOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setSelectedClientForProfile(null);
+      setShowPhotoModal(false);
+      setShowVerificationModal(false);
+      setShowReferralModal(false);
+      setShowAddModal(false);
+      setEditingServiceId(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [anyModalOpen]);
 
   if (!worker) {
     return (
@@ -382,221 +404,279 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
   const topMax = Math.max(1, ...topRequestedList.map(t => t.count));
 
   return (
-    <div className="provider-dashboard container pv-page">
+    <div ref={rootRef} className="provider-dashboard container pv-page">
       <PageHero
         tone="fuego"
         eyebrow={<><Zap size={14} aria-hidden="true" /> Panel profesional</>}
-        title="Panel de Control Profesional"
-        subtitle="Gestiona tus oficios, cotizaciones entrantes y tu visibilidad en tiempo real para clientes en Bogotá D.C."
+        title={`Hola, ${worker.name.split(' ')[0]}`}
+        subtitle="Tu disponibilidad, tus ingresos y las solicitudes que esperan respuesta, en un solo lugar."
         actions={
           <button type="button" onClick={openNewService} className="btn btn-primary">
-            <Plus size={16} aria-hidden="true" /> Añadir otro oficio
+            <Plus size={16} aria-hidden="true" /> Añadir oficio
           </button>
         }
-        stickers={[
-          { icon: <Star size={26} />, tone: 'amarillo', style: { top: '12%', right: '6%', rotate: '-9deg' } },
-          { icon: <>${(monthlyRevenue / 1000000).toFixed(1)}M</>, tone: 'blanco', pill: true, style: { top: '18%', right: '20%', rotate: '5deg' } }
-        ]}
       />
 
-      {/* Panel "Disponible Ya" (RF-30, RF-31), foto de perfil (RF-59) e insignias (RF-43, RF-69) */}
-      <section className="pv-live" data-on={isAvailableNow} aria-label="Estado de disponibilidad">
-        <div className="pv-live__who">
-          <div className="pv-avatar">
-            {worker.photoUrl ? (
-              <img className="pv-avatar__img" src={worker.photoUrl} alt="Tu foto de perfil" />
-            ) : (
-              <div className="pv-avatar__img">
-                <MascotAvatar trade={worker.trade} size="sm" />
-              </div>
-            )}
-            <label className="pv-avatar__edit" title="Cambiar foto de perfil">
-              <Camera size={16} aria-hidden="true" />
-              <span className="pv-visually-hidden">Cambiar foto de perfil</span>
-              <input
-                type="file"
-                accept="image/*"
-                className="pv-visually-hidden"
-                onChange={handleProfilePhoto}
-                disabled={isUploading}
-              />
-            </label>
-          </div>
-          <div className="pv-live__info">
-            <h2 className="pv-live__title oy-display">
-              {isAvailableNow ? 'Disponible ya' : 'Fuera de línea'}
-            </h2>
-            <p className="pv-live__text">
-              {isPaused
-                ? worker.pauseReason === PROFILE_INCOMPLETE_REASON
-                  ? 'Registra tu primer oficio para aparecer en el directorio'
-                  : `Perfil en pausa: ${worker.pauseReason ?? 'revisión de moderación'}`
-                : isAvailableNow ? 'Visible en el mapa local' : 'Oculto para nuevos pedidos'}
-            </p>
-            {photoError && <p className="pv-live__text" role="alert">{photoError}</p>}
-            <div className="pv-badges">
-              {isIdentityVerified && (
-                <span className="pv-tag" title="Identidad validada con cédula">
-                  <ShieldCheck size={13} aria-hidden="true" /> Identidad Verificada
-                </span>
+      <div className="pv-bento">
+        {/* Disponible ya (RF-30, RF-31), foto de perfil (RF-59) */}
+        <section
+          className="pv-tile pv-tile--live"
+          data-on={isAvailableNow}
+          data-reveal
+          style={{ '--reveal-i': 0 } as React.CSSProperties}
+          aria-labelledby="pv-live-title"
+        >
+          <div className="pv-live__who">
+            <div className="pv-avatar">
+              {worker.photoUrl ? (
+                <img className="pv-avatar__img" src={worker.photoUrl} alt="Tu foto de perfil" />
+              ) : (
+                <div className="pv-avatar__img">
+                  <MascotAvatar trade={worker.trade} size="sm" />
+                </div>
               )}
-              {isCommunityReferrer && (
-                <span className="pv-tag">
-                  <Award size={13} aria-hidden="true" /> Referente Comunitario
-                </span>
-              )}
+              <label className="pv-avatar__edit" title="Cambiar foto de perfil">
+                <Camera size={16} aria-hidden="true" />
+                <span className="pv-visually-hidden">Cambiar foto de perfil</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="pv-visually-hidden"
+                  onChange={handleProfilePhoto}
+                  disabled={isUploading}
+                />
+              </label>
+            </div>
+            <div className="pv-live__info">
+              <span className="pv-kicker">Disponibilidad</span>
+              <span className="pv-live__name">{worker.name}</span>
+              <span className="pv-muted pv-note">{worker.tradeLabel}</span>
             </div>
           </div>
+
+          <div className="pv-live__control">
+            <div className="pv-live__status">
+              <h2 id="pv-live-title" className="pv-live__title">
+                <span className="pv-dot" data-on={isAvailableNow} aria-hidden="true" />
+                {isAvailableNow ? 'Disponible ya' : 'Fuera de línea'}
+              </h2>
+              <p className="pv-live__text">
+                {isPaused
+                  ? worker.pauseReason === PROFILE_INCOMPLETE_REASON
+                    ? 'Registra tu primer oficio para aparecer en el directorio'
+                    : `Perfil en pausa: ${worker.pauseReason ?? 'revisión de moderación'}`
+                  : isAvailableNow ? 'Visible en el mapa para clientes cercanos' : 'Oculto para nuevos pedidos'}
+              </p>
+            </div>
+            <SquishSwitch
+              checked={isAvailableNow}
+              onChange={setAvailable}
+              disabled={isPaused}
+              ariaLabel="Disponible ya"
+              trackOnColor="var(--oy-verde-esmeralda)"
+              width={84}
+              height={48}
+              radius={24}
+            />
+          </div>
+          {photoError && <p className="pv-live__text pv-error" role="alert">{photoError}</p>}
+        </section>
+
+        {/* Ingresos del mes (RF-45) */}
+        <section
+          className="pv-tile pv-tile--income"
+          data-reveal
+          style={{ '--reveal-i': 1 } as React.CSSProperties}
+          aria-labelledby="pv-income-title"
+        >
+          <span className="pv-tile__icon pv-tile__icon--ambar" aria-hidden="true"><DollarSign size={20} /></span>
+          <h2 id="pv-income-title" className="pv-kicker">Ingresos del mes</h2>
+          <p className="pv-figure">
+            <span className="pv-figure__unit">$</span>{monthlyRevenue.toLocaleString('es-CO')}
+          </p>
+          <span className="pv-muted pv-note">COP · servicios finalizados este mes</span>
+        </section>
+
+        {/* Estadísticas (RF-08, RF-10) */}
+        <div className="pv-tile pv-tile--stat" data-reveal style={{ '--reveal-i': 2 } as React.CSSProperties}>
+          <span className="pv-tile__icon pv-tile__icon--esmeralda" aria-hidden="true"><CheckCircle2 size={20} /></span>
+          <span className="pv-figure pv-figure--md">{completedJobsCount}</span>
+          <span className="pv-kicker">Trabajos completados</span>
+        </div>
+        <div className="pv-tile pv-tile--stat" data-reveal style={{ '--reveal-i': 3 } as React.CSSProperties}>
+          <span className="pv-tile__icon pv-tile__icon--marino" aria-hidden="true"><BellRing size={20} /></span>
+          <span className="pv-figure pv-figure--md">{incomingRequests.length}</span>
+          <span className="pv-kicker">Solicitudes por responder</span>
         </div>
 
-        <div className="pv-live__switch">
-          <span className="pv-row">
-            <span className="pv-dot" data-on={isAvailableNow} aria-hidden="true" />
-            {isAvailableNow ? 'DISPONIBLE YA' : 'FUERA DE LÍNEA'}
-          </span>
-          <SquishSwitch
-            checked={isAvailableNow}
-            onChange={setAvailable}
-            disabled={isPaused}
-            ariaLabel="Disponible Ya"
-            trackOnColor="var(--oy-cacao-profundo)"
-            width={60}
-            height={34}
-            radius={17}
-          />
-        </div>
-      </section>
+        {/* Reputación (RF-43, RF-69) */}
+        <section
+          className="pv-tile pv-tile--rep"
+          data-reveal
+          style={{ '--reveal-i': 4 } as React.CSSProperties}
+          aria-labelledby="pv-rep-title"
+        >
+          <div className="pv-tile__head">
+            <h2 id="pv-rep-title" className="pv-kicker">Reputación</h2>
+            <span className="pv-tile__icon pv-tile__icon--amarillo" aria-hidden="true"><Star size={20} /></span>
+          </div>
+          <div className="pv-rep">
+            <span className="pv-figure pv-figure--md">{worker.reviewCount > 0 ? worker.rating.toFixed(1) : '—'}</span>
+            <span className="pv-rep__stars" aria-hidden="true">
+              {[1, 2, 3, 4, 5].map(n => (
+                <Star key={n} size={18} data-on={n <= Math.round(worker.rating) ? '' : undefined} />
+              ))}
+            </span>
+            <span className="pv-muted pv-note">{worker.reviewCount} reseñas verificadas</span>
+          </div>
+          <div className="pv-badges">
+            <span className={`pv-tag ${isIdentityVerified ? 'pv-tag--esmeralda' : isVerificationPending ? 'pv-tag--marino' : ''}`}>
+              {isIdentityVerified
+                ? <><ShieldCheck size={13} aria-hidden="true" /> Identidad verificada</>
+                : isVerificationPending
+                  ? <><Hourglass size={13} aria-hidden="true" /> Cédula en revisión</>
+                  : <><ShieldCheck size={13} aria-hidden="true" /> Sin verificar</>}
+            </span>
+            {isCommunityReferrer && (
+              <span className="pv-tag pv-tag--fuego">
+                <Award size={13} aria-hidden="true" /> Referente comunitario
+              </span>
+            )}
+          </div>
+        </section>
 
-      {/* Estadísticas (RF-08, RF-10, RF-45) */}
-      <div className="pv-stats">
-        <div className="oy-stat pv-stat--esmeralda">
-          <span className="pv-stat__icon"><CheckCircle2 size={20} aria-hidden="true" /></span>
-          <span className="oy-stat__value">{completedJobsCount}</span>
-          <span className="oy-stat__label">Trabajos Completados</span>
-        </div>
-        <div className="oy-stat pv-stat--amarillo">
-          <span className="pv-stat__icon"><Star size={20} aria-hidden="true" /></span>
-          <span className="oy-stat__value">{worker.reviewCount > 0 ? worker.rating.toFixed(1) : '—'}</span>
-          <span className="oy-stat__label">Calificación Promedio</span>
-          <span className="pv-stat__note">({worker.reviewCount} reseñas)</span>
-        </div>
-        <div className="oy-stat pv-stat--fuego">
-          <span className="pv-stat__icon"><DollarSign size={20} aria-hidden="true" /></span>
-          <span className="oy-stat__value">${monthlyRevenue.toLocaleString()}</span>
-          <span className="oy-stat__label">Ingresos Mes</span>
-          <span className="pv-stat__note">COP · servicios finalizados este mes</span>
-        </div>
-        <div className="oy-stat pv-stat--marino">
-          <span className="pv-stat__icon"><BellRing size={20} aria-hidden="true" /></span>
-          <span className="oy-stat__value">{incomingRequests.length}</span>
-          <span className="oy-stat__label">Solicitudes Pendientes</span>
-        </div>
+        {/* Bandeja de solicitudes entrantes (RF-25, RF-26, RF-27, RF-28, RF-53) */}
+        <section
+          className="pv-tile pv-tile--inbox"
+          data-reveal
+          style={{ '--reveal-i': 5 } as React.CSSProperties}
+          aria-labelledby="pv-inbox-title"
+        >
+          <div className="pv-tile__head">
+            <div>
+              <h2 id="pv-inbox-title" className="pv-tile__title">Solicitudes entrantes</h2>
+              <p className="pv-muted pv-note">Responde en menos de 30 minutos para no perder el trabajo.</p>
+            </div>
+            <span className="pv-tag pv-tag--fuego">{incomingRequests.length} pendientes</span>
+          </div>
+
+          {incomingRequests.length === 0 ? (
+            <div className="oy-empty pv-empty">
+              <MascotAvatar trade={worker.trade} size="sm" expression="alegre" />
+              <h3 className="oy-empty__title">Estás al día</h3>
+              <p className="oy-empty__text">No tienes solicitudes pendientes de respuesta en este momento.</p>
+            </div>
+          ) : (
+            <ul className="pv-inbox">
+              {incomingRequests.map(req => {
+                const secondsLeft = timeLeftMap[req.id] !== undefined ? timeLeftMap[req.id] : 1800;
+                const minutes = Math.floor(secondsLeft / 60);
+                const seconds = secondsLeft % 60;
+                const isUrgentExpiration = secondsLeft < 300;
+
+                return (
+                  <li key={req.id} className="pv-ticket">
+                    <div className="pv-ticket__top">
+                      <button type="button" className="pv-client-link" onClick={() => openClientProfile(req)}>
+                        <strong>{req.clientName}</strong>
+                        <small>Ver reputación del contratante</small>
+                      </button>
+                      <span className={`pv-tag ${req.urgency === 'urgente' ? 'pv-tag--danger' : 'pv-tag--esmeralda'}`}>
+                        {req.urgency === 'urgente' ? <><Zap size={12} aria-hidden="true" /> Urgente</> : 'Normal'}
+                      </span>
+                    </div>
+
+                    <p className="pv-ticket__quote">{req.problemDescription}</p>
+
+                    {req.photos && req.photos.length > 0 && (
+                      <div className="pv-evidence">
+                        <img src={req.photos[0]} alt="Evidencia del problema" />
+                        <span>Foto del problema adjunta por el cliente</span>
+                      </div>
+                    )}
+
+                    <div className="pv-ticket__meta">
+                      <span><CalendarDays size={14} aria-hidden="true" /> {req.date}</span>
+                      <span><Clock size={14} aria-hidden="true" /> {req.time}</span>
+                      <span><MapPin size={14} aria-hidden="true" /> {req.coverageZone ?? req.address}</span>
+                    </div>
+
+                    <div className="pv-ticket__foot">
+                      <span className="pv-ticket__budget">${req.amount.toLocaleString('es-CO')} <small>COP</small></span>
+                      <span className="pv-timer" data-urgent={isUrgentExpiration} role="timer" aria-live="off">
+                        <Hourglass size={13} aria-hidden="true" />
+                        <span className="pv-visually-hidden">Tiempo para responder:</span>
+                        <span className="pv-timer__clock">{minutes}:{seconds < 10 ? `0${seconds}` : seconds}</span>
+                      </span>
+                    </div>
+
+                    <div className="pv-ticket__actions">
+                      <button type="button" onClick={() => onRejectRequest(req.id)} className="btn btn-secondary">
+                        <X size={16} aria-hidden="true" /> Rechazar
+                      </button>
+                      <button type="button" onClick={() => onAcceptRequest(req.id)} className="btn btn-primary">
+                        <CheckCircle2 size={16} aria-hidden="true" /> Aceptar
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        {/* Oportunidades: servicios más solicitados (RF-46) */}
+        <section
+          className="pv-tile pv-tile--opps"
+          data-reveal
+          style={{ '--reveal-i': 6 } as React.CSSProperties}
+          aria-labelledby="pv-opps-title"
+        >
+          <div className="pv-tile__head">
+            <h2 id="pv-opps-title" className="pv-tile__title">Lo más pedido</h2>
+            <span className="pv-tile__icon pv-tile__icon--marino" aria-hidden="true"><TrendingUp size={20} /></span>
+          </div>
+          <p className="pv-muted pv-note">Trabajos completados por categoría este mes.</p>
+          {topRequestedList.length === 0 ? (
+            <p className="pv-muted pv-copy pv-opps__empty">Aún no tienes trabajos finalizados este mes.</p>
+          ) : (
+            <ol className="pv-top-list">
+              {topRequestedList.map(t => (
+                <li key={t.label}>
+                  <div className="pv-row pv-row--between pv-top-list__row">
+                    <span>{t.label}</span>
+                    <span>{t.count}</span>
+                  </div>
+                  <div className="pv-bar" aria-hidden="true">
+                    <div className="pv-bar__fill" style={{ transform: `scaleX(${t.count / topMax})` }} />
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+          <div className="pv-opps__tip">
+            <Sparkles size={16} aria-hidden="true" />
+            <span>{activeDays} días activos en tu agenda. Más días disponibles, más solicitudes.</span>
+          </div>
+        </section>
       </div>
 
-      {/* Sección 1: Bandeja de Solicitudes Entrantes (RF-25, RF-26, RF-27, RF-28, RF-53) */}
-      <section aria-labelledby="pv-inbox-title">
-        <div className="oy-section-head">
+      {/* Oficios y especializaciones (RF-01, RF-02, RF-03, RF-04, RF-05, RF-09, RF-57, RF-66, RF-67) */}
+      <section className="pv-section" aria-labelledby="pv-trades-title">
+        <div className="oy-section-head" data-reveal>
           <div>
-            <h2 id="pv-inbox-title" className="oy-section-title oy-display">Bandeja de Solicitudes Entrantes</h2>
-            <p className="oy-section-sub">
-              Clientes en Bogotá solicitando atención. Tiempo de respuesta límite: 30 minutos.
-            </p>
+            <h2 id="pv-trades-title" className="oy-section-title oy-display">Mis oficios y tarifas</h2>
+            <p className="oy-section-sub">Equipos, marcas, especialidades y zonas que ve el contratante.</p>
           </div>
-          <span className="pv-tag pv-tag--fuego">{incomingRequests.length} pendientes</span>
-        </div>
-
-        {incomingRequests.length === 0 ? (
-          <div className="oy-empty">
-            <MascotAvatar trade={worker.trade} size="md" expression="alegre" />
-            <h3 className="oy-empty__title oy-display">¡Estás al día!</h3>
-            <p className="oy-empty__text">No tienes solicitudes pendientes de respuesta en este momento.</p>
-          </div>
-        ) : (
-          <div className="pv-grid">
-            {incomingRequests.map(req => {
-              const secondsLeft = timeLeftMap[req.id] !== undefined ? timeLeftMap[req.id] : 1800;
-              const minutes = Math.floor(secondsLeft / 60);
-              const seconds = secondsLeft % 60;
-              const isUrgentExpiration = secondsLeft < 300; // Menos de 5 minutos
-
-              return (
-                <article key={req.id} className="pv-ticket">
-                  <div className="pv-ticket__band pv-row pv-row--between">
-                    {/* Enlace para consultar perfil del contratante (RF-53) */}
-                    <button
-                      type="button"
-                      className="pv-client-link"
-                      onClick={() => openClientProfile(req)}
-                    >
-                      <strong>{req.clientName}</strong>
-                      <small>Ver reputación del contratante ↗</small>
-                    </button>
-                    <span className={`pv-tag ${req.urgency === 'urgente' ? 'pv-tag--danger' : 'pv-tag--esmeralda'}`}>
-                      {req.urgency === 'urgente' ? <><Zap size={12} aria-hidden="true" /> Urgente</> : 'Normal'}
-                    </span>
-                  </div>
-
-                  <span className="pv-muted pv-note">{req.address}</span>
-
-                  <p className="pv-ticket__quote">"{req.problemDescription}"</p>
-
-                  {/* Foto de la solicitud si existe (RF-20) */}
-                  {req.photos && req.photos.length > 0 && (
-                    <div className="pv-evidence">
-                      <img src={req.photos[0]} alt="Evidencia del problema" />
-                      <span>Foto del problema adjunta por el cliente</span>
-                    </div>
-                  )}
-
-                  <div className="pv-ticket__meta pv-row--between">
-                    <span><CalendarDays size={14} aria-hidden="true" /> {req.date}</span>
-                    <span><Clock size={14} aria-hidden="true" /> {req.time}</span>
-                    {req.coverageZone && <span><MapPin size={14} aria-hidden="true" /> {req.coverageZone}</span>}
-                  </div>
-
-                  <div className="pv-ticket__budget">
-                    Presupuesto: ${req.amount.toLocaleString()} COP
-                  </div>
-
-                  {/* Contador Regresivo de Expiración (RF-28) */}
-                  <div className="pv-timer" data-urgent={isUrgentExpiration} role="timer" aria-live="off">
-                    <span>Tiempo para responder:</span>
-                    <span className="pv-timer__clock">
-                      {minutes}:{seconds < 10 ? `0${seconds}` : seconds} min
-                    </span>
-                  </div>
-
-                  <div className="pv-ticket__actions">
-                    <button type="button" onClick={() => onRejectRequest(req.id)} className="btn btn-secondary">
-                      Rechazar
-                    </button>
-                    <button type="button" onClick={() => onAcceptRequest(req.id)} className="btn btn-primary">
-                      Aceptar Trabajo
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* Sección 2: Multi-Servicio & Especializaciones (RF-01, RF-02, RF-03, RF-04, RF-05, RF-09, RF-57, RF-66, RF-67) */}
-      <section aria-labelledby="pv-trades-title">
-        <div className="oy-section-head">
-          <div>
-            <h2 id="pv-trades-title" className="oy-section-title oy-display">Mis Oficios, Especializaciones y Tarifas</h2>
-            <p className="oy-section-sub">Configura detalles específicos como equipos, marcas y especialidades</p>
-          </div>
-          <button type="button" onClick={openNewService} className="btn btn-primary">
+          <button type="button" onClick={openNewService} className="btn btn-secondary">
             <Plus size={16} aria-hidden="true" /> Añadir otro oficio
           </button>
         </div>
 
         {isProfileIncomplete && (
-          <div className="oy-empty">
+          <div className="oy-empty" data-reveal>
             <MascotAvatar size="md" expression="entusiasta" />
-            <h3 className="oy-empty__title oy-display">Registra tu primer oficio</h3>
+            <h3 className="oy-empty__title">Registra tu primer oficio</h3>
             <p className="oy-empty__text">
               Cuéntale a tus vecinos qué haces, cuánto cobras y en qué zonas trabajas. Así apareces en el directorio.
             </p>
@@ -608,10 +688,16 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
 
         <div className="pv-grid">
           {services.map((srv, index) => (
-            <article key={srv.id} className="pv-ticket">
-              <div className={`pv-ticket__band pv-row pv-row--between${index === 0 ? '' : ' pv-ticket__band--almendra'}`}>
+            <article
+              key={srv.id}
+              className="pv-ticket pv-trade"
+              data-primary={index === 0 ? '' : undefined}
+              data-reveal
+              style={{ '--reveal-i': index } as React.CSSProperties}
+            >
+              <div className="pv-ticket__top">
                 <span className={`pv-tag${index === 0 ? ' pv-tag--solid' : ''}`}>
-                  {index === 0 ? 'OFICIO PRINCIPAL' : 'OFICIO SECUNDARIO'}
+                  {index === 0 ? 'Oficio principal' : 'Oficio secundario'}
                 </span>
                 <div className="pv-row">
                   <button
@@ -651,18 +737,17 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
               <h3 className="pv-ticket__title">{srv.tradeLabel}</h3>
               <p className="pv-muted pv-copy">{srv.bio}</p>
 
-              <div className="pv-row">
-                <span className="pv-tag pv-tag--fuego"><DollarSign size={13} aria-hidden="true" /> ${srv.hourlyRate.toLocaleString()} COP/{rateUnitShort(srv.rateUnit)}</span>
-                <span className="pv-tag"><Clock size={13} aria-hidden="true" /> {srv.experienceYears} años exp.</span>
-              </div>
+              <p className="pv-rate">
+                ${srv.hourlyRate.toLocaleString('es-CO')}
+                <small> COP/{rateUnitShort(srv.rateUnit)} · {srv.experienceYears} años de experiencia</small>
+              </p>
 
-              {/* Especializaciones (RF-66, RF-67) */}
               {srv.specializations && srv.specializations.length > 0 && (
                 <div>
                   <span className="pv-label">Especializaciones</span>
                   <div className="pv-row">
                     {srv.specializations.map((spec, i) => (
-                      <span key={i} className="pv-tag pv-tag--almendra">
+                      <span key={i} className="pv-tag">
                         <Star size={11} aria-hidden="true" /> {spec}
                       </span>
                     ))}
@@ -670,7 +755,6 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                 </div>
               )}
 
-              {/* Equipos & Marcas (RF-09) */}
               {(srv.equipment?.length || srv.brands?.length || srv.species?.length) ? (
                 <div className="pv-details">
                   {srv.equipment && srv.equipment.length > 0 && <div><strong>Equipo:</strong> {srv.equipment.join(', ')}</div>}
@@ -695,16 +779,16 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
         </div>
       </section>
 
-      {/* Sección 3: Disponibilidad semanal (RF-06) */}
-      <section aria-labelledby="pv-week-title">
-        <div className="oy-section-head">
+      {/* Disponibilidad semanal (RF-06) */}
+      <section className="pv-section" aria-labelledby="pv-week-title">
+        <div className="oy-section-head" data-reveal>
           <div>
-            <h2 id="pv-week-title" className="oy-section-title oy-display">Disponibilidad Semanal</h2>
+            <h2 id="pv-week-title" className="oy-section-title oy-display">Agenda semanal</h2>
             <p className="oy-section-sub">Días y franjas horarias habituales en que atiendes servicios.</p>
           </div>
           <span className="pv-tag pv-tag--fuego"><CalendarDays size={13} aria-hidden="true" /> {activeDays} días activos</span>
         </div>
-        <div className="oy-panel oy-panel--almendra">
+        <div className="oy-panel pv-panel" data-reveal>
           <div className="pv-week">
             {WEEK_DAYS.map(d => {
               const day = weeklySchedule[d.key];
@@ -745,19 +829,21 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
         </div>
       </section>
 
-      {/* Sección 4: Métodos de Pago, Portafolio y servicios más solicitados (RF-60, RF-07, RF-46) */}
-      <section aria-labelledby="pv-profile-title">
-        <div className="oy-section-head">
+      {/* Pagos y portafolio (RF-60, RF-07) */}
+      <section className="pv-section" aria-labelledby="pv-profile-title">
+        <div className="oy-section-head" data-reveal>
           <div>
-            <h2 id="pv-profile-title" className="oy-section-title oy-display">Pagos, portafolio y demanda</h2>
+            <h2 id="pv-profile-title" className="oy-section-title oy-display">Pagos y portafolio</h2>
             <p className="oy-section-sub">Lo que ve el contratante antes de solicitarte un servicio.</p>
           </div>
         </div>
 
-        <div className="pv-grid--2 pv-grid">
-          {/* RF-60: Métodos de Pago */}
-          <div className="oy-panel oy-panel--amarillo">
-            <h3 className="pv-panel-title"><CreditCard size={22} aria-hidden="true" /> Métodos de Pago Aceptados</h3>
+        <div className="pv-grid pv-grid--2">
+          <div className="oy-panel pv-panel" data-reveal>
+            <h3 className="pv-panel-title">
+              <span className="pv-tile__icon pv-tile__icon--amarillo" aria-hidden="true"><CreditCard size={18} /></span>
+              Métodos de pago
+            </h3>
             <p className="pv-muted pv-copy">
               Selecciona los canales en los que recibes pagos para informar al contratante antes del servicio.
             </p>
@@ -777,10 +863,12 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
             </div>
           </div>
 
-          {/* RF-07: Portafolio de Fotografías */}
-          <div className="oy-panel oy-panel--marino">
+          <div className="oy-panel pv-panel" data-reveal style={{ '--reveal-i': 1 } as React.CSSProperties}>
             <div className="pv-row pv-row--between">
-              <h3 className="pv-panel-title"><ImageIcon size={22} aria-hidden="true" /> Portafolio de Trabajos</h3>
+              <h3 className="pv-panel-title">
+                <span className="pv-tile__icon pv-tile__icon--marino" aria-hidden="true"><ImageIcon size={18} /></span>
+                Portafolio
+              </h3>
               <button type="button" onClick={() => setShowPhotoModal(true)} className="btn btn-secondary">
                 <Plus size={14} aria-hidden="true" /> Subir foto
               </button>
@@ -805,44 +893,24 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
               ))}
             </div>
           </div>
-
-          {/* RF-46: Servicios más solicitados */}
-          <div className="oy-panel oy-panel--gris">
-            <h3 className="pv-panel-title"><TrendingUp size={22} aria-hidden="true" /> Servicios más solicitados</h3>
-            <p className="pv-muted pv-copy">Trabajos completados por categoría este mes.</p>
-            {topRequestedList.length === 0 && (
-              <p className="pv-muted pv-copy">Aún no tienes trabajos finalizados este mes.</p>
-            )}
-            <ol className="pv-top-list">
-              {topRequestedList.map(t => (
-                <li key={t.label}>
-                  <div className="pv-row pv-row--between pv-top-list__row">
-                    <span>{t.label}</span>
-                    <span>{t.count}</span>
-                  </div>
-                  <div className="pv-bar" aria-hidden="true">
-                    <div className="pv-bar__fill" style={{ width: `${(t.count / topMax) * 100}%` }} />
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
         </div>
       </section>
 
-      {/* Sección 5: Verificación de Identidad & Referidos (RF-41, RF-42, RF-43, RF-68, RF-69) */}
-      <section aria-labelledby="pv-trust-title">
-        <div className="oy-section-head">
+      {/* Verificación de identidad y referidos (RF-41, RF-42, RF-43, RF-68, RF-69) */}
+      <section className="pv-section" aria-labelledby="pv-trust-title">
+        <div className="oy-section-head" data-reveal>
           <div>
             <h2 id="pv-trust-title" className="oy-section-title oy-display">Confianza y comunidad</h2>
             <p className="oy-section-sub">Distintivos que te hacen destacar en el directorio.</p>
           </div>
         </div>
 
-        <div className="pv-grid--2 pv-grid">
-          {/* RF-41, RF-42, RF-43: Verificación de Identidad */}
-          <div className="oy-panel oy-panel--esmeralda">
-            <h3 className="pv-panel-title"><ShieldCheck size={22} aria-hidden="true" /> Verificación de Identidad</h3>
+        <div className="pv-grid pv-grid--2">
+          <div className="oy-panel pv-panel" data-reveal>
+            <h3 className="pv-panel-title">
+              <span className="pv-tile__icon pv-tile__icon--esmeralda" aria-hidden="true"><ShieldCheck size={18} /></span>
+              Verificación de identidad
+            </h3>
             <p className="pv-muted pv-copy">
               {isEligibleForVerification
                 ? `Has completado ${completedJobsCount} trabajos (mínimo 10 requeridos). Eres elegible para el distintivo oficial.`
@@ -853,10 +921,10 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                 <span className="pv-label">Estado actual</span>
                 <span className={`pv-tag ${isIdentityVerified ? 'pv-tag--esmeralda' : isVerificationPending ? 'pv-tag--marino' : 'pv-tag--danger'}`}>
                   {isIdentityVerified
-                    ? <><CheckCircle2 size={13} aria-hidden="true" /> Identidad Verificada Activa</>
+                    ? <><CheckCircle2 size={13} aria-hidden="true" /> Identidad verificada activa</>
                     : isVerificationPending
                       ? <><Hourglass size={13} aria-hidden="true" /> En revisión por moderación</>
-                      : 'Pendiente de Documento'}
+                      : 'Pendiente de documento'}
                 </span>
               </div>
               <button
@@ -865,15 +933,17 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                 className="btn btn-secondary"
                 disabled={!isIdentityVerified && !isVerificationPending && !isEligibleForVerification}
               >
-                {isIdentityVerified || isVerificationPending ? 'Ver Soporte' : 'Enviar Cédula'}
+                {isIdentityVerified || isVerificationPending ? 'Ver soporte' : 'Enviar cédula'}
               </button>
             </div>
           </div>
 
-          {/* RF-68, RF-69: Referidos y Crecimiento Comunitario */}
-          <div className="oy-panel oy-panel--almendra">
+          <div className="oy-panel pv-panel" data-reveal style={{ '--reveal-i': 1 } as React.CSSProperties}>
             <div className="pv-row pv-row--between">
-              <h3 className="pv-panel-title"><Users size={22} aria-hidden="true" /> Referidos Comunitarios</h3>
+              <h3 className="pv-panel-title">
+                <span className="pv-tile__icon pv-tile__icon--fuego" aria-hidden="true"><Users size={18} /></span>
+                Referidos comunitarios
+              </h3>
               <button type="button" onClick={() => setShowReferralModal(true)} className="btn btn-secondary">
                 <Plus size={14} aria-hidden="true" /> Referir colega
               </button>
@@ -883,23 +953,23 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
             </p>
             <div className="pv-summary">
               <div className="pv-row pv-row--between">
-                <span>Referidos verificados:</span>
+                <span>Referidos verificados</span>
                 <strong>{referrals.count} colegas</strong>
               </div>
               {pendingReferrals > 0 && (
                 <div className="pv-row pv-row--between">
-                  <span>En verificación:</span>
+                  <span>En verificación</span>
                   <strong>{pendingReferrals} colegas</strong>
                 </div>
               )}
               <div className="pv-row pv-row--between">
-                <span>Oficios distintos:</span>
-                <strong>{distinctTradesCount} oficios (mínimo 3 para insignia)</strong>
+                <span>Oficios distintos</span>
+                <strong>{distinctTradesCount} de 3 para la insignia</strong>
               </div>
             </div>
             {isCommunityReferrer && (
               <span className="pv-tag pv-tag--solid">
-                <Award size={13} aria-hidden="true" /> Insignia Permanente: Referente Comunitario Verificado
+                <Award size={13} aria-hidden="true" /> Insignia permanente: Referente comunitario verificado
               </span>
             )}
           </div>
@@ -937,10 +1007,10 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                 </div>
               </div>
 
-              <div className="oy-panel oy-panel--amarillo pv-client-rep">
+              <div className="oy-panel pv-client-rep">
                 <span className="pv-label">Reputación histórica como contratante</span>
                 <div className="pv-rating">
-                  <Star size={22} fill="var(--color-star)" color="var(--oy-cacao-profundo)" aria-hidden="true" /> {selectedClientForProfile.reviewCount > 0 ? selectedClientForProfile.rating.toFixed(1) : '—'}
+                  <Star size={22} fill="var(--color-star)" color="var(--color-star)" aria-hidden="true" /> {selectedClientForProfile.reviewCount > 0 ? selectedClientForProfile.rating.toFixed(1) : '—'}
                   <span className="pv-muted pv-rating__count">
                     ({selectedClientForProfile.reviewCount} calificaciones de otros profesionales)
                   </span>

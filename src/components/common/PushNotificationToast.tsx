@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type { PushNotification } from '../../types';
 import { Bell, CheckCircle2, MessageSquare, AlertCircle, X } from 'lucide-react';
 import { MascotAvatar } from '../mascot/MascotAvatar';
+import { useLanguage } from '../../context/LanguageContext';
 import './PushNotificationToast.css';
 
 interface PushNotificationToastProps {
@@ -13,25 +14,32 @@ export const PushNotificationToast: React.FC<PushNotificationToastProps> = ({
   notification,
   onDismiss
 }) => {
-  const [visible, setVisible] = useState(false);
+  const { t } = useLanguage();
+  /* id del toast que está saliendo: sale con la misma transición por la que entró */
+  const [closingId, setClosingId] = useState<string | null>(null);
+  const visible = !!notification && closingId !== notification.id;
 
   useEffect(() => {
-    if (notification) {
-      setVisible(true);
-      const timer = setTimeout(() => {
-        setVisible(false);
-        setTimeout(onDismiss, 300);
-      }, 5000);
-      return () => clearTimeout(timer);
-    } else {
-      setVisible(false);
-    }
+    if (!notification) return;
+    let dismiss: ReturnType<typeof setTimeout> | undefined;
+    const timer = setTimeout(() => {
+      setClosingId(notification.id);
+      dismiss = setTimeout(onDismiss, 300);
+    }, 5000);
+    return () => {
+      clearTimeout(timer);
+      if (dismiss) clearTimeout(dismiss);
+    };
   }, [notification, onDismiss]);
 
-  if (!notification && !visible) return null;
+  if (!notification) return null;
+
+  const close = () => {
+    setClosingId(notification.id);
+    setTimeout(onDismiss, 300);
+  };
 
   const getIcon = () => {
-    if (!notification) return <Bell size={18} aria-hidden="true" />;
     switch (notification.type) {
       case 'request':
         return <Bell size={18} color="var(--color-action-strong)" aria-hidden="true" />;
@@ -46,12 +54,13 @@ export const PushNotificationToast: React.FC<PushNotificationToastProps> = ({
 
   return (
     <div
+      key={notification.id}
       className={`push-toast${visible ? ' push-toast--visible' : ''}`}
       role="status"
       aria-live="polite"
       aria-atomic="true"
     >
-      <div className="push-toast__card">
+      <div className="push-toast__card glass-2">
         <div className="push-toast__avatar">
           <MascotAvatar size="xs" />
         </div>
@@ -59,20 +68,17 @@ export const PushNotificationToast: React.FC<PushNotificationToastProps> = ({
         <div className="push-toast__text">
           <div className="push-toast__head">
             <span className="push-toast__icon">{getIcon()}</span>
-            <span className="push-toast__title">{notification?.title}</span>
+            <span className="push-toast__title">{notification.title}</span>
           </div>
-          <p className="push-toast__body">{notification?.body}</p>
-          <span className="push-toast__time">{notification?.timestamp}</span>
+          <p className="push-toast__body">{notification.body}</p>
+          <span className="push-toast__time">{notification.timestamp}</span>
         </div>
 
         <button
           type="button"
           className="push-toast__close"
-          aria-label="Cerrar notificación"
-          onClick={() => {
-            setVisible(false);
-            setTimeout(onDismiss, 300);
-          }}
+          aria-label={t('app.toast.close')}
+          onClick={close}
         >
           <X size={16} aria-hidden="true" />
         </button>

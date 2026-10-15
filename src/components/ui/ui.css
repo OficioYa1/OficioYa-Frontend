@@ -100,18 +100,23 @@
   to { transform: rotate(360deg); }
 }
 
-/* ── Badge ──────────────────────────────────────────────── */
+/* ── Badge: píldoras de vidrio ─────────────────────────── */
 .oy-badge {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  padding: 4px 10px;
+  min-height: 26px;
+  padding: 4px 11px;
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-pill);
+  background: var(--glass-2);
+  color: var(--color-text-main);
   font-family: var(--font-text);
   font-size: var(--text-caption);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
+  box-shadow: var(--glass-shine);
 }
 
 .oy-badge--upper {
@@ -119,23 +124,22 @@
   letter-spacing: var(--tracking-label);
 }
 
-/* "PROFESIONAL VERIFICADO" (manual pág. 10) */
-.oy-badge--verified { background: var(--color-energy); color: var(--color-on-energy); }
+/* "PROFESIONAL VERIFICADO" (manual pág. 10): vidrio con escudo Azul Marino */
+.oy-badge--verified svg { color: var(--color-trust); }
 
-/* "DISPONIBLE" (manual pág. 10) */
-.oy-badge--available { background: var(--color-status); color: var(--color-on-status); }
-
-.oy-badge--unavailable {
-  background: var(--color-surface-hover);
-  color: var(--color-text-muted);
+/* "DISPONIBLE" (manual pág. 10): Esmeralda con texto Cacao (5.87:1) */
+.oy-badge--available {
+  border-color: transparent;
+  background: var(--color-status);
+  color: var(--color-on-status);
 }
 
-.oy-badge--neutral {
-  background: var(--color-surface-hover);
+.oy-badge--unavailable { color: var(--color-text-muted); }
+
+.oy-badge--warm {
+  background: var(--wash-almendra);
   color: var(--color-text-main);
 }
-
-.oy-badge--warm { background: var(--color-warm); color: var(--color-detail); }
 
 /* Punto de estado: nunca depende solo del color, siempre va con texto */
 .oy-badge__dot {
@@ -154,25 +158,29 @@
   50% { opacity: 0.35; }
 }
 
-/* ── Card ───────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .oy-badge--available .oy-badge__dot { animation: none; }
+}
+
+/* ── Card: vidrio de profundidad 1 ──────────────────────── */
 .oy-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-card);
   padding: var(--space-5);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  background: var(--glass-1);
+  box-shadow: var(--glass-shine), var(--depth-1);
 }
 
 .oy-card--interactive {
-  cursor: pointer;
-  text-align: left;
   width: 100%;
   color: inherit;
   font: inherit;
+  text-align: left;
+  cursor: pointer;
   transition:
-    transform var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur-base) ease,
-    border-color var(--dur-base) ease;
+    transform 600ms var(--ease-editorial),
+    box-shadow 600ms var(--ease-editorial),
+    background-color 300ms ease;
 }
 
 .oy-card--interactive:active {
@@ -181,9 +189,15 @@
 
 @media (hover: hover) and (pointer: fine) {
   .oy-card--interactive:hover {
-    border-color: var(--color-border);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
+    background: var(--color-surface-hover);
+    box-shadow: var(--glass-shine), var(--depth-2);
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oy-card--interactive { transition: none; }
+  .oy-card--interactive:hover { transform: none; }
 }
 
 /* ── Logo ───────────────────────────────────────────────── */

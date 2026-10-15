@@ -2,7 +2,7 @@
    CircularCarousel · carrusel 3D de imágenes
    Versión en CSS plano (el repo no usa Tailwind) con los tokens
    del manual: fundido de profundidad con el color de superficie,
-   radios de marco del manual y foco visible en Azul Marino.
+   marcos de vidrio con canto de luz y foco visible del manual.
    ============================================================ */
 
 .cc-root {

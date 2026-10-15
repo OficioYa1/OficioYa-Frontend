@@ -1,157 +1,156 @@
 /* ============================================================
-   Footer — banda plana Almendra con contorno Cacao (lenguaje sticker)
+   Footer editorial — panel de vidrio con claim grande y ligero,
+   accesos, redes sociales y crédito académico DOSW.
    ============================================================ */
 
 .app-footer {
   width: 100%;
   margin-top: auto;
-  padding: var(--space-16) var(--space-6) var(--space-8);
-  border-top: var(--stroke-w) solid var(--stroke-ink);
-  background: var(--wash-almendra);
-  color: var(--color-text-muted);
+  padding: var(--space-16) 12px var(--space-6);
 }
 
-.app-footer__inner {
+.app-footer__panel {
   max-width: 1200px;
   margin: 0 auto;
+  padding: clamp(28px, 5vw, 56px) clamp(22px, 5vw, 56px) var(--space-6);
+  border-radius: var(--radius-card-lg);
+  color: var(--color-text-muted);
 }
 
 .app-footer__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-12);
-  margin-bottom: var(--space-12);
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-10);
+  margin-bottom: var(--space-10);
 }
 
 .app-footer__brand {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: var(--space-4);
 }
 
 .app-footer__claim {
-  margin: 0;
+  max-width: 18ch;
+  margin: var(--space-2) 0 0;
   color: var(--color-text-main);
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.4;
+  font-size: clamp(1.9rem, 1.3rem + 2.2vw, 3rem);
 }
 
 .app-footer__text {
+  max-width: 46ch;
   margin: 0;
   font-size: var(--text-small);
   line-height: 1.6;
 }
 
 .app-footer__heading {
-  display: inline-block;
-  margin: 0 0 var(--space-5);
-  padding: 4px 12px;
-  border: var(--stroke-w) solid var(--stroke-ink);
-  border-radius: var(--radius-pill);
-  background: var(--color-surface);
-  color: var(--color-text-main);
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-subtle);
   font-family: var(--font-text);
   font-size: var(--text-caption);
-  font-weight: 800;
-  letter-spacing: var(--tracking-label);
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .app-footer__list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  align-items: flex-start;
+  gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: var(--text-small);
 }
 
 .app-footer__link {
-  border-radius: var(--radius-xs);
-  color: inherit;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--color-text-main);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  text-align: left;
   text-decoration: underline;
   text-decoration-color: transparent;
-  text-underline-offset: 3px;
-  transition: color 160ms ease, text-decoration-color 160ms ease;
+  text-underline-offset: 4px;
+  cursor: pointer;
+  transition: text-decoration-color 200ms ease, color 200ms ease;
 }
 
-.app-footer__link:focus-visible {
+.app-footer__social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-footer__social-link {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--glass-border);
+  border-radius: 50%;
+  background: var(--glass-2);
+  box-shadow: var(--glass-shine), var(--depth-1);
+  color: var(--color-text-main);
+  transition: transform 400ms var(--ease-editorial), background-color 200ms ease, color 200ms ease;
+}
+
+.app-footer__social-link:active { transform: scale(0.97); }
+
+.app-footer__link:focus-visible,
+.app-footer__social-link:focus-visible {
   outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .app-footer__link:hover {
-    color: var(--color-text-main);
-    text-decoration-color: currentColor;
+  .app-footer__link:hover { text-decoration-color: currentColor; }
+  .app-footer__social-link:hover {
+    background: var(--role-primary);
+    color: var(--role-on-primary);
+    transform: translateY(-2px);
   }
 }
-
-/* Firma: sticker con Many */
-.app-footer__sign {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  width: fit-content;
-  max-width: 100%;
-  margin-bottom: var(--space-12);
-  padding: var(--space-4) var(--space-6) var(--space-4) var(--space-4);
-  border: var(--stroke-w) solid var(--stroke-ink);
-  border-radius: var(--radius-pill);
-  background: var(--color-surface);
-}
-
-.app-footer__sign-avatar {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  overflow: hidden;
-  border: var(--stroke-w) solid var(--stroke-ink);
-  border-radius: 50%;
-  background: var(--wash-amarillo);
-}
-
-.app-footer__sign-text { min-width: 0; }
-
-.app-footer__sign-title {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--color-trust);
-  font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
-  line-height: 1;
-}
-
-html.role-provider .app-footer__sign-title { color: var(--oy-cacao-profundo); }
-html.theme-dark .app-footer__sign-title { color: var(--color-text-main); }
-
-.app-footer__sign-sub { font-size: var(--text-small); }
 
 .app-footer__bar {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2) var(--space-4);
-  padding-top: var(--space-6);
-  border-top: var(--stroke-w) solid var(--stroke-ink);
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border-subtle);
   font-size: 13px;
+  line-height: 1.5;
 }
 
 .app-footer__copy {
   color: var(--color-text-main);
-  font-weight: 700;
+  font-weight: 600;
 }
 
-.app-footer__dot { opacity: 0.5; }
+@media (max-width: 900px) {
+  .app-footer__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .app-footer__brand { grid-column: 1 / -1; }
+}
 
 @media (max-width: 600px) {
-  .app-footer { padding: var(--space-12) var(--space-4) var(--space-8); }
+  .app-footer { padding-top: var(--space-12); }
+  .app-footer__panel { border-radius: var(--radius-frame); }
   .app-footer__grid { gap: var(--space-8); }
-  .app-footer__sign { border-radius: var(--radius-card); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-footer__link { transition: none; }
+  .app-footer__link,
+  .app-footer__social-link { transition: none; }
 }

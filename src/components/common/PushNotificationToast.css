@@ -1,36 +1,43 @@
 /* ============================================================
-   Toast de notificación push — sticker con contorno Cacao.
-   Escritorio: arriba a la derecha, bajo el header (no tapa el CTA
-   del hero, que vive a la izquierda). Móvil: abajo, sobre BottomNav.
+   Toast de notificación push — vidrio elevado bajo el header.
+   Entra y sale por arriba (mismo sentido). Escritorio: a la
+   derecha; móvil: ancho completo, respetando el área segura.
    ============================================================ */
 
 .push-toast {
   position: fixed;
-  top: 76px;
-  right: 16px;
-  z-index: 1300;
-  width: calc(100% - 32px);
-  max-width: 360px;
+  top: calc(84px + env(safe-area-inset-top, 0px));
+  right: max(12px, calc((100vw - 1200px) / 2));
+  z-index: 940; /* bajo el header y sus menús, sobre el contenido */
+  width: min(360px, calc(100vw - 24px));
   opacity: 0;
   pointer-events: none;
-  transform: translateY(-12px);
-  transition: transform 300ms var(--ease-out), opacity 200ms ease;
+  transform: translateY(-14px) scale(0.98);
+  transform-origin: top center;
+  transition: transform 450ms var(--ease-editorial), opacity 250ms ease;
 }
 
 .push-toast--visible {
   opacity: 1;
   pointer-events: auto;
-  transform: translateY(0);
+  transform: none;
+  animation: push-toast-in 450ms var(--ease-editorial);
+}
+
+/* Entrada al montarse; la salida es la transición inversa hacia arriba */
+@keyframes push-toast-in {
+  from { opacity: 0; transform: translateY(-14px) scale(0.98); }
+  to { opacity: 1; transform: none; }
 }
 
 .push-toast__card {
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
-  padding: 12px 12px 12px 14px;
-  border: var(--stroke-w) solid var(--stroke-ink);
+  padding: 12px 10px 12px 12px;
   border-radius: var(--radius-card);
-  background: var(--color-surface);
+  background: var(--glass-3);
+  box-shadow: var(--glass-shine), var(--depth-3);
   color: var(--color-text-main);
 }
 
@@ -47,7 +54,7 @@
 .push-toast__head {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin-bottom: 2px;
 }
 
@@ -57,77 +64,80 @@
   place-items: center;
   width: 26px;
   height: 26px;
-  border: 1px solid var(--stroke-ink);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-pill);
-  background: var(--wash-almendra);
+  background: var(--glass-1);
+  box-shadow: var(--glass-shine);
 }
 
 .push-toast__title {
   min-width: 0;
   overflow-wrap: anywhere;
   font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
 }
 
 .push-toast__body {
   margin: 0;
   color: var(--color-text-muted);
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 
 .push-toast__time {
   display: block;
   margin-top: 4px;
-  color: var(--color-text-muted);
-  font-size: 11px;
+  color: var(--color-text-subtle);
+  font-size: 11.5px;
 }
 
 .push-toast__close {
   display: grid;
   flex-shrink: 0;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border: var(--stroke-w) solid var(--stroke-ink);
+  width: 44px;
+  height: 44px;
+  margin: -6px -2px 0 0;
+  border: none;
   border-radius: var(--radius-pill);
-  background: var(--color-surface);
-  color: var(--color-text-main);
+  background: transparent;
+  color: var(--color-text-muted);
   cursor: pointer;
-  transition: background-color 160ms ease, transform 160ms var(--ease-out);
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms var(--ease-out);
 }
 
 .push-toast__close:active { transform: scale(0.97); }
 
 .push-toast__close:focus-visible {
   outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .push-toast__close:hover { background: var(--color-surface-hover); }
+  .push-toast__close:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-text-main);
+  }
 }
 
-/* Móvil: abajo, por encima de la barra inferior */
+/* Móvil: arriba, bajo el header compacto, ocupando el ancho útil */
 @media (max-width: 767px) {
   .push-toast {
-    top: auto;
-    right: 16px;
-    bottom: calc(76px + env(safe-area-inset-bottom));
-    max-width: none;
-    transform: translateY(12px);
+    top: calc(76px + env(safe-area-inset-top, 0px));
+    right: 12px;
+    width: calc(100vw - 24px);
   }
-  .push-toast--visible { transform: translateY(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .push-toast {
+  .push-toast,
+  .push-toast--visible {
     transform: none;
     transition: opacity 160ms ease;
+    animation: none;
   }
-  .push-toast--visible { transform: none; }
   .push-toast__close { transition: none; }
 }

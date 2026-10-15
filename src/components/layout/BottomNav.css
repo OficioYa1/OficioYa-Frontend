@@ -1,85 +1,96 @@
 /* ============================================================
-   Barra inferior móvil — lenguaje sticker: fondo plano, contorno
-   Cacao y píldora del color del rol en la pestaña activa.
+   Barra inferior móvil — píldora de vidrio flotante sobre el
+   área segura, con un indicador que se desliza al destino activo.
+   El layout reserva su alto con --bottom-nav-space (App.css).
    ============================================================ */
 
 .bottom-nav {
   position: fixed;
-  right: 0;
+  right: 12px;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  left: 12px;
+  z-index: 900;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 5px;
+  border-radius: var(--radius-pill);
+}
+
+.bottom-nav__track {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.bottom-nav__indicator {
+  position: absolute;
+  top: 0;
   bottom: 0;
   left: 0;
-  z-index: 900;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  gap: 2px;
-  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
-  border-top: var(--stroke-w) solid var(--stroke-ink);
-  background: var(--color-bg);
+  width: 0;
+  border-radius: var(--radius-pill);
+  background: var(--role-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 8px 18px -10px var(--role-primary);
+  opacity: 0;
+  pointer-events: none;
+  transform-origin: left center;
+  transition: opacity 200ms ease, background-color 300ms ease;
 }
 
 .bottom-nav__item {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex: 1 1 0;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 2px;
   min-width: 0;
-  min-height: var(--tap-target);
-  padding: 2px 0;
+  min-height: 54px;
+  padding: 4px 2px;
   border: none;
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--color-text-muted);
   font-family: var(--font-text);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: color 160ms ease, transform 160ms var(--ease-out);
+  transition: color 250ms ease, transform 160ms var(--ease-out);
 }
+
+.bottom-nav__item[aria-current='page'] { color: var(--role-on-primary); }
 
 .bottom-nav__icon {
   position: relative;
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 28px;
-  border: var(--stroke-w) solid transparent;
-  border-radius: var(--radius-pill);
-  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+  height: 24px;
 }
 
 .bottom-nav__label {
   max-width: 100%;
   overflow: hidden;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 600;
+  letter-spacing: -0.005em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.bottom-nav__item--active { color: var(--color-text-main); }
-
-.bottom-nav__item--active .bottom-nav__icon {
-  border-color: var(--stroke-ink);
-  background: var(--role-primary);
-  color: var(--role-on-primary);
-}
-
-.bottom-nav__item--active .bottom-nav__label { font-weight: 800; }
-
 .bottom-nav__badge {
   position: absolute;
-  top: -6px;
-  right: 2px;
+  top: -5px;
+  left: 12px;
   min-width: 18px;
   padding: 1px 5px;
-  border: 1px solid var(--oy-cacao-profundo);
   border-radius: var(--radius-pill);
   background: var(--oy-amarillo-canario);
+  box-shadow: 0 0 0 2px var(--canvas);
   color: var(--oy-cacao-profundo);
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 14px;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 15px;
   text-align: center;
 }
 
@@ -96,16 +107,14 @@
 
 .bottom-nav__item:focus-visible {
   outline: 2px solid var(--color-focus-ring);
-  outline-offset: 1px;
+  outline-offset: -2px;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .bottom-nav__item:not(.bottom-nav__item--active):hover .bottom-nav__icon {
-    background: var(--color-surface-hover);
-  }
+  .bottom-nav__item:not([aria-current='page']):hover { color: var(--color-text-main); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .bottom-nav__item,
-  .bottom-nav__icon { transition: none; }
+  .bottom-nav__indicator { transition: none; }
 }

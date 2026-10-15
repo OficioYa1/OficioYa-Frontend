@@ -34,6 +34,7 @@ import { MascotAssistant } from './components/mascot/MascotAssistant';
 import { MascotAvatar } from './components/mascot/MascotAvatar';
 import { PushNotificationToast } from './components/common/PushNotificationToast';
 import { NotificationInbox } from './components/common/NotificationInbox';
+import { BackToTop } from './components/common/BackToTop';
 
 import { LandingPage } from './modules/landing/LandingPage';
 import { SeekerDirectory } from './modules/seeker/SeekerDirectory';
@@ -106,6 +107,11 @@ const MainAppContent: React.FC = () => {
   useEffect(() => {
     setCurrentTab(role === 'seeker' ? 'inicio_seeker' : 'inicio_pro');
   }, [role]);
+
+  // Cada pestaña nueva empieza arriba (sin desplazamiento animado)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [currentTab]);
 
   // RF-63: Geolocalización geoespacial (Bogotá D.C. lat: 4.6768, lng: -74.0482)
   const [userLocation, setUserLocation] = useState<Coordinates>(FALLBACK_LOCATION_BOGOTA);
@@ -650,6 +656,7 @@ const MainAppContent: React.FC = () => {
         isChatOpen={isChatOpen}
         onToggleChat={() => setIsChatOpen(!isChatOpen)}
         notificationCount={notifications.filter(n => !n.read).length}
+        isInboxOpen={isInboxOpen}
         onOpenNotifications={() => setIsInboxOpen(open => !open)}
       />
 
@@ -663,79 +670,108 @@ const MainAppContent: React.FC = () => {
 
       <div className="app-main-body">
         {/* Área Central de Contenido */}
-        <main className="app-content-area" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
-          {/* ========================================================
-              VISTAS DE CONTRATANTE (SEEKER)
-              ======================================================== */}
-          {currentTab === 'inicio_seeker' && (
-            <SeekerHomeView
-              workers={workers}
-              userLocation={userLocation}
-              onSelectWorker={setSelectedWorkerForProfile}
-              onOpenSendRequest={handleOpenSendRequest}
-              onChangeTradeCategory={setCurrentTradeCategory}
-            />
-          )}
+        <main className="app-content-area">
+          {/* Vista de la pestaña activa: al cambiar se monta de nuevo y entra con un fundido suave */}
+          <div key={currentTab} className="app-tab-view">
+            {/* ========================================================
+                VISTAS DE CONTRATANTE (SEEKER)
+                ======================================================== */}
+            {currentTab === 'inicio_seeker' && (
+              <SeekerHomeView
+                workers={workers}
+                userLocation={userLocation}
+                onSelectWorker={setSelectedWorkerForProfile}
+                onOpenSendRequest={handleOpenSendRequest}
+                onChangeTradeCategory={setCurrentTradeCategory}
+              />
+            )}
 
-          {currentTab === 'buscar' && (
-            <SeekerDirectory
-              workers={workers}
-              userLocation={userLocation}
-              onSelectWorker={setSelectedWorkerForProfile}
-              onOpenSendRequest={handleOpenSendRequest}
-              onChangeTradeCategory={setCurrentTradeCategory}
-            />
-          )}
+            {currentTab === 'buscar' && (
+              <SeekerDirectory
+                workers={workers}
+                userLocation={userLocation}
+                onSelectWorker={setSelectedWorkerForProfile}
+                onOpenSendRequest={handleOpenSendRequest}
+                onChangeTradeCategory={setCurrentTradeCategory}
+              />
+            )}
 
-          {currentTab === 'solicitudes' && (
-            <MyServicesView
-              services={seekerServices}
-              onUpdateServiceStatus={handleUpdateServiceStatus}
-              onSubmitReview={handleSubmitReview}
-              onOpenReport={handleOpenReportFromService}
-              onRehireWorker={handleRehireWorker}
-              onRateClient={handleRateClient}
-            />
-          )}
+            {currentTab === 'solicitudes' && (
+              <MyServicesView
+                services={seekerServices}
+                onUpdateServiceStatus={handleUpdateServiceStatus}
+                onSubmitReview={handleSubmitReview}
+                onOpenReport={handleOpenReportFromService}
+                onRehireWorker={handleRehireWorker}
+                onRateClient={handleRateClient}
+              />
+            )}
 
-          {/* ========================================================
-              VISTAS DE PROFESIONAL (PROVIDER)
-              ======================================================== */}
-          {(currentTab === 'inicio_pro' || currentTab === 'oportunidades') && (
-            <ProviderHomeView
-              onRecommend={() => triggerPushNotification('Recomendación enviada', 'Compartimos la oportunidad con tus colegas del oficio.', 'system')}
-            />
-          )}
+            {/* ========================================================
+                VISTAS DE PROFESIONAL (PROVIDER)
+                ======================================================== */}
+            {(currentTab === 'inicio_pro' || currentTab === 'oportunidades') && (
+              <ProviderHomeView
+                onRecommend={() => triggerPushNotification('Recomendación enviada', 'Compartimos la oportunidad con tus colegas del oficio.', 'system')}
+              />
+            )}
 
-          {currentTab === 'alertas' && (
-            <ProviderDashboard
-              worker={currentWorker}
-              services={services}
-              incomingRequests={workerServices.filter(s => s.status === 'pendiente')}
-              onAcceptRequest={handleAcceptIncomingRequest}
-              onRejectRequest={handleRejectIncomingRequest}
-              onUpdateWorker={patch => currentWorker && updateWorker(currentWorker.id, patch)}
-            />
-          )}
+            {currentTab === 'alertas' && (
+              <ProviderDashboard
+                worker={currentWorker}
+                services={services}
+                incomingRequests={workerServices.filter(s => s.status === 'pendiente')}
+                onAcceptRequest={handleAcceptIncomingRequest}
+                onRejectRequest={handleRejectIncomingRequest}
+                onUpdateWorker={patch => currentWorker && updateWorker(currentWorker.id, patch)}
+              />
+            )}
 
-          {currentTab === 'clientes' && (
-            <MyServicesView
-              services={workerServices}
-              onUpdateServiceStatus={handleUpdateServiceStatus}
-              onSubmitReview={handleSubmitReview}
-              onOpenReport={handleOpenReportFromService}
-              onRehireWorker={handleRehireWorker}
-              onRateClient={handleRateClient}
-            />
-          )}
+            {currentTab === 'clientes' && (
+              <MyServicesView
+                services={workerServices}
+                onUpdateServiceStatus={handleUpdateServiceStatus}
+                onSubmitReview={handleSubmitReview}
+                onOpenReport={handleOpenReportFromService}
+                onRehireWorker={handleRehireWorker}
+                onRateClient={handleRateClient}
+              />
+            )}
+
+            {!KNOWN_TABS.has(currentTab) && (
+              <StatusScreen
+                code="404"
+                title="Esta sección no existe"
+                message="Many no encontró lo que buscabas. Vuelve al inicio para seguir."
+                actions={
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => setCurrentTab(role === 'seeker' ? 'inicio_seeker' : 'inicio_pro')}
+                  >
+                    <Home size={18} aria-hidden="true" /> Ir al inicio
+                  </button>
+                }
+              />
+            )}
+
+            {/* Pestaña: Perfil */}
+            {currentTab === 'perfil' && (
+              <UserProfileView
+                services={role === 'provider' ? workerServices : seekerServices}
+                onOpenSettings={() => setIsSettingsOpen(true)}
+                onNavigateToTab={setCurrentTab}
+              />
+            )}
+          </div>
 
           {/* Drawer de Mensajes / Chat (Overlay Sidebar) */}
           {isChatOpen && (
             <>
-              <div 
-                className="hide-on-desktop"
+              <div
+                className="app-chat-backdrop hide-on-desktop"
                 onClick={() => setIsChatOpen(false)}
-                style={{ position: 'fixed', inset: 0, background: 'rgba(62,31,20,0.45)', zIndex: 999 }}
+                aria-hidden="true"
               />
               <ChatView
                 conversations={conversations}
@@ -748,37 +784,11 @@ const MainAppContent: React.FC = () => {
               />
             </>
           )}
-
-          {!KNOWN_TABS.has(currentTab) && (
-            <StatusScreen
-              code="404"
-              title="Esta sección no existe"
-              message="Many no encontró lo que buscabas. Vuelve al inicio para seguir."
-              actions={
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => setCurrentTab(role === 'seeker' ? 'inicio_seeker' : 'inicio_pro')}
-                >
-                  <Home size={18} aria-hidden="true" /> Ir al inicio
-                </button>
-              }
-            />
-          )}
-
-          {/* Pestaña: Perfil */}
-          {currentTab === 'perfil' && (
-            <UserProfileView
-              services={role === 'provider' ? workerServices : seekerServices}
-              onOpenSettings={() => setIsSettingsOpen(true)}
-              onNavigateToTab={setCurrentTab}
-            />
-          )}
         </main>
       </div>
 
       {/* Footer Universal de la App */}
-      <AppFooter />
+      <AppFooter onSelectTab={tab => { setIsChatOpen(false); setCurrentTab(tab); }} />
 
       {/* Barra de Navegación Inferior para Móvil */}
       <BottomNav
@@ -788,6 +798,8 @@ const MainAppContent: React.FC = () => {
         isChatOpen={isChatOpen}
         onToggleChat={() => setIsChatOpen(open => !open)}
       />
+
+      <BackToTop />
 
       {/* Widget Interactivo de la Mascota Many */}
       <MascotAssistant

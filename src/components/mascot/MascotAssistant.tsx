@@ -2,142 +2,112 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { MascotExpression, TradeCategory } from '../../types';
 import { MascotAvatar } from './MascotAvatar';
 import { useAuth } from '../../context/AuthContext';
-import { X, ChevronRight } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
+import { X, ChevronRight, MessageCircle } from 'lucide-react';
 import './MascotAssistant.css';
 
 interface MascotAssistantProps {
   currentTrade?: TradeCategory;
+  /** Pestaña activa de la app; define el consejo de contexto. */
   activeView?: string;
-  customMessage?: string;
 }
 
-type ManyState = {
+type ManyAnimation = 'float' | 'wave' | 'bounce' | 'idle';
+
+interface ManyState {
   expression: MascotExpression;
-  message: string;
-  animate: 'float' | 'wave' | 'bounce' | 'idle';
-};
+  /** Clave del diccionario (src/i18n/app.ts). */
+  messageKey: string;
+  vars?: Record<string, string>;
+  animate: ManyAnimation;
+}
 
 const CONTEXT_STATES: Record<string, ManyState> = {
-  directorio_seeker: {
-    expression: 'alegre',
-    message: 'Encuentra el profesional ideal en tu barrio. Filtra por oficio y distancia.',
-    animate: 'float',
-  },
-  directorio_provider: {
-    expression: 'concentrado',
-    message: 'Modo Profesional activo. Mantén tus tarifas y disponibilidad actualizadas.',
-    animate: 'idle',
-  },
-  servicios: {
-    expression: 'pensativo',
-    message: 'Aquí puedes ver el estado de todos tus servicios y dejar reseñas verificadas.',
-    animate: 'float',
-  },
-  mensajes: {
-    expression: 'entusiasta',
-    message: 'Chatea directamente con el profesional. Acuerda la tarifa antes del servicio.',
-    animate: 'bounce',
-  },
-  perfil: {
-    expression: 'guino',
-    message: 'Tu reputación digital es tu mayor activo. Mantén tu perfil completo.',
-    animate: 'idle',
-  },
-  'dashboard-pro': {
-    expression: 'concentrado',
-    message: 'Gestiona tus solicitudes entrantes y activa tu disponibilidad en tiempo real.',
-    animate: 'idle',
-  },
+  directory_seeker: { expression: 'alegre', messageKey: 'app.many.ctx.directorySeeker', animate: 'float' },
+  directory_provider: { expression: 'concentrado', messageKey: 'app.many.ctx.directoryProvider', animate: 'idle' },
+  services: { expression: 'pensativo', messageKey: 'app.many.ctx.services', animate: 'float' },
+  profile: { expression: 'guino', messageKey: 'app.many.ctx.profile', animate: 'idle' },
+  dashboard: { expression: 'concentrado', messageKey: 'app.many.ctx.dashboard', animate: 'idle' }
+};
+
+/** Pestaña de la app → contexto de Many. */
+const VIEW_CONTEXT: Record<string, keyof typeof CONTEXT_STATES> = {
+  inicio_seeker: 'directory_seeker',
+  buscar: 'directory_seeker',
+  solicitudes: 'services',
+  clientes: 'services',
+  inicio_pro: 'directory_provider',
+  oportunidades: 'directory_provider',
+  alertas: 'dashboard',
+  perfil: 'profile'
 };
 
 const INTERACTION_MESSAGES: ManyState[] = [
-  { expression: 'alegre',       message: '¡Hola! Soy Many, el castor de OficioYa. Estoy aquí para ayudarte.', animate: 'wave' },
-  { expression: 'guino',        message: 'Todos los profesionales tienen antecedentes verificados. Confía en las reseñas.', animate: 'float' },
-  { expression: 'entusiasta',   message: '¡Respuesta promedio en menos de 20 minutos! Eso sí es velocidad.', animate: 'bounce' },
-  { expression: 'sorprendido',  message: 'Hay un profesional calificado a menos de 500 metros de ti ahora mismo.', animate: 'wave' },
-  { expression: 'pensativo',    message: 'Analizo distancia, reputación y disponibilidad para darte la mejor opción.', animate: 'idle' },
-  { expression: 'concentrado',  message: 'Las reseñas son verificadas: solo clientes con servicio completado pueden opinar.', animate: 'float' },
+  { expression: 'alegre', messageKey: 'app.many.tip.hello', animate: 'wave' },
+  { expression: 'guino', messageKey: 'app.many.tip.verified', animate: 'float' },
+  { expression: 'entusiasta', messageKey: 'app.many.tip.speed', animate: 'bounce' },
+  { expression: 'sorprendido', messageKey: 'app.many.tip.nearby', animate: 'wave' },
+  { expression: 'pensativo', messageKey: 'app.many.tip.ranking', animate: 'idle' },
+  { expression: 'concentrado', messageKey: 'app.many.tip.reviews', animate: 'float' }
 ];
 
-export const MascotAssistant: React.FC<MascotAssistantProps> = ({
-  currentTrade,
-  activeView = 'directorio',
-  customMessage,
-}) => {
+const contextFor = (view: string, role: string): ManyState => {
+  const key = VIEW_CONTEXT[view] ?? (role === 'provider' ? 'directory_provider' : 'directory_seeker');
+  return CONTEXT_STATES[key];
+};
+
+/** Many flotante: consejos según la pestaña y el oficio que se está mirando. */
+export const MascotAssistant: React.FC<MascotAssistantProps> = ({ currentTrade, activeView = '' }) => {
   const { role } = useAuth();
-  const [isOpen, setIsOpen] = useState(true);
-  const [currentState, setCurrentState] = useState<ManyState>(CONTEXT_STATES.directorio_seeker);
+  const { t } = useLanguage();
+  /* En móvil empieza plegado para no tapar el contenido */
+  const [isOpen, setIsOpen] = useState(() => window.matchMedia('(min-width: 768px)').matches);
+  /* Consejo elegido al tocar a Many; se descarta al cambiar de pestaña, rol u oficio */
+  const [tip, setTip] = useState<{ state: ManyState; context: string } | null>(null);
   const [interactionIndex, setInteractionIndex] = useState(0);
   const [isInteracting, setIsInteracting] = useState(false);
+  const [waving, setWaving] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Update state based on context
-  useEffect(() => {
-    if (customMessage) {
-      setCurrentState({ expression: 'entusiasta', message: customMessage, animate: 'wave' });
-      return;
-    }
-    const contextKey = activeView === 'directorio'
-      ? `directorio_${role}`
-      : activeView;
-    setCurrentState(CONTEXT_STATES[contextKey] ?? CONTEXT_STATES.directorio_seeker);
-  }, [role, activeView, customMessage]);
+  const context = `${role}:${activeView}:${currentTrade ?? ''}`;
+  const baseState: ManyState = currentTrade
+    ? { expression: 'pensativo', messageKey: 'app.many.trade', vars: { trade: t(`app.many.tradeName.${currentTrade}`) }, animate: 'idle' }
+    : contextFor(activeView, role);
+  const shown = tip && tip.context === context ? tip.state : baseState;
+  const animate: ManyAnimation = waving ? 'wave' : shown.animate;
 
-  // Update message when trade changes
+  // Cada 15 s saluda para llamar la atención (si nadie está interactuando)
   useEffect(() => {
-    if (currentTrade && !customMessage) {
-      const tradeLabels: Partial<Record<TradeCategory, string>> = {
-        electricidad: 'electricidad',
-        plomeria: 'plomería',
-        pintura: 'pintura',
-        cerrajeria: 'cerrajería',
-        electrodomesticos: 'electrodomésticos',
-        computacion: 'computación',
-        hogar: 'hogar',
-        mascotas: 'cuidado de mascotas',
-        aseo: 'aseo',
-        jardineria: 'jardinería',
-        albanileria: 'albañilería',
-        clases: 'clases particulares',
-      };
-      setCurrentState({
-        expression: 'pensativo',
-        message: `Buscando expertos en ${tradeLabels[currentTrade] ?? currentTrade}. Revisa las reseñas verificadas.`,
-        animate: 'idle',
-      });
-    }
-  }, [currentTrade, customMessage]);
-
-  // Auto-idle timer: wave every 15s to draw attention
-  useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || isInteracting) return;
+    let settle: ReturnType<typeof setTimeout> | undefined;
     const interval = setInterval(() => {
-      if (!isInteracting) {
-        setCurrentState(prev => ({ ...prev, animate: 'wave' }));
-        setTimeout(() => {
-          setCurrentState(prev => ({ ...prev, animate: 'float' }));
-        }, 900);
-      }
+      setWaving(true);
+      settle = setTimeout(() => setWaving(false), 900);
     }, 15000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (settle) clearTimeout(settle);
+    };
   }, [isOpen, isInteracting]);
+
+  useEffect(() => () => {
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+  }, []);
 
   const handleManyClick = () => {
     setIsInteracting(true);
-    const next = INTERACTION_MESSAGES[interactionIndex % INTERACTION_MESSAGES.length];
-    setCurrentState(next);
+    setIsOpen(true);
+    setTip({ state: INTERACTION_MESSAGES[interactionIndex % INTERACTION_MESSAGES.length], context });
     setInteractionIndex(i => i + 1);
 
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    idleTimerRef.current = setTimeout(() => {
-      setIsInteracting(false);
-    }, 4000);
+    idleTimerRef.current = setTimeout(() => setIsInteracting(false), 4000);
   };
 
   return (
-    <aside aria-label="Asistente interactivo Many" className="many-assistant">
+    <aside aria-label={t('app.many.label')} className="many-assistant">
       {isOpen && (
-        <div className="many-bubble many-assistant__bubble">
+        <div className="many-assistant__bubble glass-2">
           <div className="many-assistant__head">
             <span className="many-assistant__name">
               <span className="many-assistant__status" aria-hidden="true" />
@@ -147,37 +117,40 @@ export const MascotAssistant: React.FC<MascotAssistantProps> = ({
               type="button"
               className="many-assistant__close"
               onClick={() => setIsOpen(false)}
-              aria-label="Cerrar asistente"
+              aria-label={t('app.many.close')}
             >
-              <X size={14} aria-hidden="true" />
+              <X size={16} aria-hidden="true" />
             </button>
           </div>
 
           <p className="many-assistant__message" aria-live="polite">
-            {currentState.message}
+            {t(shown.messageKey, shown.vars)}
           </p>
 
           <button type="button" className="many-assistant__hint" onClick={handleManyClick}>
-            <ChevronRight size={12} aria-hidden="true" />
-            Haz clic en Many para más consejos
+            {t('app.many.more')}
+            <ChevronRight size={14} aria-hidden="true" />
           </button>
         </div>
       )}
 
       <div className="many-assistant__row">
         {!isOpen && (
-          <button type="button" className="many-assistant__open" onClick={() => setIsOpen(true)}>
-            Hablar con Many
+          <button type="button" className="many-assistant__open glass-2" onClick={() => setIsOpen(true)}>
+            <MessageCircle size={15} aria-hidden="true" />
+            {t('app.many.open')}
           </button>
         )}
 
-        <MascotAvatar
-          trade={currentTrade}
-          expression={currentState.expression}
-          size="md"
-          animate={currentState.animate}
-          onClick={handleManyClick}
-        />
+        <div className="many-assistant__avatar">
+          <MascotAvatar
+            trade={currentTrade}
+            expression={shown.expression}
+            size="md"
+            animate={animate}
+            onClick={handleManyClick}
+          />
+        </div>
       </div>
     </aside>
   );

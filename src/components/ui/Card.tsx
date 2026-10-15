@@ -6,7 +6,7 @@ type CardProps =
   | ({ interactive: true } & React.ButtonHTMLAttributes<HTMLButtonElement>);
 
 /**
- * Tarjeta blanca del manual. Con `interactive` se renderiza como <button>
+ * Tarjeta de vidrio (profundidad 1). Con `interactive` se renderiza como <button>
  * para que sea accesible con teclado.
  */
 export const Card: React.FC<CardProps> = ({ interactive, className = '', ...rest }) => {

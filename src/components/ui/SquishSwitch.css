@@ -1,18 +1,18 @@
 /* ============================================================
    SquishSwitch · interruptor que se estira al deslizar
-   Lenguaje sticker del manual: pista y perilla con contorno
-   Cacao, encendido en el color del rol (o Esmeralda para
-   disponibilidad) y perilla blanca.
+   Liquid Glass: pista de vidrio hundida, encendida en el color
+   del rol (o Esmeralda para disponibilidad), perilla blanca
+   con sombra suave.
    ============================================================ */
 
 .ss {
-  --ss-track-off: var(--oy-gris-200);
+  --ss-track-off: rgba(62, 31, 20, 0.14);
   display: inline-flex;
   align-items: center;
   gap: 10px;
 }
 
-html.theme-dark .ss { --ss-track-off: #334155; }
+html.theme-dark .ss { --ss-track-off: rgba(255, 255, 255, 0.16); }
 
 .ss-btn {
   position: relative;
@@ -56,24 +56,27 @@ html.theme-dark .ss { --ss-track-off: #334155; }
   box-sizing: border-box;
   width: var(--ss-w);
   height: var(--ss-h);
-  border: var(--stroke-w) solid var(--stroke-ink);
+  border: 1px solid var(--glass-line);
   border-radius: var(--ss-r);
   background: var(--ss-track);
+  box-shadow: inset 0 1px 3px rgba(62, 31, 20, 0.16);
   transition: background-color var(--ss-fade) ease;
 }
+
+.ss-btn[data-on] .ss-track { border-color: transparent; }
 
 .ss-btn[data-on] .ss-track { background: var(--ss-track-on); }
 
 .ss-thumb {
   position: absolute;
-  top: calc(var(--ss-inset) - var(--stroke-w));
-  left: calc(-1 * var(--stroke-w));
+  top: calc(var(--ss-inset) - 1px);
+  left: -1px;
   box-sizing: border-box;
   width: var(--ss-thumb);
   height: var(--ss-thumb);
-  border: var(--stroke-w) solid var(--stroke-ink);
   border-radius: var(--ss-thumb-r);
   background: var(--ss-thumb-color);
+  box-shadow: 0 1px 2px rgba(62, 31, 20, 0.18), 0 4px 10px -2px rgba(30, 58, 138, 0.25);
   transition: background-color var(--ss-fade) ease;
 }
 

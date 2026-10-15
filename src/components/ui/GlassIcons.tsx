@@ -13,8 +13,9 @@ import './GlassIcons.css';
 /* ============================================================
    GlassIcons · iconos de vidrio sobre una placa de color (WebGL2)
    La placa usa la paleta del manual; el degradado sutil vive solo
-   dentro del vidrio. Sin WebGL2 o con movimiento reducido se dibuja
-   una placa plana con contorno Cacao y el glifo encima.
+   dentro del vidrio. Por defecto la placa se desplaza en diagonal
+   (sin girar). Sin WebGL2 o con movimiento reducido se dibuja una
+   placa plana con canto de luz y el glifo encima.
    ============================================================ */
 
 export type GlassIconsColor =
@@ -61,7 +62,7 @@ export interface GlassIconsProps {
   parallax?: number;
   labels?: 'hover' | 'always' | 'none';
   intro?: boolean;
-  /** Contorno Cacao de 1.5px en placa y vidrio (estilo sticker). */
+  /** Canto fino de 1.5px en placa y vidrio. */
   outline?: boolean;
   /** Nombre accesible del grupo. */
   ariaLabel?: string;
@@ -450,14 +451,14 @@ export const GlassIcons = ({
   shine = 0.85,
   tint = WHITE,
   tintOpacity = 0.15,
-  plate = 'tilt',
+  plate = 'offset',
   tilt = 30,
   spread = 0.5,
   hover = 'press',
   parallax = 1,
   labels = 'always',
   intro = true,
-  outline = true,
+  outline = false,
   ariaLabel,
   className = '',
   style,
