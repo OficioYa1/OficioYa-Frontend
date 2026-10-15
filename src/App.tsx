@@ -547,8 +547,10 @@ const MainAppContent: React.FC = () => {
       {/* Barra de Navegación Inferior para Móvil */}
       <BottomNav
         currentTab={currentTab}
-        onSelectTab={setCurrentTab}
+        onSelectTab={(tab) => { setIsChatOpen(false); setCurrentTab(tab); }}
         unreadCount={totalUnreadCount}
+        isChatOpen={isChatOpen}
+        onToggleChat={() => setIsChatOpen(open => !open)}
       />
 
       {/* Widget Interactivo de la Mascota Many */}

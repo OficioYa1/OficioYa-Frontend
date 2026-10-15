@@ -86,7 +86,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 <h3 id="pf-seeker-title" className="oy-section-title">Resumen de Contratante</h3>
                 <p className="oy-section-sub">Historial de servicios solicitados en tu zona</p>
               </div>
-              <button onClick={() => onNavigateToTab('servicios')} className="btn btn-secondary">
+              <button onClick={() => onNavigateToTab('solicitudes')} className="btn btn-secondary">
                 Ver todos ({services.length})
               </button>
             </div>
@@ -117,7 +117,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 <h3 id="pf-pro-title" className="oy-section-title">Perfil Profesional</h3>
                 <p className="oy-section-sub">Oficios técnicos publicados y validados</p>
               </div>
-              <button onClick={() => onNavigateToTab('dashboard-pro')} className="btn btn-primary">
+              <button onClick={() => onNavigateToTab('alertas')} className="btn btn-primary">
                 <Briefcase size={14} aria-hidden="true" /> Ir a Mi Taller
               </button>
             </div>

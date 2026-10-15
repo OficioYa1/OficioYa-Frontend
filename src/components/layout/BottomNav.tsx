@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Search, MessageSquare, ClipboardList, Briefcase, User } from 'lucide-react';
+import { Home, Search, MessageSquare, ClipboardList, Briefcase, Inbox, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import './BottomNav.css';
 
@@ -8,34 +8,47 @@ interface BottomNavProps {
   currentTab: string;
   onSelectTab: (tab: string) => void;
   unreadCount?: number;
+  isChatOpen?: boolean;
+  onToggleChat?: () => void;
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({
   currentTab,
   onSelectTab,
-  unreadCount = 0
+  unreadCount = 0,
+  isChatOpen = false,
+  onToggleChat
 }) => {
   const { role } = useAuth();
 
-  const items: { tab: string; label: string; Icon: LucideIcon; badge?: number }[] = [
-    { tab: 'directorio', label: 'Explorar', Icon: Search },
-    ...(role === 'provider' ? [{ tab: 'dashboard-pro', label: 'Mi Taller', Icon: Briefcase }] : []),
-    { tab: 'servicios', label: 'Servicios', Icon: ClipboardList },
-    { tab: 'mensajes', label: 'Mensajes', Icon: MessageSquare, badge: unreadCount },
-    { tab: 'perfil', label: 'Perfil', Icon: User },
-  ];
+  // Mismas pestañas que el header (App.tsx solo conoce estos ids).
+  const items: { tab: string; label: string; Icon: LucideIcon; badge?: number }[] = role === 'provider'
+    ? [
+        { tab: 'inicio_pro', label: 'Inicio', Icon: Home },
+        { tab: 'alertas', label: 'Mi Taller', Icon: Inbox },
+        { tab: 'clientes', label: 'Clientes', Icon: Briefcase },
+        { tab: 'mensajes', label: 'Mensajes', Icon: MessageSquare, badge: unreadCount },
+        { tab: 'perfil', label: 'Perfil', Icon: User },
+      ]
+    : [
+        { tab: 'inicio_seeker', label: 'Inicio', Icon: Home },
+        { tab: 'buscar', label: 'Buscar', Icon: Search },
+        { tab: 'solicitudes', label: 'Servicios', Icon: ClipboardList },
+        { tab: 'mensajes', label: 'Mensajes', Icon: MessageSquare, badge: unreadCount },
+        { tab: 'perfil', label: 'Perfil', Icon: User },
+      ];
 
   return (
     <nav className="mobile-bottom-nav bottom-nav" aria-label="Navegación principal">
       {items.map(({ tab, label, Icon, badge }) => {
-        const active = currentTab === tab;
+        const active = tab === 'mensajes' ? isChatOpen : currentTab === tab && !isChatOpen;
         return (
           <button
             key={tab}
             type="button"
             className={`bottom-nav__item${active ? ' bottom-nav__item--active' : ''}`}
             aria-current={active ? 'page' : undefined}
-            onClick={() => onSelectTab(tab)}
+            onClick={() => (tab === 'mensajes' && onToggleChat ? onToggleChat() : onSelectTab(tab))}
           >
             <span className="bottom-nav__icon">
               <Icon size={20} aria-hidden="true" />
