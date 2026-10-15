@@ -21,6 +21,8 @@ interface ChatViewProps {
   messages: Record<string, ChatMessage[]>;
   initialConversationId?: string;
   onSendMessage: (conversationId: string, text: string) => void;
+  /** OFY-51: mensaje entrante de la otra parte (respuesta simulada en el mock). */
+  onReceiveMessage?: (conversationId: string, text: string) => void;
   workers: Worker[];
   onClose?: () => void;
 }
@@ -38,6 +40,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   messages,
   initialConversationId,
   onSendMessage,
+  onReceiveMessage,
   workers,
   onClose
 }) => {
@@ -48,6 +51,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const replyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeConv = conversations.find(c => c.id === activeConvId);
   const currentMessages = activeConvId && messages[activeConvId] ? messages[activeConvId] : [];
@@ -67,7 +71,9 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
     // Simular respuesta automática con retardo de escritura (···)
     setIsTyping(true);
-    setTimeout(() => {
+    if (replyTimerRef.current) clearTimeout(replyTimerRef.current);
+    const convId = activeConvId;
+    replyTimerRef.current = setTimeout(() => {
       setIsTyping(false);
       const simulatedReplies = [
         '¡Perfecto! Ya tengo la dirección registrada en el mapa, voy saliendo.',
@@ -76,7 +82,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
         'Listo, cualquier duda me puedes marcar directamente.'
       ];
       const randomReply = simulatedReplies[Math.floor(Math.random() * simulatedReplies.length)];
-      onSendMessage(activeConvId, randomReply);
+      if (onReceiveMessage) onReceiveMessage(convId, randomReply);
     }, 1800);
   };
 

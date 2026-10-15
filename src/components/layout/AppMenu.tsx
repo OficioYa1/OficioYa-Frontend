@@ -10,7 +10,8 @@ import {
   Settings,
   Bell,
   Moon,
-  LogOut
+  LogOut,
+  ShieldAlert
 } from 'lucide-react';
 import type { UserRole } from '../../types';
 import { BranchedMenu, SquishSwitch, type BranchedMenuItem } from '../ui';
@@ -27,6 +28,8 @@ interface AppMenuProps {
   onSelectTab: (tab: string) => void;
   onToggleChat?: () => void;
   onOpenSettings: () => void;
+  /** OFY-54: Panel de moderación (demo, visible para cualquier sesión). */
+  onOpenAdminModeration?: () => void;
   onOpenNotifications?: () => void;
   onToggleTheme: () => void;
   onLogout: () => void;
@@ -65,6 +68,7 @@ export const AppMenu: React.FC<AppMenuProps> = ({
   onSelectTab,
   onToggleChat,
   onOpenSettings,
+  onOpenAdminModeration,
   onOpenNotifications,
   onToggleTheme,
   onLogout
@@ -86,7 +90,10 @@ export const AppMenu: React.FC<AppMenuProps> = ({
         ...(onOpenNotifications
           ? [{ value: 'notificaciones', label: 'Notificaciones', icon: <Bell size={ICON} />, badge: notificationCount }]
           : []),
-        { value: 'configuracion', label: 'Configuración', icon: <Settings size={ICON} /> }
+        { value: 'configuracion', label: 'Configuración', icon: <Settings size={ICON} /> },
+        ...(onOpenAdminModeration
+          ? [{ value: 'moderacion', label: 'Moderación (demo)', icon: <ShieldAlert size={ICON} /> }]
+          : [])
       ]
     }
   ];
@@ -95,6 +102,7 @@ export const AppMenu: React.FC<AppMenuProps> = ({
     if (value === 'mensajes') onToggleChat?.();
     else if (value === 'configuracion') onOpenSettings();
     else if (value === 'notificaciones') onOpenNotifications?.();
+    else if (value === 'moderacion') onOpenAdminModeration?.();
     else onSelectTab(value);
     onClose();
   };

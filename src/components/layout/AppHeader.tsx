@@ -40,6 +40,7 @@ interface AppHeaderProps {
 export const AppHeader: React.FC<AppHeaderProps> = ({
   onOpenLanding,
   onOpenSettings,
+  onOpenAdminModeration,
   onRefreshGps,
   hasGps,
   currentTab,
@@ -173,6 +174,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 onSelectTab={onSelectTab}
                 onToggleChat={onToggleChat}
                 onOpenSettings={onOpenSettings}
+                onOpenAdminModeration={onOpenAdminModeration}
                 onOpenNotifications={onOpenNotifications}
                 onToggleTheme={toggleTheme}
                 onLogout={logout}

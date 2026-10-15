@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import type {
@@ -9,8 +9,11 @@ import type {
   ComplaintTicket,
   TradeCategory,
   ServiceStatus,
-  PushNotification
+  PushNotification,
+  Review
 } from './types';
+import { applyCompletion, applyReview } from './utils/reputation';
+import { createWorkerForUser, findUnclaimedWorkerByName } from './utils/workerProfile';
 import type { Coordinates } from './utils/geo';
 import { FALLBACK_LOCATION_BOGOTA } from './utils/geo';
 import {
@@ -204,6 +207,45 @@ const MainAppContent: React.FC = () => {
     setStoredData('oy-conversations', conversations);
   }, [messages, conversations]);
 
+  // OFY-01: Vincular la cuenta Profesional con su ficha en `workers` (o crearla la primera vez)
+  useEffect(() => {
+    if (!user || role !== 'provider') return;
+    if (workers.some(w => w.ownerUserId === user.id)) return;
+    const unclaimed = findUnclaimedWorkerByName(workers, user.name);
+    if (unclaimed) {
+      setWorkers(prev => prev.map(w => (w.id === unclaimed.id ? { ...w, ownerUserId: user.id } : w)));
+    } else {
+      setWorkers(prev => [createWorkerForUser(user), ...prev]);
+    }
+  }, [user, role, workers]);
+
+  // OFY-28: Las solicitudes pendientes vencidas pasan a canceladas ("Expirada sin respuesta")
+  const servicesRef = useRef(services);
+  useEffect(() => {
+    servicesRef.current = services;
+  }, [services]);
+
+  useEffect(() => {
+    const expirePending = () => {
+      const now = Date.now();
+      const expired = servicesRef.current.filter(
+        s => s.status === 'pendiente' && s.expiresAt && new Date(s.expiresAt).getTime() < now
+      );
+      if (expired.length === 0) return;
+      const ids = new Set(expired.map(s => s.id));
+      setServices(prev =>
+        prev.map(s =>
+          ids.has(s.id)
+            ? { ...s, status: 'cancelado', isExpired: true, cancelReason: 'Expirada sin respuesta' }
+            : s
+        )
+      );
+    };
+    expirePending();
+    const timer = setInterval(expirePending, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Pantalla de carga (spinner) mientras se verifica el JWT
   if (isLoading) {
     return (
@@ -328,6 +370,33 @@ const MainAppContent: React.FC = () => {
 
   };
 
+  // OFY-51, OFY-61: respuesta simulada de la otra parte + notificación push de mensaje
+  const handleReceiveMessage = (conversationId: string, text: string) => {
+    const conv = conversations.find(c => c.id === conversationId);
+    const fromProvider = role !== 'provider';
+    const reply: ChatMessage = {
+      id: `msg-${Date.now()}-in`,
+      conversationId,
+      senderId: fromProvider ? conv?.workerId || 'w-unknown' : `client-${conversationId}`,
+      senderRole: fromProvider ? 'provider' : 'seeker',
+      text,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: 'delivered'
+    };
+    setMessages(prev => ({
+      ...prev,
+      [conversationId]: [...(prev[conversationId] || []), reply]
+    }));
+    setConversations(prev =>
+      prev.map(c => (c.id === conversationId ? { ...c, lastMessage: text, lastMessageTime: 'Ahora' } : c))
+    );
+    triggerPushNotification(
+      `Nuevo mensaje de ${fromProvider ? conv?.workerName ?? 'tu profesional' : 'tu cliente'}`,
+      text,
+      'message'
+    );
+  };
+
   const handleOpenSendRequest = (worker?: Worker | Worker[]) => {
     setSelectedWorkerForProfile(null);
     const target = Array.isArray(worker) ? worker[0] : worker;
@@ -360,29 +429,25 @@ const MainAppContent: React.FC = () => {
     });
   };
 
-  const handleUpdateServiceStatus = (serviceId: string, newStatus: ServiceStatus, reason?: string) => {
-    setServices(prev =>
-      prev.map(s =>
-        s.id === serviceId ? { ...s, status: newStatus, cancelReason: reason } : s
-      )
-    );
+  const updateWorker = (workerId: string, patch: Partial<Worker>) => {
+    setWorkers(prev => prev.map(w => (w.id === workerId ? { ...w, ...patch } : w)));
   };
 
-  const handleSubmitReview = (serviceId: string, _rating: number, _comment: string) => {
+  // OFY-26, OFY-24: Aceptar pasa a "en_curso", cancela el resto del envío múltiple y deja al trabajador ocupado (OFY-31, OFY-33)
+  const acceptRequest = (id: string) => {
+    const target = services.find(s => s.id === id);
+    if (!target || target.status !== 'pendiente') return;
+    const acceptedAt = new Date().toISOString();
     setServices(prev =>
-      prev.map(s => (s.id === serviceId ? { ...s, reviewDone: true } : s))
+      prev.map(s => {
+        if (s.id === id) return { ...s, status: 'en_curso', acceptedAt };
+        if (target.broadcastId && s.broadcastId === target.broadcastId && s.status === 'pendiente') {
+          return { ...s, status: 'cancelado', cancelReason: 'Asignado a otro profesional' };
+        }
+        return s;
+      })
     );
-    triggerPushNotification(
-      '¡Gracias por tu reseña!',
-      'Tu opinión ayuda a otros vecinos a elegir con confianza.',
-      'system'
-    );
-  };
-
-  const handleAcceptIncomingRequest = (id: string) => {
-    setServices(prev =>
-      prev.map(s => (s.id === id ? { ...s, status: 'en_curso' } : s))
-    );
+    updateWorker(target.workerId, { available: false });
     triggerPushNotification(
       '¡Trabajo aceptado!',
       'Quedó en tu agenda. Escríbele al cliente para coordinar la llegada.',
@@ -390,9 +455,111 @@ const MainAppContent: React.FC = () => {
     );
   };
 
+  // OFY-78: Cambio de estado (Pendiente / En progreso / Finalizado / Cancelado)
+  const handleUpdateServiceStatus = (
+    serviceId: string,
+    newStatus: ServiceStatus,
+    reason?: string,
+    extra?: Partial<ServiceRequest>
+  ) => {
+    const current = services.find(s => s.id === serviceId);
+    if (!current || current.status === newStatus) return;
+    if (current.status === 'pendiente' && newStatus === 'en_curso') {
+      acceptRequest(serviceId);
+      return;
+    }
+
+    const completedAt = newStatus === 'finalizado' ? new Date().toISOString() : current.completedAt;
+    setServices(prev =>
+      prev.map(s =>
+        s.id === serviceId
+          ? {
+              ...s,
+              ...extra,
+              status: newStatus,
+              cancelReason: newStatus === 'cancelado' ? reason : s.cancelReason,
+              cancelledBy: newStatus === 'cancelado' ? (role === 'seeker' ? 'client' : 'worker') : s.cancelledBy,
+              completedAt
+            }
+          : s
+      )
+    );
+
+    // OFY-08, OFY-71: el trabajo finalizado suma al contador; si no tiene otro en curso vuelve a estar disponible
+    if (newStatus === 'finalizado' || (newStatus === 'cancelado' && current.status === 'en_curso')) {
+      const stillBusy = services.some(
+        s => s.id !== serviceId && s.workerId === current.workerId && s.status === 'en_curso'
+      );
+      setWorkers(prev =>
+        prev.map(w => {
+          if (w.id !== current.workerId) return w;
+          const next = newStatus === 'finalizado' ? applyCompletion(w, current.tradeCategory) : w;
+          return stillBusy || next.isPaused ? next : { ...next, available: true };
+        })
+      );
+    }
+  };
+
+  // OFY-34, OFY-36, OFY-37, OFY-39, OFY-56: la reseña se guarda en el trabajador y recalcula su reputación
+  const handleSubmitReview = (serviceId: string, rating: number, comment: string) => {
+    const service = services.find(s => s.id === serviceId);
+    const worker = service ? workers.find(w => w.id === service.workerId) : undefined;
+    if (!service || !worker || service.reviewDone) return;
+
+    const review: Review = {
+      id: `r-${Date.now()}`,
+      author: user?.name || 'Cliente',
+      rating,
+      date: new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }),
+      comment: comment.trim() || 'Sin comentario.',
+      verifiedWork: true,
+      serviceId,
+      tradeCategory: service.tradeCategory ?? worker.trade,
+      targetRole: 'worker'
+    };
+    const updated = applyReview(worker, review);
+    setWorkers(prev => prev.map(w => (w.id === worker.id ? updated : w)));
+    setServices(prev =>
+      prev.map(s =>
+        s.id === serviceId ? { ...s, reviewDone: true, clientRating: rating, clientReview: review.comment } : s
+      )
+    );
+    triggerPushNotification(
+      '¡Gracias por tu reseña!',
+      'Tu opinión ayuda a otros vecinos a elegir con confianza.',
+      'system'
+    );
+    if (updated.isPaused && !worker.isPaused) {
+      triggerPushNotification(
+        `Perfil de ${worker.name} en pausa`,
+        'Su promedio reciente bajó de 3.0. No recibirá solicitudes hasta que moderación lo revise.',
+        'system'
+      );
+    }
+  };
+
+  // OFY-35: el trabajador califica al contratante
+  const handleRateClient = (serviceId: string, rating: number, comment: string) => {
+    setServices(prev =>
+      prev.map(s =>
+        s.id === serviceId
+          ? { ...s, workerRatedClient: true, clientRatingByWorker: rating, workerCommentOnClient: comment.trim() }
+          : s
+      )
+    );
+  };
+
+  const handleAcceptIncomingRequest = (id: string) => {
+    acceptRequest(id);
+  };
+
   const handleRejectIncomingRequest = (id: string) => {
     setServices(prev =>
-      prev.map(s => (s.id === id ? { ...s, status: 'cancelado', cancelReason: 'Rechazado por el profesional' } : s))
+      prev.map(s =>
+        s.id === id
+          ? { ...s, status: 'cancelado', cancelReason: 'Rechazado por el profesional', cancelledBy: 'worker' }
+          : s
+      )
     );
   };
 
@@ -409,13 +576,21 @@ const MainAppContent: React.FC = () => {
     setWorkers(prev =>
       prev.map(w =>
         w.id === workerId
-          ? { ...w, isPaused, available: !isPaused }
+          ? { ...w, isPaused, available: !isPaused, pauseReason: isPaused ? 'Suspendido por moderación.' : undefined }
           : w
       )
     );
   };
 
   const totalUnreadCount = conversations.reduce((acc, c) => acc + c.unreadCount, 0);
+
+  // Ficha del profesional en sesión y servicios visibles según el rol
+  const currentWorker = user ? workers.find(w => w.ownerUserId === user.id) : undefined;
+  const seekerServices = services.filter(s => s.clientId === user?.id);
+  const workerServices = currentWorker ? services.filter(s => s.workerId === currentWorker.id) : [];
+  const liveProfileWorker = selectedWorkerForProfile
+    ? workers.find(w => w.id === selectedWorkerForProfile.id) ?? selectedWorkerForProfile
+    : null;
 
   return (
     <div className={`app-root-layout role-${role} crossfade-wrapper ${visible ? '' : 'crossfade-wrapper--hidden'}`}>
@@ -476,11 +651,12 @@ const MainAppContent: React.FC = () => {
 
           {currentTab === 'solicitudes' && (
             <MyServicesView
-              services={services}
+              services={seekerServices}
               onUpdateServiceStatus={handleUpdateServiceStatus}
               onSubmitReview={handleSubmitReview}
               onOpenReport={handleOpenReportFromService}
               onRehireWorker={handleRehireWorker}
+              onRateClient={handleRateClient}
             />
           )}
 
@@ -495,19 +671,23 @@ const MainAppContent: React.FC = () => {
 
           {currentTab === 'alertas' && (
             <ProviderDashboard
-              incomingRequests={services.filter(s => s.status === 'en_curso')}
+              worker={currentWorker}
+              services={services}
+              incomingRequests={workerServices.filter(s => s.status === 'pendiente')}
               onAcceptRequest={handleAcceptIncomingRequest}
               onRejectRequest={handleRejectIncomingRequest}
+              onUpdateWorker={patch => currentWorker && updateWorker(currentWorker.id, patch)}
             />
           )}
 
           {currentTab === 'clientes' && (
             <MyServicesView
-              services={services}
+              services={workerServices}
               onUpdateServiceStatus={handleUpdateServiceStatus}
               onSubmitReview={handleSubmitReview}
               onOpenReport={handleOpenReportFromService}
               onRehireWorker={handleRehireWorker}
+              onRateClient={handleRateClient}
             />
           )}
 
@@ -524,6 +704,7 @@ const MainAppContent: React.FC = () => {
                 messages={messages}
                 initialConversationId={activeChatConvId}
                 onSendMessage={handleSendMessage}
+                onReceiveMessage={handleReceiveMessage}
                 workers={workers}
                 onClose={() => setIsChatOpen(false)}
               />
@@ -533,7 +714,7 @@ const MainAppContent: React.FC = () => {
           {/* Pestaña: Perfil */}
           {currentTab === 'perfil' && (
             <UserProfileView
-              services={services}
+              services={role === 'provider' ? workerServices : seekerServices}
               onOpenSettings={() => setIsSettingsOpen(true)}
               onNavigateToTab={setCurrentTab}
             />
@@ -560,9 +741,9 @@ const MainAppContent: React.FC = () => {
       />
 
       {/* Modales del Sistema */}
-      {selectedWorkerForProfile && (
+      {liveProfileWorker && (
         <WorkerProfileModal
-          worker={selectedWorkerForProfile}
+          worker={liveProfileWorker}
           onClose={() => setSelectedWorkerForProfile(null)}
           onOpenBooking={handleOpenBooking}
           onOpenChat={handleOpenChat}
@@ -621,6 +802,7 @@ const MainAppContent: React.FC = () => {
           workers={workers}
           onClose={() => setIsAdminModalOpen(false)}
           onToggleWorkerPause={handleToggleWorkerPause}
+          onUpdateWorker={updateWorker}
         />
       )}
     </div>

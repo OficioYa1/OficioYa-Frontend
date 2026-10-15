@@ -19,6 +19,7 @@ import {
   Tag,
   Flag
 } from 'lucide-react';
+import { TRADE_LABELS, rateUnitShort } from '../../utils/workerProfile';
 import './Worker.css';
 
 interface WorkerProfileModalProps {
@@ -72,6 +73,8 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
 
   const canBook = worker.available && !worker.isPaused;
   const primaryRep = worker.ratingByTrade?.[worker.trade];
+  const unit = rateUnitShort(worker.rateUnit);
+  const formatRating = (rating: number, count: number) => (count > 0 ? rating.toFixed(1) : '—');
 
   const tabs: { id: typeof activeTab; label: string }[] = [
     { id: 'info', label: 'Detalles & Horarios' },
@@ -96,7 +99,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
               style={{ '--wk-avatar-bg': worker.avatarColor } as React.CSSProperties}
               aria-hidden="true"
             >
-              {worker.initials}
+              {worker.photoUrl ? <img src={worker.photoUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : worker.initials}
             </div>
 
             <div className="wk-head__text">
@@ -158,7 +161,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
             <div className="oy-stat wk-stat--amarillo">
               <span className="oy-stat__label">Calificación</span>
               <span className="oy-stat__value wk-stat__row">
-                <Star size={22} fill="var(--color-star)" color="var(--stroke-ink)" aria-hidden="true" /> {worker.rating.toFixed(1)}
+                <Star size={22} fill="var(--color-star)" color="var(--stroke-ink)" aria-hidden="true" /> {formatRating(worker.rating, worker.reviewCount)}
                 <span className="wk-stat__aside">({worker.reviewCount})</span>
               </span>
             </div>
@@ -172,7 +175,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
             <div className="oy-stat wk-stat--marino">
               <span className="oy-stat__label">Tarifa Aprox.</span>
               <span className="oy-stat__value wk-stat__value--sm">${worker.hourlyRate.toLocaleString()}</span>
-              <span className="wk-stat__aside">COP /h</span>
+              <span className="wk-stat__aside">COP /{unit}</span>
             </div>
 
             <div className="oy-stat">
@@ -180,6 +183,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
               <span className="wk-stat__zone">
                 <MapPin size={15} aria-hidden="true" /> {worker.location.zoneName}
               </span>
+              {worker.maxDistanceKm && <span className="wk-stat__aside">Hasta {worker.maxDistanceKm} km</span>}
             </div>
           </div>
 
@@ -224,7 +228,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
               </section>
 
               {/* RF-09: Equipamiento, Marcas y Especies */}
-              {(worker.equipment || worker.brands || worker.species) && (
+              {(worker.equipment?.length || worker.brands?.length || worker.species?.length) ? (
                 <div className="wk-grid">
                   {worker.equipment && (
                     <section className="wk-card">
@@ -263,7 +267,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                     </section>
                   )}
                 </div>
-              )}
+              ) : null}
 
               {/* Slots de Disponibilidad Semanal (RF-06) */}
               <section className="wk-block">
@@ -304,18 +308,20 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                     <span className="oy-stat__label">Calificación</span>
                     <span className="oy-stat__value wk-stat__row">
                       <Star size={20} fill="var(--color-star)" color="var(--stroke-ink)" aria-hidden="true" />
-                      {primaryRep?.rating || worker.rating}
+                      {primaryRep
+                        ? formatRating(primaryRep.rating, primaryRep.reviewCount)
+                        : formatRating(worker.rating, worker.reviewCount)}
                     </span>
-                    <span className="wk-stat__aside">{primaryRep?.reviewCount || worker.reviewCount} reseñas</span>
+                    <span className="wk-stat__aside">{primaryRep?.reviewCount ?? worker.reviewCount} reseñas</span>
                   </div>
                   <div className="oy-stat wk-stat--esmeralda">
                     <span className="oy-stat__label">Trabajos completados</span>
-                    <span className="oy-stat__value">{primaryRep?.completedJobs || worker.completedJobsCount}</span>
+                    <span className="oy-stat__value">{primaryRep?.completedJobs ?? worker.completedJobsCount}</span>
                   </div>
                   <div className="oy-stat wk-stat--marino">
                     <span className="oy-stat__label">Tarifa</span>
                     <span className="oy-stat__value wk-stat__value--sm">${worker.hourlyRate.toLocaleString()}</span>
-                    <span className="wk-stat__aside">COP/h</span>
+                    <span className="wk-stat__aside">COP/{unit}</span>
                   </div>
                 </div>
 
@@ -334,18 +340,19 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
 
               {/* Oficios Secundarios (RF-03) */}
               {worker.secondaryTrades && worker.secondaryTrades.length > 0 && worker.secondaryTrades.map(secTrade => {
-                const secRep = worker.ratingByTrade?.[secTrade] || { rating: 4.8, reviewCount: 6, completedJobs: 6 };
+                const secRep = worker.ratingByTrade?.[secTrade] ?? { rating: 0, reviewCount: 0, completedJobs: 0 };
+                const secService = worker.services.find(sv => sv.trade === secTrade);
                 return (
                   <section key={secTrade} className="wk-trade">
                     <div className="wk-trade__head">
                       <span className="oy-sticker oy-sticker--pill oy-sticker--blanco wk-trade__pill">Oficio secundario</span>
-                      <h4 className="oy-display wk-trade__name wk-trade__name--cap">{secTrade}</h4>
+                      <h4 className="oy-display wk-trade__name wk-trade__name--cap">{secService?.tradeLabel ?? TRADE_LABELS[secTrade] ?? secTrade}</h4>
                     </div>
                     <div className="wk-trade__stats">
                       <div className="oy-stat wk-stat--amarillo">
                         <span className="oy-stat__label">Calificación</span>
                         <span className="oy-stat__value wk-stat__row">
-                          <Star size={20} fill="var(--color-star)" color="var(--stroke-ink)" aria-hidden="true" /> {secRep.rating}
+                          <Star size={20} fill="var(--color-star)" color="var(--stroke-ink)" aria-hidden="true" /> {formatRating(secRep.rating, secRep.reviewCount)}
                         </span>
                         <span className="wk-stat__aside">{secRep.reviewCount} reseñas</span>
                       </div>
@@ -353,6 +360,13 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                         <span className="oy-stat__label">Trabajos completados</span>
                         <span className="oy-stat__value">{secRep.completedJobs}</span>
                       </div>
+                      {secService && (
+                        <div className="oy-stat wk-stat--marino">
+                          <span className="oy-stat__label">Tarifa</span>
+                          <span className="oy-stat__value wk-stat__value--sm">${secService.hourlyRate.toLocaleString()}</span>
+                          <span className="wk-stat__aside">COP/{rateUnitShort(secService.rateUnit)}</span>
+                        </div>
+                      )}
                     </div>
                   </section>
                 );

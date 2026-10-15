@@ -441,6 +441,7 @@
 }
 
 .pv-portfolio__item {
+  position: relative;
   flex: none;
   width: 104px;
   height: 104px;
@@ -454,6 +455,15 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.pv-portfolio__remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 32px;
+  height: 32px;
+  background: var(--color-surface);
 }
 
 .pv-summary {

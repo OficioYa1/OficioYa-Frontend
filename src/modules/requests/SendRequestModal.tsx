@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useId } from 'react';
-import type { Worker, UrgencyLevel, ServiceRequest, PaymentMethod } from '../../types';
+import type { Worker, UrgencyLevel, ServiceRequest, PaymentMethod, TradeCategory } from '../../types';
+import { TRADE_LABELS, rateUnitShort } from '../../utils/workerProfile';
 import { useAuth } from '../../context/AuthContext';
 import {
   X,
@@ -53,6 +54,8 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
   const dialogRef = useFlowModal(onClose);
 
   const [description, setDescription] = useState('');
+  // OFY-22: oficio requerido ('' = cualquiera)
+  const [trade, setTrade] = useState<TradeCategory | ''>(initialWorker?.trade ?? '');
   const [expectedDate, setExpectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedZone, setSelectedZone] = useState('Chapinero / Chicó');
   const [addressDetail, setAddressDetail] = useState('Carrera 15 # 85-20');
@@ -73,17 +76,21 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [createdList, setCreatedList] = useState<ServiceRequest[]>([]);
 
-  // OFY-22: Identificar trabajadores cercanos compatibles con la zona seleccionada
+  // OFY-22: Identificar trabajadores cercanos compatibles con el oficio y la zona seleccionados
   const compatibleWorkers = useMemo(() => {
     const zoneKeyword = selectedZone.split('/')[0].trim().toLowerCase();
     return workers.filter(
       w =>
         w.available &&
         !w.isPaused &&
+        (!trade ||
+          w.trade === trade ||
+          w.secondaryTrades?.includes(trade) ||
+          w.services.some(s => s.trade === trade)) &&
         (w.location.zoneName.toLowerCase().includes(zoneKeyword) ||
           w.services.some(s => s.coverageZones.some(cz => cz.toLowerCase().includes(zoneKeyword))))
     );
-  }, [workers, selectedZone]);
+  }, [workers, selectedZone, trade]);
 
   const addWorker = (worker: Worker) => {
     if (!selectedWorkers.some(sw => sw.id === worker.id)) {
@@ -114,9 +121,12 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
     if (!description.trim() || selectedWorkers.length === 0) return;
 
     const expirationDate = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 minutos (OFY-28)
+    const broadcastId = `bc-${Date.now()}`;
 
     const newRequests: ServiceRequest[] = selectedWorkers.map(w => ({
       id: `srv-${Date.now()}-${w.id}`,
+      broadcastId,
+      tradeCategory: trade || w.trade,
       workerId: w.id,
       workerName: w.name,
       workerTrade: w.tradeLabel,
@@ -130,7 +140,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
       coverageZone: selectedZone,
       problemDescription: description,
       paymentMethod,
-      status: 'en_curso',
+      status: 'pendiente',
       urgency,
       budget: parseInt(budget) || 50000,
       amount: parseInt(budget) || 50000,
@@ -247,6 +257,22 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
                 <h3 id={`${uid}-s2`} className="oy-flow-section__title">
                   <span className="oy-flow-num">2</span> ¿Qué necesitas?
                 </h3>
+                <div className="oy-flow-field">
+                  <label className="oy-flow-label" htmlFor={`${uid}-trade`}>
+                    Oficio requerido
+                  </label>
+                  <select
+                    id={`${uid}-trade`}
+                    className="input-base"
+                    value={trade}
+                    onChange={e => setTrade(e.target.value as TradeCategory | '')}
+                  >
+                    <option value="">Cualquier oficio</option>
+                    {(Object.keys(TRADE_LABELS) as TradeCategory[]).map(t => (
+                      <option key={t} value={t}>{TRADE_LABELS[t]}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="oy-flow-field">
                   <label className="oy-flow-label" htmlFor={`${uid}-desc`}>
                     Descripción detallada de la necesidad
@@ -388,7 +414,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
                 {compatibleWorkers.length > 0 && (
                   <div className="oy-panel oy-panel--marino oy-flow-panel">
                     <p className="oy-flow-panel__title">
-                      <Sparkles size={14} aria-hidden="true" /> Expertos cercanos compatibles con {selectedZone}:
+                      <Sparkles size={14} aria-hidden="true" /> Expertos cercanos compatibles con {trade ? `${TRADE_LABELS[trade]} en ` : ''}{selectedZone}:
                     </p>
                     <div className="oy-flow-choices">
                       {compatibleWorkers.slice(0, 4).map(w => {
@@ -402,11 +428,16 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
                             disabled={isAdded}
                             aria-pressed={isAdded}
                           >
-                            {isAdded ? '✓' : '+'} {w.name} (${w.hourlyRate.toLocaleString()}/h)
+                            {isAdded ? '✓' : '+'} {w.name} (${w.hourlyRate.toLocaleString()}/{rateUnitShort(w.rateUnit)})
                           </button>
                         );
                       })}
                     </div>
+                  </div>
+                )}
+                {compatibleWorkers.length === 0 && (
+                  <div className="oy-flow-empty-line" role="status">
+                    Ningún profesional disponible coincide con {trade ? TRADE_LABELS[trade] : 'ese oficio'} en {selectedZone}. Prueba otra zona u oficio.
                   </div>
                 )}
               </section>
@@ -439,7 +470,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
               <h3 className="oy-flow-success__title oy-display">¡Solicitud enviada con éxito!</h3>
               <p className="oy-flow-success__text">
                 Despachamos la notificación a los <strong>{createdList.length}</strong> profesionales seleccionados en Bogotá.
-                Cuentan con 30 minutos para aceptar antes de expirar.
+                Cuentan con 30 minutos para aceptar antes de expirar. Cuando uno acepte, la solicitud se cierra para los demás.
               </p>
 
               <button type="button" onClick={onClose} className="btn btn-primary oy-flow-cta">

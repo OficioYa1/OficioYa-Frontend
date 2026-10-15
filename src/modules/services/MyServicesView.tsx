@@ -4,6 +4,7 @@ import { PeekRating } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { PageHero } from '../../components/layout/PageHero';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
+import { mediaService, MediaUploadError } from '../../services/mock/mediaService';
 import './Services.css';
 import {
   Wrench,
@@ -24,10 +25,17 @@ import {
 
 interface MyServicesViewProps {
   services: ServiceRequest[];
-  onUpdateServiceStatus: (serviceId: string, newStatus: ServiceStatus, reason?: string) => void;
+  onUpdateServiceStatus: (
+    serviceId: string,
+    newStatus: ServiceStatus,
+    reason?: string,
+    extra?: Partial<ServiceRequest>
+  ) => void;
   onSubmitReview: (serviceId: string, rating: number, comment: string) => void;
   onOpenReport: (service: ServiceRequest) => void;
   onRehireWorker?: (workerId: string, workerName: string, trade: string) => void;
+  /** OFY-35: el trabajador califica al contratante. */
+  onRateClient?: (serviceId: string, rating: number, comment: string) => void;
 }
 
 const STATUS_META: Record<ServiceStatus, { label: string; tone: string }> = {
@@ -39,6 +47,7 @@ const STATUS_META: Record<ServiceStatus, { label: string; tone: string }> = {
 
 const FILTER_TABS: { id: ServiceStatus | 'todos'; label: string }[] = [
   { id: 'todos', label: 'Todos' },
+  { id: 'pendiente', label: 'Pendientes' },
   { id: 'en_curso', label: 'En progreso / Aceptados' },
   { id: 'finalizado', label: 'Completados' },
   { id: 'cancelado', label: 'Cancelados' }
@@ -58,7 +67,8 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
   onUpdateServiceStatus,
   onSubmitReview,
   onOpenReport,
-  onRehireWorker
+  onRehireWorker,
+  onRateClient
 }) => {
   const { role } = useAuth();
   const [filterStatus, setFilterStatus] = useState<ServiceStatus | 'todos'>('todos');
@@ -70,7 +80,9 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
 
   // Modal Finalización con Evidencia Fotográfica (RF-62, RF-29)
   const [completingService, setCompletingService] = useState<ServiceRequest | null>(null);
-  const [completionPhotoUrl, setCompletionPhotoUrl] = useState<string>('https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=500&auto=format&fit=crop');
+  const [completionPhotoUrl, setCompletionPhotoUrl] = useState<string>('');
+  const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
+  const [evidenceError, setEvidenceError] = useState<string | null>(null);
 
   // Modal Calificación Bilateral (RF-34, RF-35, RF-36)
   const [reviewingService, setReviewingService] = useState<ServiceRequest | null>(null);
@@ -123,12 +135,43 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
   };
 
   const handleConfirmFinalize = (service: ServiceRequest) => {
+    setCompletionPhotoUrl('');
+    setEvidenceError(null);
     setCompletingService(service);
+  };
+
+  // RF-62: foto del trabajo terminado tomada con la cámara o elegida de la galería
+  const handleEvidenceFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setEvidenceError(null);
+    setIsUploadingEvidence(true);
+    try {
+      const media = await mediaService.uploadImage(file, { folder: 'evidence', maxSide: 900 });
+      setCompletionPhotoUrl(media.url);
+    } catch (err) {
+      setEvidenceError(err instanceof MediaUploadError ? err.message : 'No pudimos leer la foto. Intenta con otra.');
+    } finally {
+      setIsUploadingEvidence(false);
+    }
+  };
+
+  // RF-78: el profesional cambia el estado (Pendiente / En progreso / Finalizado)
+  const handleProviderStatus = (service: ServiceRequest, next: ServiceStatus) => {
+    if (next === 'finalizado') handleConfirmFinalize(service);
+    else onUpdateServiceStatus(service.id, next);
   };
 
   const handleExecuteFinalize = () => {
     if (!completingService) return;
-    onUpdateServiceStatus(completingService.id, 'finalizado');
+    const evidence = completionPhotoUrl.trim();
+    onUpdateServiceStatus(
+      completingService.id,
+      'finalizado',
+      undefined,
+      evidence ? { completionEvidence: [evidence] } : undefined
+    );
     const finalized = completingService;
     setCompletingService(null);
 
@@ -154,6 +197,9 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
   };
 
   const handleSendClientRating = () => {
+    if (ratingClientService) {
+      onRateClient?.(ratingClientService.id, clientRatingValue, clientRatingComment);
+    }
     setRatingClientService(null);
   };
 
@@ -262,7 +308,8 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
       ) : (
         <div className="svc-grid">
           {filteredServices.map(srv => {
-            const meta = STATUS_META[srv.status] ?? STATUS_META.en_curso;
+            const baseMeta = STATUS_META[srv.status] ?? STATUS_META.en_curso;
+            const meta = srv.isExpired ? { ...baseMeta, label: 'Expirada' } : baseMeta;
 
             return (
               <article key={srv.id} className={`svc-card svc-card--${meta.tone}`}>
@@ -312,8 +359,37 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                 </div>
 
                 {/* Acciones del Servicio (RF-29, RF-34, RF-35, RF-76, RF-78) */}
-                {(srv.status === 'en_curso' || srv.status === 'finalizado') && (
+                {(srv.status === 'pendiente' || srv.status === 'en_curso' || srv.status === 'finalizado') && (
                   <div className="svc-card__actions">
+                    {!isSeeker && (srv.status === 'pendiente' || srv.status === 'en_curso') && (
+                      <div className="svc-status-field">
+                        <label htmlFor={`svc-status-${srv.id}`} className="svc-label">Estado del servicio</label>
+                        <select
+                          id={`svc-status-${srv.id}`}
+                          className="input-base"
+                          value={srv.status}
+                          onChange={e => handleProviderStatus(srv, e.target.value as ServiceStatus)}
+                        >
+                          <option value="pendiente" disabled={srv.status !== 'pendiente'}>Pendiente</option>
+                          <option value="en_curso">En progreso</option>
+                          <option value="finalizado">Finalizado</option>
+                        </select>
+                      </div>
+                    )}
+
+                    {srv.status === 'pendiente' && (
+                      <>
+                        {isSeeker && (
+                          <span className="svc-muted svc-pending-note">
+                            <Clock size={13} aria-hidden="true" /> Esperando respuesta del profesional
+                          </span>
+                        )}
+                        <button onClick={() => setCancellingService(srv)} className="btn btn-secondary svc-btn-cancel">
+                          <XCircle size={15} aria-hidden="true" /> {isSeeker ? 'Retirar solicitud' : 'Rechazar'}
+                        </button>
+                      </>
+                    )}
+
                     {srv.status === 'en_curso' && (
                       <>
                         <button onClick={() => handleConfirmFinalize(srv)} className="btn btn-primary svc-btn-complete">
@@ -345,6 +421,10 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                               <Star size={14} aria-hidden="true" /> Calificar Profesional
                             </button>
                           )
+                        ) : srv.workerRatedClient ? (
+                          <span className="svc-review-done">
+                            <CheckCircle2 size={14} aria-hidden="true" /> Contratante calificado ({srv.clientRatingByWorker}/5)
+                          </span>
                         ) : (
                           <button onClick={() => setRatingClientService(srv)} className="btn btn-secondary svc-btn-sm">
                             <Star size={14} aria-hidden="true" /> Calificar Contratante
@@ -387,12 +467,25 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
             </div>
 
             <div className="oy-modal__body">
-              <label htmlFor="svc-photo-url" className="svc-label">Foto del resultado final / respaldo</label>
+              <label htmlFor="svc-photo-file" className="svc-label">Toma o elige la foto del trabajo terminado</label>
+              <input
+                id="svc-photo-file"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="input-base"
+                onChange={handleEvidenceFile}
+                disabled={isUploadingEvidence}
+              />
+              {isUploadingEvidence && <span className="svc-muted" role="status">Subiendo foto…</span>}
+              {evidenceError && <span className="svc-muted" role="alert">{evidenceError}</span>}
+
+              <label htmlFor="svc-photo-url" className="svc-label">O pega la URL de la foto</label>
               <input
                 id="svc-photo-url"
                 type="text"
                 className="input-base"
-                value={completionPhotoUrl}
+                value={completionPhotoUrl.startsWith('data:') ? '' : completionPhotoUrl}
                 onChange={e => setCompletionPhotoUrl(e.target.value)}
                 placeholder="URL de la fotografía del trabajo terminado"
               />
@@ -406,7 +499,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                 <button onClick={() => setCompletingService(null)} className="btn btn-secondary">
                   Cancelar
                 </button>
-                <button onClick={handleExecuteFinalize} className="btn btn-primary svc-btn-complete">
+                <button onClick={handleExecuteFinalize} className="btn btn-primary svc-btn-complete" disabled={isUploadingEvidence}>
                   Confirmar y Cerrar Servicio
                 </button>
               </div>

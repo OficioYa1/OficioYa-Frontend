@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import type {
+  Worker,
   WorkerServiceProfile,
   ServiceRequest,
   TradeCategory,
   ClientProfile,
   AcceptedPaymentMethod,
-  ReferralRecord
+  ReferralRecord,
+  RateUnit,
+  WeekDay,
+  DaySchedule,
+  WeeklyAvailability,
+  WorkerReferrals
 } from '../../types';
 import {
   Star,
@@ -26,127 +32,78 @@ import {
   Camera,
   CalendarDays,
   TrendingUp,
-  Zap
+  Zap,
+  MapPin,
+  ArrowUpCircle,
+  Hourglass
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 import { SquishSwitch } from '../../components/ui/SquishSwitch';
 import { PageHero } from '../../components/layout/PageHero';
+import { mediaService, MediaUploadError } from '../../services/mock/mediaService';
+import { computeClientReputation, monthlyIncome, topRequested } from '../../utils/reputation';
+import {
+  PROFILE_INCOMPLETE_REASON,
+  RATE_UNITS,
+  TRADE_LABELS,
+  WEEK_DAYS,
+  rateUnitShort,
+  scheduleFromWeek,
+  weekFromSchedule,
+  workerPatchFromServices
+} from '../../utils/workerProfile';
 import './Provider.css';
-
-type WeekDay = 'lun' | 'mar' | 'mie' | 'jue' | 'vie' | 'sab' | 'dom';
-
-interface DaySchedule {
-  active: boolean;
-  from: string;
-  to: string;
-}
-
-const WEEK_DAYS: { key: WeekDay; label: string }[] = [
-  { key: 'lun', label: 'Lunes' },
-  { key: 'mar', label: 'Martes' },
-  { key: 'mie', label: 'Miércoles' },
-  { key: 'jue', label: 'Jueves' },
-  { key: 'vie', label: 'Viernes' },
-  { key: 'sab', label: 'Sábado' },
-  { key: 'dom', label: 'Domingo' }
-];
 
 const PAYMENT_OPTIONS: AcceptedPaymentMethod[] = ['efectivo', 'nequi', 'daviplata', 'bre_b', 'tarjeta'];
 
-// RF-46: Servicios más solicitados del periodo (datos referenciales)
-const TOP_REQUESTED: { label: string; count: number }[] = [
-  { label: 'Tableros y breakers', count: 18 },
-  { label: 'Instalación de tomas', count: 12 },
-  { label: 'Calentadores', count: 7 },
-  { label: 'Neveras', count: 5 }
-];
+const splitList = (text: string) => text.split(',').map(t => t.trim()).filter(Boolean);
+
+/** Recalcula contadores e insignia de referidos: solo cuentan los verificados (OFY-68, OFY-69). */
+const referralsWith = (base: WorkerReferrals, referredList: ReferralRecord[]): WorkerReferrals => {
+  const verified = referredList.filter(r => r.status === 'verificado');
+  const distinct = new Set(verified.map(r => r.trade.toLowerCase())).size;
+  return {
+    ...base,
+    referredList,
+    count: verified.length,
+    distinctTradesCount: distinct,
+    isCommunityReferrer: distinct >= 3
+  };
+};
 
 interface ProviderDashboardProps {
+  /** Ficha del profesional en sesión (fuente: `workers` en App, persistida en `oy-workers`). */
+  worker?: Worker;
+  /** Todas las solicitudes, para estadísticas y reputación de contratantes. */
+  services?: ServiceRequest[];
   incomingRequests: ServiceRequest[];
   onAcceptRequest: (id: string) => void;
   onRejectRequest: (id: string) => void;
+  onUpdateWorker?: (patch: Partial<Worker>) => void;
 }
 
 export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
+  worker,
+  services: allServices = [],
   incomingRequests,
   onAcceptRequest,
-  onRejectRequest
+  onRejectRequest,
+  onUpdateWorker
 }) => {
-  const [isAvailableNow, setIsAvailableNow] = useState(true);
+  const update = (patch: Partial<Worker>) => onUpdateWorker?.(patch);
 
-  // RF-59: Foto de perfil
-  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  // RF-06: Disponibilidad semanal (días y franjas horarias)
-  const [weeklySchedule, setWeeklySchedule] = useState<Record<WeekDay, DaySchedule>>({
-    lun: { active: true, from: '07:00', to: '18:00' },
-    mar: { active: true, from: '07:00', to: '18:00' },
-    mie: { active: true, from: '07:00', to: '18:00' },
-    jue: { active: true, from: '07:00', to: '18:00' },
-    vie: { active: true, from: '07:00', to: '17:00' },
-    sab: { active: true, from: '08:00', to: '13:00' },
-    dom: { active: false, from: '09:00', to: '12:00' }
-  });
-
-  // RF-01, RF-02, RF-03, RF-04, RF-05, RF-09, RF-66, RF-67: Oficios registrados con detalles específicos
-  const [services, setServices] = useState<WorkerServiceProfile[]>([
-    {
-      id: 'srv-prof-1',
-      trade: 'electricidad',
-      tradeLabel: 'Electricista Residencial & Comercial SENA',
-      hourlyRate: 45000,
-      experienceYears: 8,
-      coverageZones: ['Chapinero', 'Chicó', 'Usaquén', 'Cedritos'],
-      bio: 'Instalaciones eléctricas certificadas, tableros de protección y cableado.',
-      phone: '+57 312 458 9012',
-      specializations: ['Tableros trifásicos', 'Cableado estructurado', 'Automatización domótica'],
-      equipment: ['Multímetro digital Fluke', 'Ponchadora hidráulica', 'Detector sin contacto'],
-      brands: ['Schneider Electric', 'Legrand', 'Bticino', 'Philips']
-    },
-    {
-      id: 'srv-prof-2',
-      trade: 'electrodomesticos',
-      tradeLabel: 'Reparación de Calentadores y Neveras',
-      hourlyRate: 40000,
-      experienceYears: 5,
-      coverageZones: ['Chapinero', 'Teusaquillo', 'Suba'],
-      bio: 'Mantenimiento preventivo y cambio de repuestos originales.',
-      phone: '+57 312 458 9012',
-      specializations: ['Carga de gas refrigerante', 'Termostatos', 'Bombas de desagüe'],
-      equipment: ['Manómetro refrigeración', 'Bomba de vacío'],
-      brands: ['Haceb', 'Whirlpool', 'Samsung']
-    }
-  ]);
-
-  // RF-60: Métodos de pago aceptados configurables
-  const [paymentMethods, setPaymentMethods] = useState<AcceptedPaymentMethod[]>([
-    'efectivo',
-    'nequi',
-    'daviplata',
-    'bre_b'
-  ]);
-
-  // RF-07: Portafolio de fotografías
-  const [portfolioPhotos, setPortfolioPhotos] = useState<string[]>([
-    'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=500&auto=format&fit=crop'
-  ]);
   const [newPhotoUrl, setNewPhotoUrl] = useState('');
   const [showPhotoModal, setShowPhotoModal] = useState(false);
 
-  // RF-41, RF-42, RF-43: Verificación de Identidad
-  const [completedJobsCount] = useState(42); // >= 10 requerido para elegibilidad (RF-41)
-  const [isIdentityVerified, setIsIdentityVerified] = useState(true);
+  // RF-41, RF-42: Envío de cédula para revisión
   const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [docNumber, setDocNumber] = useState('1.020.845.912');
+  const [docNumber, setDocNumber] = useState(worker?.identityVerification?.documentNumber ?? '');
+  const [docFileUrl, setDocFileUrl] = useState<string | undefined>(worker?.identityVerification?.documentFileUrl);
 
-  // RF-68, RF-69: Referidos
-  const [referralCode] = useState('MGOMEZ-2026');
-  const [referralsList, setReferralsList] = useState<ReferralRecord[]>([
-    { name: 'Carlos Restrepo', trade: 'Plomería', status: 'verificado' },
-    { name: 'Elena Jaramillo', trade: 'Pintura', status: 'verificado' },
-    { name: 'Andrés Henao', trade: 'Cerrajería', status: 'verificado' }
-  ]);
+  // RF-68: Referidos
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [newReferralName, setNewReferralName] = useState('');
   const [newReferralTrade, setNewReferralTrade] = useState('pintura');
@@ -154,57 +111,117 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
   // RF-53: Consulta de Perfil de Contratante
   const [selectedClientForProfile, setSelectedClientForProfile] = useState<ClientProfile | null>(null);
 
-  // Modal para Añadir Servicio (RF-01, RF-09, RF-66, RF-67)
+  // Modal para Añadir Servicio (RF-01, RF-04, RF-05, RF-09, RF-66, RF-67)
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [newTrade, setNewTrade] = useState<TradeCategory>('plomeria');
   const [newTradeLabel, setNewTradeLabel] = useState('');
   const [newHourlyRate, setNewHourlyRate] = useState('42000');
+  const [newRateUnit, setNewRateUnit] = useState<RateUnit>('hora');
   const [newExpYears, setNewExpYears] = useState('4');
   const [newZones, setNewZones] = useState('Chapinero, Chicó, Usaquén');
+  const [newMaxDistance, setNewMaxDistance] = useState('8');
   const [newBio, setNewBio] = useState('Atención de emergencias y servicios a domicilio en Bogotá.');
   const [newEquipment, setNewEquipment] = useState('Herramienta manual, tester');
   const [newBrands, setNewBrands] = useState('Grival, Corona, Pavco');
   const [newSpecializations, setNewSpecializations] = useState('Destapes urgentes, griferías');
+  const [newSpecies, setNewSpecies] = useState('');
 
   // RF-28: Cálculo de tiempo restante de solicitudes (30 minutos sin respuesta)
   const [timeLeftMap, setTimeLeftMap] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    const tick = () => {
       const now = Date.now();
       const updated: Record<string, number> = {};
       incomingRequests.forEach(req => {
         const createdMs = req.createdAt ? new Date(req.createdAt).getTime() : now;
         const expiryMs = req.expiresAt ? new Date(req.expiresAt).getTime() : createdMs + 30 * 60 * 1000;
-        const diffSeconds = Math.max(0, Math.floor((expiryMs - now) / 1000));
-        updated[req.id] = diffSeconds;
+        updated[req.id] = Math.max(0, Math.floor((expiryMs - now) / 1000));
       });
       setTimeLeftMap(updated);
-    }, 1000);
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, [incomingRequests]);
 
-  useEffect(() => {
-    return () => {
-      if (profilePhoto) URL.revokeObjectURL(profilePhoto);
-    };
-  }, [profilePhoto]);
+  if (!worker) {
+    return (
+      <div className="provider-dashboard container pv-page">
+        <div className="oy-empty" role="status">
+          <MascotAvatar size="md" expression="pensativo" />
+          <h2 className="oy-empty__title oy-display">Preparando tu ficha profesional…</h2>
+          <p className="oy-empty__text">Entra con una cuenta en modo Profesional para gestionar tus oficios.</p>
+        </div>
+      </div>
+    );
+  }
 
-  const handleProfilePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setProfilePhoto(URL.createObjectURL(file));
-    e.target.value = '';
+  const isProfileIncomplete = worker.services.length === 0;
+  const isPaused = !!worker.isPaused;
+  const isAvailableNow = worker.available && !isPaused;
+  const services = worker.services;
+  const paymentMethods = worker.acceptedPaymentMethods ?? [];
+  const portfolioPhotos = worker.gallery;
+  const completedJobsCount = worker.completedJobsCount;
+  const weeklySchedule: WeeklyAvailability = worker.weeklyAvailability ?? weekFromSchedule(worker.schedule);
+  const verificationStatus = worker.identityVerification?.status ?? (worker.verified ? 'verified' : 'none');
+  const isIdentityVerified = verificationStatus === 'verified';
+  const isVerificationPending = verificationStatus === 'pending';
+  const isEligibleForVerification = completedJobsCount >= 10;
+  const referrals: WorkerReferrals = worker.referrals ?? {
+    code: `${worker.initials}-${worker.id.slice(-4).toUpperCase()}`,
+    count: 0,
+    distinctTradesCount: 0,
+    isCommunityReferrer: false,
+    referredList: []
+  };
+  const referralsList = referrals.referredList;
+
+  const uploadImage = async (file: File, folder: string): Promise<string | null> => {
+    setPhotoError(null);
+    setIsUploading(true);
+    try {
+      const media = await mediaService.uploadImage(file, { folder, maxSide: 720 });
+      return media.url;
+    } catch (err) {
+      setPhotoError(err instanceof MediaUploadError ? err.message : 'No pudimos subir la foto. Intenta de nuevo.');
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
   };
 
+  // RF-59: Foto de perfil
+  const handleProfilePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const url = await uploadImage(file, 'avatars');
+    if (url) update({ photoUrl: url });
+  };
+
+  // RF-30, RF-31: "Disponible ya"
+  const setAvailable = (value: boolean) => {
+    if (isPaused) return;
+    update({ available: value });
+  };
+
+  // RF-06: Agenda semanal
   const updateDay = (day: WeekDay, patch: Partial<DaySchedule>) => {
-    setWeeklySchedule(prev => ({ ...prev, [day]: { ...prev[day], ...patch } }));
+    const next: WeeklyAvailability = { ...weeklySchedule, [day]: { ...weeklySchedule[day], ...patch } };
+    update({ weeklyAvailability: next, schedule: scheduleFromWeek(next) });
+  };
+
+  const saveServices = (list: WorkerServiceProfile[]) => {
+    update(workerPatchFromServices(worker, list));
   };
 
   const openNewService = () => {
     setEditingServiceId(null);
     setNewTradeLabel('');
+    setNewSpecies('');
     setShowAddModal(true);
   };
 
@@ -214,12 +231,15 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
     setNewTrade(srv.trade);
     setNewTradeLabel(srv.tradeLabel);
     setNewHourlyRate(String(srv.hourlyRate));
+    setNewRateUnit(srv.rateUnit ?? 'hora');
     setNewExpYears(String(srv.experienceYears));
     setNewZones(srv.coverageZones.join(', '));
+    setNewMaxDistance(srv.maxDistanceKm ? String(srv.maxDistanceKm) : '');
     setNewBio(srv.bio);
     setNewEquipment((srv.equipment ?? []).join(', '));
     setNewBrands((srv.brands ?? []).join(', '));
     setNewSpecializations((srv.specializations ?? []).join(', '));
+    setNewSpecies((srv.species ?? []).join(', '));
     setShowAddModal(true);
   };
 
@@ -230,65 +250,136 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
 
   const handleAddService = (e: React.FormEvent) => {
     e.preventDefault();
+    const species = splitList(newSpecies);
     const created: WorkerServiceProfile = {
       id: editingServiceId ?? `srv-prof-${Date.now()}`,
       trade: newTrade,
-      tradeLabel: newTradeLabel || `Servicio de ${newTrade}`,
+      tradeLabel: newTradeLabel || `Servicio de ${TRADE_LABELS[newTrade]}`,
       hourlyRate: parseInt(newHourlyRate) || 40000,
+      rateUnit: newRateUnit,
       experienceYears: parseInt(newExpYears) || 3,
-      coverageZones: newZones.split(',').map(z => z.trim()),
+      coverageZones: splitList(newZones),
+      maxDistanceKm: parseInt(newMaxDistance) || undefined,
       bio: newBio,
-      phone: '+57 312 458 9012',
-      equipment: newEquipment.split(',').map(e => e.trim()).filter(Boolean),
-      brands: newBrands.split(',').map(b => b.trim()).filter(Boolean),
-      specializations: newSpecializations.split(',').map(s => s.trim()).filter(Boolean)
+      phone: worker.phone,
+      equipment: splitList(newEquipment),
+      brands: splitList(newBrands),
+      specializations: splitList(newSpecializations),
+      species: species.length > 0 ? species : undefined
     };
 
-    setServices(prev =>
-      editingServiceId ? prev.map(s => (s.id === editingServiceId ? created : s)) : [...prev, created]
+    saveServices(
+      editingServiceId ? services.map(s => (s.id === editingServiceId ? created : s)) : [...services, created]
     );
     closeServiceModal();
     setNewTradeLabel('');
   };
 
   const handleDeleteService = (id: string) => {
-    setServices(prev => prev.filter(s => s.id !== id));
+    saveServices(services.filter(s => s.id !== id));
+  };
+
+  // RF-02: Elegir cuál oficio es el principal
+  const handleMakePrimary = (id: string) => {
+    const target = services.find(s => s.id === id);
+    if (!target) return;
+    saveServices([target, ...services.filter(s => s.id !== id)]);
   };
 
   const togglePaymentMethod = (method: AcceptedPaymentMethod) => {
-    setPaymentMethods(prev =>
-      prev.includes(method) ? prev.filter(m => m !== method) : [...prev, method]
-    );
+    update({
+      acceptedPaymentMethods: paymentMethods.includes(method)
+        ? paymentMethods.filter(m => m !== method)
+        : [...paymentMethods, method]
+    });
   };
 
   const handleAddPhoto = () => {
     if (newPhotoUrl.trim()) {
-      setPortfolioPhotos(prev => [...prev, newPhotoUrl.trim()]);
+      update({ gallery: [...portfolioPhotos, newPhotoUrl.trim()] });
       setNewPhotoUrl('');
       setShowPhotoModal(false);
     }
   };
 
+  const handlePortfolioFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const url = await uploadImage(file, 'portfolio');
+    if (url) {
+      update({ gallery: [...portfolioPhotos, url] });
+      setShowPhotoModal(false);
+    }
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    update({ gallery: portfolioPhotos.filter((_, i) => i !== index) });
+  };
+
+  const handleDocFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const url = await uploadImage(file, 'identity');
+    if (url) setDocFileUrl(url);
+  };
+
+  // RF-42: el envío queda "en revisión" hasta que moderación lo aprueba
+  const handleSubmitVerification = () => {
+    if (!docNumber.trim()) return;
+    update({
+      identityVerification: {
+        status: 'pending',
+        documentType: 'Cédula de Ciudadanía',
+        documentNumber: docNumber.trim(),
+        documentFileUrl: docFileUrl,
+        submittedAt: new Date().toISOString()
+      }
+    });
+    setShowVerificationModal(false);
+  };
+
   const handleAddReferral = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newReferralName.trim()) return;
-    setReferralsList(prev => [
-      ...prev,
-      { name: newReferralName.trim(), trade: newReferralTrade, status: 'verificado' }
-    ]);
+    const label = TRADE_LABELS[newReferralTrade as TradeCategory] ?? newReferralTrade;
+    update({
+      referrals: referralsWith(referrals, [
+        ...referralsList,
+        { name: newReferralName.trim(), trade: label, status: 'pendiente' }
+      ])
+    });
     setNewReferralName('');
     setShowReferralModal(false);
   };
 
-  // RF-69: Insignia de Referente Comunitario Verificado (mínimo 3 oficios distintos)
-  const distinctTradesCount = new Set(referralsList.map(r => r.trade.toLowerCase())).size;
-  const isCommunityReferrer = distinctTradesCount >= 3;
+  // RF-69: Insignia de Referente Comunitario Verificado (mínimo 3 oficios distintos verificados)
+  const distinctTradesCount = referrals.distinctTradesCount;
+  const isCommunityReferrer = referrals.isCommunityReferrer;
+  const pendingReferrals = referralsList.filter(r => r.status === 'pendiente').length;
 
-  // RF-45: Calcular ingresos mensuales referenciales
-  const monthlyRevenue = 1890000;
+  // RF-45: Ingresos reales del mes (servicios finalizados)
+  const monthlyRevenue = monthlyIncome(allServices, worker.id);
+
+  // RF-46: Servicios más solicitados del mes
+  const topRequestedList = topRequested(allServices, worker.id, s =>
+    s.tradeCategory ? TRADE_LABELS[s.tradeCategory] : s.workerTrade
+  );
+
+  // RF-53: Reputación del contratante calculada con las calificaciones de otros profesionales
+  const openClientProfile = (req: ServiceRequest) => {
+    const rep = computeClientReputation(allServices, req.clientId);
+    setSelectedClientForProfile({
+      id: req.clientId,
+      name: req.clientName,
+      avatarColor: 'var(--oy-azul-marino)',
+      ...rep
+    });
+  };
 
   const activeDays = WEEK_DAYS.filter(d => weeklySchedule[d.key].active).length;
-  const topMax = Math.max(...TOP_REQUESTED.map(t => t.count));
+  const topMax = Math.max(1, ...topRequestedList.map(t => t.count));
 
   return (
     <div className="provider-dashboard container pv-page">
@@ -312,11 +403,11 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
       <section className="pv-live" data-on={isAvailableNow} aria-label="Estado de disponibilidad">
         <div className="pv-live__who">
           <div className="pv-avatar">
-            {profilePhoto ? (
-              <img className="pv-avatar__img" src={profilePhoto} alt="Tu foto de perfil" />
+            {worker.photoUrl ? (
+              <img className="pv-avatar__img" src={worker.photoUrl} alt="Tu foto de perfil" />
             ) : (
               <div className="pv-avatar__img">
-                <MascotAvatar trade="electricidad" size="sm" />
+                <MascotAvatar trade={worker.trade} size="sm" />
               </div>
             )}
             <label className="pv-avatar__edit" title="Cambiar foto de perfil">
@@ -327,6 +418,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                 accept="image/*"
                 className="pv-visually-hidden"
                 onChange={handleProfilePhoto}
+                disabled={isUploading}
               />
             </label>
           </div>
@@ -335,8 +427,13 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
               {isAvailableNow ? 'Disponible ya' : 'Fuera de línea'}
             </h2>
             <p className="pv-live__text">
-              {isAvailableNow ? 'Visible en el mapa local' : 'Oculto para nuevos pedidos'}
+              {isPaused
+                ? worker.pauseReason === PROFILE_INCOMPLETE_REASON
+                  ? 'Registra tu primer oficio para aparecer en el directorio'
+                  : `Perfil en pausa: ${worker.pauseReason ?? 'revisión de moderación'}`
+                : isAvailableNow ? 'Visible en el mapa local' : 'Oculto para nuevos pedidos'}
             </p>
+            {photoError && <p className="pv-live__text" role="alert">{photoError}</p>}
             <div className="pv-badges">
               {isIdentityVerified && (
                 <span className="pv-tag" title="Identidad validada con cédula">
@@ -359,7 +456,8 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           </span>
           <SquishSwitch
             checked={isAvailableNow}
-            onChange={setIsAvailableNow}
+            onChange={setAvailable}
+            disabled={isPaused}
             ariaLabel="Disponible Ya"
             trackOnColor="var(--oy-cacao-profundo)"
             width={60}
@@ -378,15 +476,15 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
         </div>
         <div className="oy-stat pv-stat--amarillo">
           <span className="pv-stat__icon"><Star size={20} aria-hidden="true" /></span>
-          <span className="oy-stat__value">4.9</span>
+          <span className="oy-stat__value">{worker.reviewCount > 0 ? worker.rating.toFixed(1) : '—'}</span>
           <span className="oy-stat__label">Calificación Promedio</span>
-          <span className="pv-stat__note">(38 reseñas)</span>
+          <span className="pv-stat__note">({worker.reviewCount} reseñas)</span>
         </div>
         <div className="oy-stat pv-stat--fuego">
           <span className="pv-stat__icon"><DollarSign size={20} aria-hidden="true" /></span>
           <span className="oy-stat__value">${monthlyRevenue.toLocaleString()}</span>
           <span className="oy-stat__label">Ingresos Mes</span>
-          <span className="pv-stat__note">COP · referencial</span>
+          <span className="pv-stat__note">COP · servicios finalizados este mes</span>
         </div>
         <div className="oy-stat pv-stat--marino">
           <span className="pv-stat__icon"><BellRing size={20} aria-hidden="true" /></span>
@@ -409,7 +507,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
 
         {incomingRequests.length === 0 ? (
           <div className="oy-empty">
-            <MascotAvatar trade="electricidad" size="md" expression="alegre" />
+            <MascotAvatar trade={worker.trade} size="md" expression="alegre" />
             <h3 className="oy-empty__title oy-display">¡Estás al día!</h3>
             <p className="oy-empty__text">No tienes solicitudes pendientes de respuesta en este momento.</p>
           </div>
@@ -428,17 +526,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                     <button
                       type="button"
                       className="pv-client-link"
-                      onClick={() =>
-                        setSelectedClientForProfile({
-                          id: req.clientId,
-                          name: req.clientName,
-                          avatarColor: 'var(--oy-azul-marino)',
-                          rating: 4.9,
-                          reviewCount: 12,
-                          completedServicesCount: 15,
-                          registeredSince: 'Enero 2025'
-                        })
-                      }
+                      onClick={() => openClientProfile(req)}
                     >
                       <strong>{req.clientName}</strong>
                       <small>Ver reputación del contratante ↗</small>
@@ -461,7 +549,9 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   )}
 
                   <div className="pv-ticket__meta pv-row--between">
+                    <span><CalendarDays size={14} aria-hidden="true" /> {req.date}</span>
                     <span><Clock size={14} aria-hidden="true" /> {req.time}</span>
+                    {req.coverageZone && <span><MapPin size={14} aria-hidden="true" /> {req.coverageZone}</span>}
                   </div>
 
                   <div className="pv-ticket__budget">
@@ -503,6 +593,19 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           </button>
         </div>
 
+        {isProfileIncomplete && (
+          <div className="oy-empty">
+            <MascotAvatar size="md" expression="entusiasta" />
+            <h3 className="oy-empty__title oy-display">Registra tu primer oficio</h3>
+            <p className="oy-empty__text">
+              Cuéntale a tus vecinos qué haces, cuánto cobras y en qué zonas trabajas. Así apareces en el directorio.
+            </p>
+            <button type="button" onClick={openNewService} className="btn btn-primary">
+              <Plus size={16} aria-hidden="true" /> Registrar oficio
+            </button>
+          </div>
+        )}
+
         <div className="pv-grid">
           {services.map((srv, index) => (
             <article key={srv.id} className="pv-ticket">
@@ -523,6 +626,17 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   {index > 0 && (
                     <button
                       type="button"
+                      className="oy-icon-btn"
+                      onClick={() => handleMakePrimary(srv.id)}
+                      title="Marcar como oficio principal"
+                      aria-label={`Marcar ${srv.tradeLabel} como oficio principal`}
+                    >
+                      <ArrowUpCircle size={16} aria-hidden="true" />
+                    </button>
+                  )}
+                  {index > 0 && (
+                    <button
+                      type="button"
                       className="oy-icon-btn pv-icon-btn--danger"
                       onClick={() => handleDeleteService(srv.id)}
                       title="Eliminar este oficio secundario"
@@ -538,7 +652,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
               <p className="pv-muted pv-copy">{srv.bio}</p>
 
               <div className="pv-row">
-                <span className="pv-tag pv-tag--fuego"><DollarSign size={13} aria-hidden="true" /> ${srv.hourlyRate.toLocaleString()} COP/h</span>
+                <span className="pv-tag pv-tag--fuego"><DollarSign size={13} aria-hidden="true" /> ${srv.hourlyRate.toLocaleString()} COP/{rateUnitShort(srv.rateUnit)}</span>
                 <span className="pv-tag"><Clock size={13} aria-hidden="true" /> {srv.experienceYears} años exp.</span>
               </div>
 
@@ -557,12 +671,13 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
               )}
 
               {/* Equipos & Marcas (RF-09) */}
-              {(srv.equipment || srv.brands) && (
+              {(srv.equipment?.length || srv.brands?.length || srv.species?.length) ? (
                 <div className="pv-details">
-                  {srv.equipment && <div><strong>Equipo:</strong> {srv.equipment.join(', ')}</div>}
-                  {srv.brands && <div><strong>Marcas:</strong> {srv.brands.join(', ')}</div>}
+                  {srv.equipment && srv.equipment.length > 0 && <div><strong>Equipo:</strong> {srv.equipment.join(', ')}</div>}
+                  {srv.brands && srv.brands.length > 0 && <div><strong>Marcas:</strong> {srv.brands.join(', ')}</div>}
+                  {srv.species && srv.species.length > 0 && <div><strong>Especies:</strong> {srv.species.join(', ')}</div>}
                 </div>
-              )}
+              ) : null}
 
               <div className="pv-details">
                 <span className="pv-label">Zonas de cobertura en Bogotá</span>
@@ -570,6 +685,9 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   {srv.coverageZones.map((z, i) => (
                     <span key={i} className="pv-tag">{z}</span>
                   ))}
+                  {srv.maxDistanceKm && (
+                    <span className="pv-tag pv-tag--marino"><MapPin size={13} aria-hidden="true" /> Hasta {srv.maxDistanceKm} km</span>
+                  )}
                 </div>
               </div>
             </article>
@@ -672,8 +790,17 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
             </p>
             <div className="pv-portfolio">
               {portfolioPhotos.map((url, i) => (
-                <div key={i} className="pv-portfolio__item">
+                <div key={`${i}-${url.slice(-12)}`} className="pv-portfolio__item">
                   <img src={url} alt={`Trabajo ${i + 1}`} />
+                  <button
+                    type="button"
+                    className="oy-icon-btn pv-icon-btn--danger pv-portfolio__remove"
+                    onClick={() => handleRemovePhoto(i)}
+                    aria-label={`Quitar trabajo ${i + 1} del portafolio`}
+                    title="Quitar del portafolio"
+                  >
+                    <Trash2 size={14} aria-hidden="true" />
+                  </button>
                 </div>
               ))}
             </div>
@@ -683,8 +810,11 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           <div className="oy-panel oy-panel--gris">
             <h3 className="pv-panel-title"><TrendingUp size={22} aria-hidden="true" /> Servicios más solicitados</h3>
             <p className="pv-muted pv-copy">Trabajos completados por categoría este mes.</p>
+            {topRequestedList.length === 0 && (
+              <p className="pv-muted pv-copy">Aún no tienes trabajos finalizados este mes.</p>
+            )}
             <ol className="pv-top-list">
-              {TOP_REQUESTED.map(t => (
+              {topRequestedList.map(t => (
                 <li key={t.label}>
                   <div className="pv-row pv-row--between pv-top-list__row">
                     <span>{t.label}</span>
@@ -714,19 +844,28 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           <div className="oy-panel oy-panel--esmeralda">
             <h3 className="pv-panel-title"><ShieldCheck size={22} aria-hidden="true" /> Verificación de Identidad</h3>
             <p className="pv-muted pv-copy">
-              {completedJobsCount >= 10
+              {isEligibleForVerification
                 ? `Has completado ${completedJobsCount} trabajos (mínimo 10 requeridos). Eres elegible para el distintivo oficial.`
-                : `Completa al menos 10 trabajos para solicitar la verificación de identidad.`}
+                : `Llevas ${completedJobsCount} trabajos. Completa al menos 10 para solicitar la verificación de identidad.`}
             </p>
             <div className="pv-summary pv-row pv-row--between">
               <div>
                 <span className="pv-label">Estado actual</span>
-                <span className={`pv-tag ${isIdentityVerified ? 'pv-tag--esmeralda' : 'pv-tag--danger'}`}>
-                  {isIdentityVerified ? <><CheckCircle2 size={13} aria-hidden="true" /> Identidad Verificada Activa</> : 'Pendiente de Documento'}
+                <span className={`pv-tag ${isIdentityVerified ? 'pv-tag--esmeralda' : isVerificationPending ? 'pv-tag--marino' : 'pv-tag--danger'}`}>
+                  {isIdentityVerified
+                    ? <><CheckCircle2 size={13} aria-hidden="true" /> Identidad Verificada Activa</>
+                    : isVerificationPending
+                      ? <><Hourglass size={13} aria-hidden="true" /> En revisión por moderación</>
+                      : 'Pendiente de Documento'}
                 </span>
               </div>
-              <button type="button" onClick={() => setShowVerificationModal(true)} className="btn btn-secondary">
-                {isIdentityVerified ? 'Ver Soporte' : 'Enviar Cédula'}
+              <button
+                type="button"
+                onClick={() => setShowVerificationModal(true)}
+                className="btn btn-secondary"
+                disabled={!isIdentityVerified && !isVerificationPending && !isEligibleForVerification}
+              >
+                {isIdentityVerified || isVerificationPending ? 'Ver Soporte' : 'Enviar Cédula'}
               </button>
             </div>
           </div>
@@ -740,13 +879,19 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
               </button>
             </div>
             <p className="pv-muted pv-copy">
-              Tu código de referido: <span className="pv-code">{referralCode}</span>. Invita a trabajadores a registrarse.
+              Tu código de referido: <span className="pv-code">{referrals.code}</span>. Invita a trabajadores a registrarse.
             </p>
             <div className="pv-summary">
               <div className="pv-row pv-row--between">
-                <span>Referidos activos:</span>
-                <strong>{referralsList.length} colegas</strong>
+                <span>Referidos verificados:</span>
+                <strong>{referrals.count} colegas</strong>
               </div>
+              {pendingReferrals > 0 && (
+                <div className="pv-row pv-row--between">
+                  <span>En verificación:</span>
+                  <strong>{pendingReferrals} colegas</strong>
+                </div>
+              )}
               <div className="pv-row pv-row--between">
                 <span>Oficios distintos:</span>
                 <strong>{distinctTradesCount} oficios (mínimo 3 para insignia)</strong>
@@ -795,13 +940,13 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
               <div className="oy-panel oy-panel--amarillo pv-client-rep">
                 <span className="pv-label">Reputación histórica como contratante</span>
                 <div className="pv-rating">
-                  <Star size={22} fill="var(--color-star)" color="var(--oy-cacao-profundo)" aria-hidden="true" /> {selectedClientForProfile.rating}
+                  <Star size={22} fill="var(--color-star)" color="var(--oy-cacao-profundo)" aria-hidden="true" /> {selectedClientForProfile.reviewCount > 0 ? selectedClientForProfile.rating.toFixed(1) : '—'}
                   <span className="pv-muted pv-rating__count">
                     ({selectedClientForProfile.reviewCount} calificaciones de otros profesionales)
                   </span>
                 </div>
                 <span className="pv-ok pv-ok--spaced">
-                  <CheckCircle2 size={14} aria-hidden="true" /> {selectedClientForProfile.completedServicesCount} servicios contratados y pagados puntualmente
+                  <CheckCircle2 size={14} aria-hidden="true" /> {selectedClientForProfile.completedServicesCount} servicios contratados y finalizados en OficioYa
                 </span>
               </div>
 
@@ -845,6 +990,19 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   onChange={e => setNewPhotoUrl(e.target.value)}
                 />
               </div>
+              <div>
+                <label htmlFor="pv-photo-file" className="pv-label">O sube una foto desde tu celular</label>
+                <input
+                  id="pv-photo-file"
+                  type="file"
+                  accept="image/*"
+                  className="input-base"
+                  onChange={handlePortfolioFile}
+                  disabled={isUploading}
+                />
+                {isUploading && <span className="pv-muted pv-caption" role="status">Subiendo foto…</span>}
+                {photoError && <span className="pv-muted pv-caption" role="alert">{photoError}</span>}
+              </div>
               <div className="pv-form__actions">
                 <button type="button" onClick={() => setShowPhotoModal(false)} className="btn btn-secondary">Cancelar</button>
                 <button type="button" onClick={handleAddPhoto} className="btn btn-primary">Guardar Foto</button>
@@ -872,34 +1030,64 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
             </div>
             <div className="oy-modal__body pv-form">
               <p className="pv-muted pv-copy">
-                Documento validado para emitir el distintivo de Identidad Verificada en tu perfil público de Bogotá.
+                {isIdentityVerified
+                  ? 'Documento validado para emitir el distintivo de Identidad Verificada en tu perfil público de Bogotá.'
+                  : isVerificationPending
+                    ? 'Recibimos tu documento. Moderación lo revisa y te avisamos cuando el distintivo quede activo.'
+                    : 'Envía tu cédula y una foto del documento. Moderación la revisa antes de activar el distintivo.'}
               </p>
               <div>
                 <label htmlFor="pv-doc" className="pv-label">Número de Cédula de Ciudadanía</label>
                 <input
                   id="pv-doc"
                   type="text"
+                  inputMode="numeric"
                   className="input-base"
                   value={docNumber}
                   onChange={e => setDocNumber(e.target.value)}
+                  readOnly={isIdentityVerified || isVerificationPending}
+                  required
                 />
               </div>
-              <div className="pv-summary pv-summary--flush">
-                <span className="pv-ok"><CheckCircle2 size={14} aria-hidden="true" /> Cédula digital validada ante Registraduría</span>
-                <span className="pv-muted pv-caption">Vigente hasta Diciembre 2027</span>
-              </div>
+              {!isIdentityVerified && !isVerificationPending && (
+                <div>
+                  <label htmlFor="pv-doc-file" className="pv-label">Foto de la cédula (opcional)</label>
+                  <input
+                    id="pv-doc-file"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="input-base"
+                    onChange={handleDocFile}
+                    disabled={isUploading}
+                  />
+                  {isUploading && <span className="pv-muted pv-caption" role="status">Subiendo foto…</span>}
+                  {photoError && <span className="pv-muted pv-caption" role="alert">{photoError}</span>}
+                </div>
+              )}
+              {docFileUrl && (
+                <div className="pv-evidence">
+                  <img src={docFileUrl} alt="Soporte de la cédula" />
+                  <span>Soporte adjunto</span>
+                </div>
+              )}
+              {isIdentityVerified && (
+                <div className="pv-summary pv-summary--flush">
+                  <span className="pv-ok"><CheckCircle2 size={14} aria-hidden="true" /> Cédula revisada por moderación</span>
+                </div>
+              )}
               <div className="pv-form__actions">
                 <button type="button" onClick={() => setShowVerificationModal(false)} className="btn btn-secondary">Cerrar</button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsIdentityVerified(true);
-                    setShowVerificationModal(false);
-                  }}
-                  className="btn btn-primary"
-                >
-                  Confirmar Verificación
-                </button>
+                {!isIdentityVerified && !isVerificationPending && (
+                  <button
+                    type="button"
+                    onClick={handleSubmitVerification}
+                    className="btn btn-primary"
+                    disabled={!docNumber.trim() || isUploading}
+                  >
+                    Enviar a revisión
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -998,6 +1186,8 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   <option value="aseo">Aseo Profundo</option>
                   <option value="jardineria">Jardinería</option>
                   <option value="mascotas">Cuidado de Mascotas</option>
+                  <option value="hogar">Hogar y reparaciones</option>
+                  <option value="clases">Clases particulares</option>
                 </select>
               </div>
 
@@ -1016,7 +1206,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
 
               <div className="pv-form__pair">
                 <div>
-                  <label htmlFor="pv-rate" className="pv-label">Tarifa / Hora (COP)</label>
+                  <label htmlFor="pv-rate" className="pv-label">Tarifa (COP)</label>
                   <input
                     id="pv-rate"
                     type="number"
@@ -1027,6 +1217,22 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   />
                 </div>
                 <div>
+                  <label htmlFor="pv-rate-unit" className="pv-label">Modalidad de cobro</label>
+                  <select
+                    id="pv-rate-unit"
+                    className="input-base"
+                    value={newRateUnit}
+                    onChange={e => setNewRateUnit(e.target.value as RateUnit)}
+                  >
+                    {RATE_UNITS.map(u => (
+                      <option key={u.id} value={u.id}>{u.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="pv-form__pair">
+                <div>
                   <label htmlFor="pv-exp" className="pv-label">Años Experiencia</label>
                   <input
                     id="pv-exp"
@@ -1035,6 +1241,19 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                     value={newExpYears}
                     onChange={e => setNewExpYears(e.target.value)}
                     required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="pv-distance" className="pv-label">Distancia máxima (km)</label>
+                  <input
+                    id="pv-distance"
+                    type="number"
+                    min={1}
+                    max={60}
+                    className="input-base"
+                    value={newMaxDistance}
+                    onChange={e => setNewMaxDistance(e.target.value)}
+                    placeholder="8"
                   />
                 </div>
               </div>
@@ -1090,6 +1309,21 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   placeholder="Destapes no invasivos, detección por termografía"
                 />
               </div>
+
+              {/* RF-09: Especies atendidas (mascotas) */}
+              {(newTrade === 'mascotas' || newSpecies) && (
+                <div>
+                  <label htmlFor="pv-species" className="pv-label">Especies atendidas</label>
+                  <input
+                    id="pv-species"
+                    type="text"
+                    className="input-base"
+                    value={newSpecies}
+                    onChange={e => setNewSpecies(e.target.value)}
+                    placeholder="Perros, gatos, aves"
+                  />
+                </div>
+              )}
 
               <div>
                 <label htmlFor="pv-bio" className="pv-label">Descripción / Bio del Servicio</label>

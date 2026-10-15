@@ -1,6 +1,7 @@
 import React, { useId, useState } from 'react';
 import type { Worker, PaymentMethod, ServiceRequest } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { rateUnitShort } from '../../utils/workerProfile';
 import {
   X,
   Calendar,
@@ -40,7 +41,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const uid = useId();
   const dialogRef = useFlowModal(onClose);
 
-  const [date, setDate] = useState('2026-10-05');
+  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [time, setTime] = useState('10:00 AM');
   const [address, setAddress] = useState('Carrera 15 # 85-20, Bogotá D.C.');
   const [problemDescription, setProblemDescription] = useState('');
@@ -52,8 +53,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     e.preventDefault();
     if (!problemDescription.trim()) return;
 
+    const id = `srv-${Date.now()}`;
+    // 2 horas base si cobra por hora; una visita / un servicio en otras modalidades
+    const estimate = (worker.rateUnit ?? 'hora') === 'hora' ? worker.hourlyRate * 2 : worker.hourlyRate;
     const newService: ServiceRequest = {
-      id: `srv-${Date.now()}`,
+      id,
+      broadcastId: id,
+      tradeCategory: worker.trade,
       workerId: worker.id,
       workerName: worker.name,
       workerTrade: worker.tradeLabel,
@@ -66,10 +72,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       address,
       problemDescription,
       paymentMethod,
-      status: 'en_curso',
+      status: 'pendiente',
       urgency: 'normal',
-      budget: worker.hourlyRate * 2, // 2 horas base estimadas
-      amount: worker.hourlyRate * 2,
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+      budget: estimate,
+      amount: estimate,
       createdAt: new Date().toISOString()
     };
 
@@ -98,10 +105,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             <div className="oy-flow-head__text">
               <span className="oy-eyebrow oy-flow-kicker">{isSubmitted ? 'Reserva lista' : 'Reservar cita'}</span>
               <h2 id={titleId} className="oy-modal__title oy-display">
-                {isSubmitted ? '¡Reserva confirmada!' : `Reserva con ${worker.name}`}
+                {isSubmitted ? '¡Reserva enviada!' : `Reserva con ${worker.name}`}
               </h2>
               <p className="oy-flow-head__sub">
-                {worker.tradeLabel} • ${worker.hourlyRate.toLocaleString()} COP/h
+                {worker.tradeLabel} • ${worker.hourlyRate.toLocaleString()} COP/{rateUnitShort(worker.rateUnit)}
               </p>
             </div>
           </div>
@@ -226,9 +233,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 </span>
               </div>
 
-              <h3 className="oy-flow-success__title oy-display">¡Reserva Confirmada con Éxito!</h3>
+              <h3 className="oy-flow-success__title oy-display">¡Reserva enviada con éxito!</h3>
               <p className="oy-flow-success__text">
-                Many le avisó a <strong>{worker.name}</strong>. Podrás ver el estado en tu pestaña de servicios.
+                Many le avisó a <strong>{worker.name}</strong>. Tiene 30 minutos para aceptar; verás el estado en tu pestaña de servicios.
               </p>
 
               <dl className="oy-flow-summary">

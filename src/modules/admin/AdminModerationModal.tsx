@@ -14,6 +14,8 @@ interface AdminModerationModalProps {
   workers: Worker[];
   onClose: () => void;
   onToggleWorkerPause?: (workerId: string, isPaused: boolean) => void;
+  /** OFY-41/42, OFY-68: aprobar cédulas y referidos pendientes. */
+  onUpdateWorker?: (workerId: string, patch: Partial<Worker>) => void;
 }
 
 type TicketStatus = ComplaintTicket['status'];
@@ -30,22 +32,16 @@ const statusClass = (status: TicketStatus) => {
 export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
   workers,
   onClose,
-  onToggleWorkerPause
+  onToggleWorkerPause,
+  onUpdateWorker
 }) => {
   const uid = useId();
   const dialogRef = useFlowModal(onClose);
 
-  const [activeTab, setActiveTab] = useState<'tickets' | 'usuarios'>('tickets');
+  const [activeTab, setActiveTab] = useState<'tickets' | 'usuarios' | 'verificaciones'>('tickets');
   const [tickets, setTickets] = useState<ComplaintTicket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<ComplaintTicket | null>(null);
   const [searchWorker, setSearchWorker] = useState('');
-  const [workerStatusMap, setWorkerStatusMap] = useState<Record<string, boolean>>(() => {
-    const map: Record<string, boolean> = {};
-    workers.forEach(w => {
-      map[w.id] = !!w.isPaused;
-    });
-    return map;
-  });
 
   useEffect(() => {
     try {
@@ -98,13 +94,47 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
     }
   };
 
-  const handleTogglePause = (workerId: string) => {
-    const newPaused = !workerStatusMap[workerId];
-    setWorkerStatusMap(prev => ({ ...prev, [workerId]: newPaused }));
-    if (onToggleWorkerPause) {
-      onToggleWorkerPause(workerId, newPaused);
-    }
+  const handleTogglePause = (worker: Worker) => {
+    onToggleWorkerPause?.(worker.id, !worker.isPaused);
   };
+
+  // OFY-41/42: la cédula enviada queda "pending" hasta que moderación decide
+  const pendingIdentity = workers.filter(w => w.identityVerification?.status === 'pending');
+  const decideIdentity = (worker: Worker, approve: boolean) => {
+    if (!worker.identityVerification) return;
+    onUpdateWorker?.(worker.id, {
+      verified: approve,
+      identityVerification: {
+        ...worker.identityVerification,
+        status: approve ? 'verified' : worker.completedJobsCount >= 10 ? 'eligible' : 'none'
+      }
+    });
+  };
+
+  // OFY-68, OFY-69: referidos que esperan validación
+  const pendingReferrals = workers.flatMap(w =>
+    (w.referrals?.referredList ?? [])
+      .map((ref, index) => ({ worker: w, ref, index }))
+      .filter(item => item.ref.status === 'pendiente')
+  );
+  const approveReferral = (worker: Worker, index: number) => {
+    if (!worker.referrals) return;
+    const referredList = worker.referrals.referredList.map((r, i) =>
+      i === index ? { ...r, status: 'verificado' as const } : r
+    );
+    const verified = referredList.filter(r => r.status === 'verificado');
+    const distinct = new Set(verified.map(r => r.trade.toLowerCase())).size;
+    onUpdateWorker?.(worker.id, {
+      referrals: {
+        ...worker.referrals,
+        referredList,
+        count: verified.length,
+        distinctTradesCount: distinct,
+        isCommunityReferrer: distinct >= 3
+      }
+    });
+  };
+  const pendingVerifications = pendingIdentity.length + pendingReferrals.length;
 
   const titleId = `${uid}-title`;
   const query = searchWorker.toLowerCase();
@@ -129,7 +159,7 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
               <ShieldAlert size={26} />
             </span>
             <div className="oy-flow-head__text">
-              <span className="oy-eyebrow oy-flow-kicker">Administración</span>
+              <span className="oy-eyebrow oy-flow-kicker">Administración · demo</span>
               <h2 id={titleId} className="oy-modal__title oy-display">Panel de Moderación y Auditoría</h2>
               <p className="oy-flow-head__sub">
                 Gestión de quejas, reportes de reseñas falsas y suspensión preventiva de cuentas fraudulentas
@@ -168,7 +198,80 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
             >
               Moderación de Cuentas
             </button>
+            <button
+              type="button"
+              role="tab"
+              id={`${uid}-tab-verif`}
+              aria-controls={`${uid}-panel-verif`}
+              aria-selected={activeTab === 'verificaciones'}
+              data-active={activeTab === 'verificaciones' ? '' : undefined}
+              className="oy-chip"
+              onClick={() => setActiveTab('verificaciones')}
+            >
+              Verificaciones ({pendingVerifications})
+            </button>
           </div>
+
+          {/* Pestaña 3: Cédulas y referidos por revisar (OFY-41, OFY-42, OFY-68) */}
+          {activeTab === 'verificaciones' && (
+            <div role="tabpanel" id={`${uid}-panel-verif`} aria-labelledby={`${uid}-tab-verif`}>
+              {pendingVerifications === 0 ? (
+                <div className="oy-empty">
+                  <MascotAvatar size="sm" />
+                  <p className="oy-empty__title">Sin pendientes</p>
+                  <p className="oy-empty__text">No hay cédulas ni referidos esperando revisión.</p>
+                </div>
+              ) : (
+                <ul className="oy-flow-list">
+                  {pendingIdentity.map(w => (
+                    <li key={`id-${w.id}`} className="oy-flow-item">
+                      <div className="oy-flow-item__row">
+                        <div className="oy-flow-min0">
+                          <p className="oy-flow-item__title">
+                            {w.name}
+                            <span className="oy-flow-tag">Cédula</span>
+                          </p>
+                          <p className="oy-flow-item__meta">
+                            {w.identityVerification?.documentType ?? 'Documento'} {w.identityVerification?.documentNumber}
+                            {' • '}{w.completedJobsCount} trabajos completados
+                            {w.identityVerification?.documentFileUrl ? ' • con foto adjunta' : ' • sin foto adjunta'}
+                          </p>
+                        </div>
+                        <div className="oy-flow-item__actions">
+                          <button type="button" className="btn btn-secondary oy-flow-small" onClick={() => decideIdentity(w, false)}>
+                            Rechazar
+                          </button>
+                          <button type="button" className="btn oy-flow-small oy-btn-ok" onClick={() => decideIdentity(w, true)}>
+                            Aprobar
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                  {pendingReferrals.map(({ worker: w, ref, index }) => (
+                    <li key={`ref-${w.id}-${index}`} className="oy-flow-item">
+                      <div className="oy-flow-item__row">
+                        <div className="oy-flow-min0">
+                          <p className="oy-flow-item__title">
+                            {ref.name}
+                            <span className="oy-flow-tag oy-flow-tag--fuego">Referido</span>
+                          </p>
+                          <p className="oy-flow-item__meta">
+                            {ref.trade} • referido por {w.name}
+                          </p>
+                        </div>
+                        <div className="oy-flow-item__actions">
+                          <button type="button" className="btn oy-flow-small oy-btn-ok" onClick={() => approveReferral(w, index)}>
+                            Validar referido
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
 
           {/* Pestaña 1: Tickets de Quejas y Reseñas (OFY-64, OFY-73, OFY-38) */}
           {activeTab === 'tickets' && (
@@ -249,7 +352,7 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
 
               <ul className="oy-flow-list">
                 {filteredWorkers.map(w => {
-                  const isPaused = workerStatusMap[w.id];
+                  const isPaused = !!w.isPaused;
                   const isLowRating = w.rating < 3.0;
 
                   return (
@@ -284,7 +387,7 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
                           </span>
                           <button
                             type="button"
-                            onClick={() => handleTogglePause(w.id)}
+                            onClick={() => handleTogglePause(w)}
                             className={`btn oy-flow-small ${isPaused ? 'oy-btn-ok' : 'btn-danger'}`}
                           >
                             {isPaused ? 'Reactivar Cuenta' : 'Suspender Cuenta'}
