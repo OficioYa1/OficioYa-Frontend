@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
 import type {
   Worker,
   ServiceRequest,
@@ -867,10 +868,12 @@ export function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <LiquidBackground />
-        <ErrorBoundary>
-          <MainAppContent />
-        </ErrorBoundary>
+        <LanguageProvider>
+          <LiquidBackground />
+          <ErrorBoundary>
+            <MainAppContent />
+          </ErrorBoundary>
+        </LanguageProvider>
       </ThemeProvider>
     </AuthProvider>
   );
