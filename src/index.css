@@ -372,7 +372,7 @@ a {
   font-family: var(--font-ui);
   font-weight: 600;
   font-size: var(--font-size-sm);
-  transition: all var(--transition-smooth);
+  transition: background-color var(--transition-smooth), color var(--transition-smooth), border-color var(--transition-smooth), transform var(--transition-smooth), opacity var(--transition-smooth);
   white-space: nowrap;
   position: relative;
   overflow: hidden;
@@ -450,7 +450,7 @@ html.theme-dark .btn-secondary:active {
   border: none;
   border-radius: var(--radius-xl);
   color: var(--color-text-main);
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .input-base:focus {
@@ -473,14 +473,12 @@ html.theme-dark .btn-secondary:active {
 @media (hover: hover) and (pointer: fine) {
   .card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
   }
 }
 
 .card:active {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  transition: all 0.1s;
+  transform: scale(0.97);
+  transition: transform 0.1s;
 }
 
 html.theme-dark .card {
