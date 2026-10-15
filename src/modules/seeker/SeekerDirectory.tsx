@@ -28,6 +28,7 @@ import {
   Navigation,
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
+import { motion, AnimatePresence } from 'motion/react';
 import { SquishSwitch } from '../../components/ui/SquishSwitch';
 import { GlassIcons } from '../../components/ui/GlassIcons';
 import type { GlassIconsColor } from '../../components/ui/GlassIcons';
@@ -143,7 +144,7 @@ interface SeekerDirectoryProps {
   showHero?: boolean;
 }
 
-export const CATEGORIES: { id: TradeCategory; label: string; icon: React.ReactNode; avgRate: number; description: string; sampleTasks: string[] }[] = [
+const CATEGORIES: { id: TradeCategory; label: string; icon: React.ReactNode; avgRate: number; description: string; sampleTasks: string[] }[] = [
   {
     id: 'electricidad',
     label: 'Electricidad',
@@ -695,6 +696,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
           ariaLabel="Oficios más buscados"
           columns={wideLayout ? 6 : 3}
           gap={wideLayout ? 48 : 28}
+          plate="inside"
+          hover="lift"
           items={FEATURED_TRADES.map(({ id, color }) => {
             const category = CATEGORIES.find(c => c.id === id)!;
             return { icon: category.icon, label: category.label, color, onClick: () => handleCategoryChange(id) };
@@ -847,39 +850,48 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
           </button>
         </div>
       ) : (
-        <ul className="seeker-directory-grid">
-          {filteredWorkers.map(worker => {
-            return (
-              <li key={worker.id}>
-                <ProfileCard
-                  name={worker.name}
-                  title={worker.tradeLabel}
-                  avatarUrl={`https://i.pravatar.cc/300?u=${worker.id}`}
-                  initials={worker.initials}
-                  avatarColor={worker.avatarColor}
-                  available={worker.available}
-                  status={worker.available ? 'Disponible' : 'Ocupado'}
-                  verified={worker.verified}
-                  meta={
-                    <span className="seeker-card-meta">
-                      <Star size={13} fill="var(--color-star)" color="var(--color-star)" aria-hidden="true" />
-                      <strong>{worker.rating.toFixed(1)}</strong>
-                      <span aria-hidden="true">·</span>
-                      <span>{formatDistance(worker.distanceKm || 0)}</span>
-                      <span aria-hidden="true">·</span>
-                      <strong>${worker.hourlyRate.toLocaleString()}/h</strong>
-                    </span>
-                  }
-                  contactText="Ver perfil"
-                  onContactClick={() => onSelectWorker(worker)}
-                  headingLevel={3}
-                  frame="almendra"
-                  className="seeker-profile-card"
-                />
-              </li>
-            );
-          })}
-        </ul>
+        <motion.ul layout className="seeker-directory-grid">
+          <AnimatePresence mode="popLayout">
+            {filteredWorkers.map(worker => {
+              return (
+                <motion.li
+                  key={worker.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.94, y: 12 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.92, y: -6 }}
+                  transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+                >
+                  <ProfileCard
+                    name={worker.name}
+                    title={worker.tradeLabel}
+                    avatarUrl={`https://i.pravatar.cc/300?u=${worker.id}`}
+                    initials={worker.initials}
+                    avatarColor={worker.avatarColor}
+                    available={worker.available}
+                    status={worker.available ? 'Disponible' : 'Ocupado'}
+                    verified={worker.verified}
+                    meta={
+                      <span className="seeker-card-meta">
+                        <Star size={13} fill="var(--color-star)" color="var(--color-star)" aria-hidden="true" />
+                        <strong>{worker.rating.toFixed(1)}</strong>
+                        <span aria-hidden="true">·</span>
+                        <span>{formatDistance(worker.distanceKm || 0)}</span>
+                        <span aria-hidden="true">·</span>
+                        <strong>${worker.hourlyRate.toLocaleString()}/h</strong>
+                      </span>
+                    }
+                    contactText="Ver perfil"
+                    onContactClick={() => onSelectWorker(worker)}
+                    headingLevel={3}
+                    frame="almendra"
+                    className="seeker-profile-card"
+                  />
+                </motion.li>
+              );
+            })}
+          </AnimatePresence>
+        </motion.ul>
       )}
 
       {/* Modal de filtros avanzados (RF-13, RF-14, RF-15, RF-16, RF-32) */}

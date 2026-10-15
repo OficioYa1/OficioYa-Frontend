@@ -1,0 +1,184 @@
+/* EditorialManifesto inspirado en la sección "Roots in design" de danilodemarco.com */
+.danilo-manifesto {
+  position: relative;
+  padding: clamp(4rem, 10vw, 8rem) 1.5rem;
+  background: var(--bg-paper, #FBF4EA);
+  color: var(--stroke-ink, #3E1F14);
+  overflow: hidden;
+  border-top: 1.5px solid rgba(62, 31, 20, 0.12);
+  border-bottom: 1.5px solid rgba(62, 31, 20, 0.12);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+[data-theme="dark"] .danilo-manifesto {
+  background: #0d172e;
+  color: #FBF4EA;
+  border-color: rgba(255, 138, 80, 0.15);
+}
+
+.danilo-manifesto__wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.danilo-manifesto__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-text, 'Inter', sans-serif);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-brand-primary, #E65100);
+  margin-bottom: 2rem;
+}
+
+.danilo-manifesto__kicker-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-brand-primary, #E65100);
+  box-shadow: 0 0 8px rgba(230, 81, 0, 0.6);
+  animation: daniloPulse 2s infinite ease-in-out;
+}
+
+@keyframes daniloPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.5; }
+}
+
+.danilo-manifesto__title {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: clamp(2.2rem, 5.8vw, 5.2rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  margin: 0;
+}
+
+.danilo-manifesto__row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35em 0.5em;
+  margin-bottom: 0.25em;
+}
+
+/* Cápsulas de imagen inline estilo Danilo De Marco (span.small / span.imgHide) */
+.danilo-manifesto__capsule {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  height: clamp(2.4rem, 4.8vw, 4.2rem);
+  padding: 0.25rem 1.1rem;
+  border-radius: 9999px;
+  background: rgba(230, 81, 0, 0.12);
+  border: 1.5px solid var(--stroke-ink, #3E1F14);
+  vertical-align: middle;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 2px 3px 0 var(--stroke-ink, #3E1F14);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.25s ease;
+}
+
+[data-theme="dark"] .danilo-manifesto__capsule {
+  border-color: rgba(255, 138, 80, 0.6);
+  box-shadow: 2px 3px 0 rgba(255, 138, 80, 0.4);
+}
+
+.danilo-manifesto__capsule:hover {
+  transform: translateY(-4px) scale(1.05) rotate(-1.5deg);
+  box-shadow: 4px 6px 0 var(--stroke-ink, #3E1F14);
+  background: var(--color-brand-primary, #E65100);
+}
+
+[data-theme="dark"] .danilo-manifesto__capsule:hover {
+  box-shadow: 4px 6px 0 rgba(255, 138, 80, 0.8);
+}
+
+.danilo-manifesto__capsule:hover .danilo-manifesto__capsule-text {
+  color: #FFFFFF;
+}
+
+.danilo-manifesto__capsule-img {
+  width: clamp(2rem, 3.8vw, 3.2rem);
+  height: clamp(2rem, 3.8vw, 3.2rem);
+  object-fit: contain;
+  margin-right: 0.6rem;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.danilo-manifesto__capsule:hover .danilo-manifesto__capsule-img {
+  transform: scale(1.15) rotate(5deg);
+}
+
+.danilo-manifesto__capsule-text {
+  font-family: var(--font-text, 'Inter', sans-serif);
+  font-size: clamp(0.85rem, 1.4vw, 1.25rem);
+  font-weight: 700;
+  color: var(--stroke-ink, #3E1F14);
+  letter-spacing: -0.01em;
+  transition: color 0.25s ease;
+}
+
+[data-theme="dark"] .danilo-manifesto__capsule-text {
+  color: #FBF4EA;
+}
+
+.danilo-manifesto__accent {
+  color: var(--color-brand-primary, #E65100);
+  font-style: italic;
+  font-family: serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Pie de manifiesto con etiquetas de metadatos estilo editorial suizo */
+.danilo-manifesto__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 3.5rem;
+  padding-top: 2rem;
+  border-top: 1px dashed rgba(62, 31, 20, 0.2);
+}
+
+[data-theme="dark"] .danilo-manifesto__footer {
+  border-color: rgba(255, 138, 80, 0.2);
+}
+
+.danilo-manifesto__meta {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-family: var(--font-text, 'Inter', sans-serif);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(62, 31, 20, 0.7);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+[data-theme="dark"] .danilo-manifesto__meta {
+  color: rgba(251, 244, 234, 0.7);
+}
+
+.danilo-manifesto__meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 4px;
+  background: rgba(62, 31, 20, 0.05);
+}
+
+[data-theme="dark"] .danilo-manifesto__meta-tag {
+  background: rgba(255, 138, 80, 0.1);
+}

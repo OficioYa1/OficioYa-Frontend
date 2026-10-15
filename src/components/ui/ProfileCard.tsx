@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { BadgeCheck, MessageCircle } from 'lucide-react';
 import './ProfileCard.css';
 
@@ -69,7 +69,9 @@ const ProfileCardBase = ({
 }: ProfileCardProps) => {
   const rootRef = useRef<HTMLElement>(null);
   const settingsRef = useRef({ enableTilt, tiltStrength, parallax });
-  settingsRef.current = { enableTilt, tiltStrength, parallax };
+  useLayoutEffect(() => {
+    settingsRef.current = { enableTilt, tiltStrength, parallax };
+  });
 
   useEffect(() => {
     const root = rootRef.current;

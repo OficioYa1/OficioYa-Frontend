@@ -37,7 +37,7 @@ import { NotificationInbox } from './components/common/NotificationInbox';
 
 import { LandingPage } from './modules/landing/LandingPage';
 import { SeekerDirectory } from './modules/seeker/SeekerDirectory';
-import { WorkerProfileModal } from './modules/worker/WorkerProfileModal';
+import { WorkerProfileView } from './modules/worker/WorkerProfileView';
 import { BookingModal } from './modules/booking/BookingModal';
 import { SendRequestModal } from './modules/requests/SendRequestModal';
 import { ChatView } from './modules/chat/ChatView';
@@ -56,6 +56,8 @@ import { Home } from 'lucide-react';
 import { LiquidBackground } from './components/background/LiquidBackground';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { StatusScreen } from './components/common/StatusScreen';
+import { ScrollToTop } from './components/common/ScrollToTop';
+import { ContactModal } from './components/common/ContactModal';
 
 import './App.css';
 
@@ -99,13 +101,13 @@ const MainAppContent: React.FC = () => {
   const { view, visible, navigateTo } = useCrossfade('landing');
   const [pendingRole, setPendingRole] = useState<'seeker' | 'provider'>('seeker');
   const [currentTab, setCurrentTab] = useState<string>(role === 'seeker' ? 'inicio_seeker' : 'inicio_pro');
+  const [prevRole, setPrevRole] = useState(role);
+  if (role !== prevRole) {
+    setPrevRole(role);
+    setCurrentTab(role === 'seeker' ? 'inicio_seeker' : 'inicio_pro');
+  }
   const [currentTradeCategory, setCurrentTradeCategory] = useState<TradeCategory | undefined>(undefined);
   const [isUnknownPath, setIsUnknownPath] = useState(isUnknownLocation);
-
-  // Reaccionar a cambios de rol para reiniciar la pestaña principal
-  useEffect(() => {
-    setCurrentTab(role === 'seeker' ? 'inicio_seeker' : 'inicio_pro');
-  }, [role]);
 
   // RF-63: Geolocalización geoespacial (Bogotá D.C. lat: 4.6768, lng: -74.0482)
   const [userLocation, setUserLocation] = useState<Coordinates>(FALLBACK_LOCATION_BOGOTA);
@@ -146,6 +148,7 @@ const MainAppContent: React.FC = () => {
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [activeChatConvId, setActiveChatConvId] = useState<string | undefined>(undefined);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   const triggerPushNotification = (
     title: string,
@@ -193,8 +196,10 @@ const MainAppContent: React.FC = () => {
         { enableHighAccuracy: true, timeout: 5000 }
       );
     } else {
-      setUserLocation(FALLBACK_LOCATION_BOGOTA);
-      setHasGps(false);
+      queueMicrotask(() => {
+        setUserLocation(FALLBACK_LOCATION_BOGOTA);
+        setHasGps(false);
+      });
     }
   };
 
@@ -227,11 +232,13 @@ const MainAppContent: React.FC = () => {
     if (!user || role !== 'provider') return;
     if (workers.some(w => w.ownerUserId === user.id)) return;
     const unclaimed = findUnclaimedWorkerByName(workers, user.name);
-    if (unclaimed) {
-      setWorkers(prev => prev.map(w => (w.id === unclaimed.id ? { ...w, ownerUserId: user.id } : w)));
-    } else {
-      setWorkers(prev => [createWorkerForUser(user), ...prev]);
-    }
+    queueMicrotask(() => {
+      if (unclaimed) {
+        setWorkers(prev => prev.map(w => (w.id === unclaimed.id ? { ...w, ownerUserId: user.id } : w)));
+      } else {
+        setWorkers(prev => [createWorkerForUser(user), ...prev]);
+      }
+    });
   }, [user, role, workers]);
 
   // OFY-28: Las solicitudes pendientes vencidas pasan a canceladas ("Expirada sin respuesta")
@@ -320,6 +327,11 @@ const MainAppContent: React.FC = () => {
             setPendingRole(role ?? 'seeker');
             navigateTo('auth');
           }}
+          onOpenContact={() => setIsContactModalOpen(true)}
+        />
+        <ContactModal
+          isOpen={isContactModalOpen}
+          onClose={() => setIsContactModalOpen(false)}
         />
       </div>
     );
@@ -645,7 +657,10 @@ const MainAppContent: React.FC = () => {
         onRefreshGps={handleRefreshGps}
         hasGps={hasGps}
         currentTab={currentTab}
-        onSelectTab={setCurrentTab}
+        onSelectTab={(tab) => {
+          setSelectedWorkerForProfile(null);
+          setCurrentTab(tab);
+        }}
         unreadCount={totalUnreadCount}
         isChatOpen={isChatOpen}
         onToggleChat={() => setIsChatOpen(!isChatOpen)}
@@ -664,10 +679,21 @@ const MainAppContent: React.FC = () => {
       <div className="app-main-body">
         {/* Área Central de Contenido */}
         <main className="app-content-area" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
-          {/* ========================================================
-              VISTAS DE CONTRATANTE (SEEKER)
-              ======================================================== */}
-          {currentTab === 'inicio_seeker' && (
+          {liveProfileWorker ? (
+            <WorkerProfileView
+              worker={liveProfileWorker}
+              onBack={() => setSelectedWorkerForProfile(null)}
+              onOpenBooking={handleOpenBooking}
+              onOpenChat={handleOpenChat}
+              onOpenSendRequest={handleOpenSendRequest}
+              onOpenReport={handleOpenReportFromWorker}
+            />
+          ) : (
+            <>
+              {/* ========================================================
+                  VISTAS DE CONTRATANTE (SEEKER)
+                  ======================================================== */}
+              {currentTab === 'inicio_seeker' && (
             <SeekerHomeView
               workers={workers}
               userLocation={userLocation}
@@ -774,16 +800,22 @@ const MainAppContent: React.FC = () => {
               onNavigateToTab={setCurrentTab}
             />
           )}
+            </>
+          )}
         </main>
       </div>
 
       {/* Footer Universal de la App */}
-      <AppFooter />
+      <AppFooter onOpenContact={() => setIsContactModalOpen(true)} />
 
       {/* Barra de Navegación Inferior para Móvil */}
       <BottomNav
         currentTab={currentTab}
-        onSelectTab={(tab) => { setIsChatOpen(false); setCurrentTab(tab); }}
+        onSelectTab={(tab) => {
+          setSelectedWorkerForProfile(null);
+          setIsChatOpen(false);
+          setCurrentTab(tab);
+        }}
         unreadCount={totalUnreadCount}
         isChatOpen={isChatOpen}
         onToggleChat={() => setIsChatOpen(open => !open)}
@@ -796,17 +828,6 @@ const MainAppContent: React.FC = () => {
       />
 
       {/* Modales del Sistema */}
-      {liveProfileWorker && (
-        <WorkerProfileModal
-          worker={liveProfileWorker}
-          onClose={() => setSelectedWorkerForProfile(null)}
-          onOpenBooking={handleOpenBooking}
-          onOpenChat={handleOpenChat}
-          onOpenSendRequest={handleOpenSendRequest}
-          onOpenReport={handleOpenReportFromWorker}
-        />
-      )}
-
       {selectedWorkerForBooking && (
         <BookingModal
           worker={selectedWorkerForBooking}
@@ -860,6 +881,15 @@ const MainAppContent: React.FC = () => {
           onUpdateWorker={updateWorker}
         />
       )}
+
+      {/* Formulario de Contacto Validado (Item 12 & 13) */}
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+      />
+
+      {/* Botón Flotante para Volver Arriba (Item 7) */}
+      <ScrollToTop />
     </div>
   );
 };

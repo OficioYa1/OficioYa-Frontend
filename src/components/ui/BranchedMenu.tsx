@@ -78,8 +78,10 @@ export const BranchedMenu: React.FC<BranchedMenuProps> = ({
   const navRef = useRef<HTMLElement>(null);
   const heads = useRef<(HTMLButtonElement | null)[]>([]);
   const markerRef = useRef<HTMLSpanElement>(null);
-  const latest = useRef<{ onSelect?: BranchedMenuProps['onSelect']; onToggle?: BranchedMenuProps['onToggle'] }>({});
-  latest.current = { onSelect, onToggle };
+  const latest = useRef<{ onSelect?: BranchedMenuProps['onSelect']; onToggle?: BranchedMenuProps['onToggle'] }>({ onSelect, onToggle });
+  useLayoutEffect(() => {
+    latest.current = { onSelect, onToggle };
+  });
 
   const activeSection = items.findIndex(it => it.children?.some(kid => kid.value === active));
   const markerShown = activeSection >= 0 && open.has(activeSection);

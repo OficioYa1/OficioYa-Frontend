@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User, UserRole } from '../types';
 import { signJWT, verifyJWT } from '../utils/jwt';
 
@@ -103,6 +103,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const logout = useCallback(() => {
+    localStorage.removeItem('oy-auth-token');
+    localStorage.removeItem('oy-user-data');
+    setUser(null);
+    setToken(null);
+  }, []);
+
   // Inicializar o verificar JWT desde localStorage
   useEffect(() => {
     async function initAuth() {
@@ -131,7 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     initAuth();
-  }, []);
+  }, [logout]);
 
   const startSession = async (sessionUser: User) => {
     const newToken = await signJWT({
@@ -189,13 +196,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await startSession(newUser);
     setTimeout(() => setIsLoading(false), 400);
     return true;
-  };
-
-  const logout = () => {
-    localStorage.removeItem('oy-auth-token');
-    localStorage.removeItem('oy-user-data');
-    setUser(null);
-    setToken(null);
   };
 
   const switchRole = async (newRole: UserRole) => {

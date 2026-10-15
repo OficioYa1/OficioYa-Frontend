@@ -1,7 +1,19 @@
-/* ============================================================
-   Barra inferior móvil — lenguaje sticker: fondo plano, contorno
-   Cacao y píldora del color del rol en la pestaña activa.
-   ============================================================ */
+/* ══ Contenedor flotante del Dock en móvil ══ */
+.bottom-nav-wrap {
+  position: fixed;
+  right: 0;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  z-index: 900;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.bottom-nav-wrap .gdock {
+  pointer-events: auto;
+}
 
 .bottom-nav {
   position: fixed;
@@ -15,7 +27,9 @@
   gap: 2px;
   padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
   border-top: var(--stroke-w) solid var(--stroke-ink);
-  background: var(--color-bg);
+  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .bottom-nav__item {

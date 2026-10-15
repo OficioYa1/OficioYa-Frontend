@@ -10,7 +10,9 @@
   z-index: 100;
   padding: 10px 0;
   border-bottom: var(--stroke-w) solid var(--stroke-ink);
-  background: var(--color-bg);
+  background: color-mix(in srgb, var(--color-bg) 85%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .app-header__bar {
@@ -55,6 +57,19 @@
 }
 
 .app-header__gps-ok { color: var(--color-status-text); }
+
+.app-header__dock-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline: auto;
+}
+
+@media (max-width: 767px) {
+  .app-header__dock-wrap {
+    display: none;
+  }
+}
 
 .app-header__nav {
   display: flex;

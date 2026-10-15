@@ -27,6 +27,16 @@
 }
 
 /* ── Buscador grande del hero ── */
+.seeker-hero-search-wrap {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: var(--space-6);
+  min-height: 80px;
+}
+
 .seeker-hero-search {
   position: relative;
   z-index: 1;

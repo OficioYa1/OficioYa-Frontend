@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useId } from 'react';
+import React, { useState, useId } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { FontScale, ComplaintTicket } from '../../types';
@@ -124,18 +124,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
 
   // OFY-73: Estado de reportes enviados por el usuario
-  const [userReports, setUserReports] = useState<ComplaintTicket[]>([]);
+  const [userReports] = useState<ComplaintTicket[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('oy-complaints') || '[]');
+    } catch {
+      return [];
+    }
+  });
 
   const dialogRef = useFlowModal(onClose, !showDeleteModal);
-
-  useEffect(() => {
-    try {
-      const tickets: ComplaintTicket[] = JSON.parse(localStorage.getItem('oy-complaints') || '[]');
-      setUserReports(tickets);
-    } catch (_e) {
-      setUserReports([]);
-    }
-  }, []);
 
   const handleSaveContact = (e: React.FormEvent) => {
     e.preventDefault();

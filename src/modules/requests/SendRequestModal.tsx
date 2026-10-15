@@ -16,6 +16,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
+import { SlideConfirm } from '../../components/ui';
 import { useFlowModal } from './useFlowModal';
 import './Flows.css';
 
@@ -56,7 +57,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
   const [description, setDescription] = useState('');
   // OFY-22: oficio requerido ('' = cualquiera)
   const [trade, setTrade] = useState<TradeCategory | ''>(initialWorker?.trade ?? '');
-  const [expectedDate, setExpectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [expectedDate, setExpectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [selectedZone, setSelectedZone] = useState('Chapinero / Chicó');
   const [addressDetail, setAddressDetail] = useState('Carrera 15 # 85-20');
   const [urgency, setUrgency] = useState<UrgencyLevel>('urgente');
@@ -116,8 +117,8 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
   };
 
   // OFY-24: Enviar simultáneamente solicitud a varios trabajadores con plazo de 30 minutos (OFY-28)
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!description.trim() || selectedWorkers.length === 0) return;
 
     const expirationDate = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 minutos (OFY-28)
@@ -450,14 +451,24 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
                 </span>
               </div>
 
-              <button
-                type="submit"
-                disabled={recipients === 0}
-                className="btn btn-primary oy-flow-cta"
-              >
-                <Send size={16} aria-hidden="true" />
-                Enviar Solicitud a {recipients} Profesional{recipients === 1 ? '' : 'es'}
-              </button>
+              <div className="oy-flow-confirm-wrap" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginTop: '1.25rem', width: '100%' }}>
+                <SlideConfirm
+                  width={380}
+                  label={recipients === 0 ? "Selecciona un destinatario" : `Desliza para enviar a ${recipients} experto${recipients === 1 ? '' : 's'}`}
+                  confirmedLabel="¡Solicitud Confirmada!"
+                  disabled={recipients === 0}
+                  autoReset={false}
+                  onConfirm={() => handleSubmit()}
+                />
+                <button
+                  type="submit"
+                  disabled={recipients === 0}
+                  style={{ display: 'none' }}
+                  aria-hidden="true"
+                >
+                  Confirmar
+                </button>
+              </div>
             </form>
           ) : (
             <div className="oy-flow-success" role="status">

@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 import { SquishSwitch } from '../../components/ui/SquishSwitch';
+import { Upload } from '../../components/ui/Upload';
 import { PageHero } from '../../components/layout/PageHero';
 import { mediaService, MediaUploadError } from '../../services/mock/mediaService';
 import { computeClientReputation, monthlyIncome, topRequested } from '../../utils/reputation';
@@ -1050,17 +1051,31 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                 />
               </div>
               {!isIdentityVerified && !isVerificationPending && (
-                <div>
-                  <label htmlFor="pv-doc-file" className="pv-label">Foto de la cédula (opcional)</label>
-                  <input
-                    id="pv-doc-file"
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="input-base"
-                    onChange={handleDocFile}
-                    disabled={isUploading}
+                <div style={{ marginTop: '0.5rem' }}>
+                  <label className="pv-label" style={{ marginBottom: '0.5rem', display: 'block' }}>
+                    Soporte de documento (Arrastra el archivo o sube una foto):
+                  </label>
+                  <Upload
+                    onComplete={(f) => {
+                      if (f.id === 'img') {
+                        setDocFileUrl('https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=80');
+                      }
+                    }}
                   />
+                  <div style={{ marginTop: '0.75rem', textAlign: 'center' }}>
+                    <label htmlFor="pv-doc-file" className="btn btn-secondary oy-flow-small" style={{ cursor: 'pointer', display: 'inline-flex' }}>
+                      O elegir foto desde mi dispositivo
+                    </label>
+                    <input
+                      id="pv-doc-file"
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      style={{ display: 'none' }}
+                      onChange={handleDocFile}
+                      disabled={isUploading}
+                    />
+                  </div>
                   {isUploading && <span className="pv-muted pv-caption" role="status">Subiendo foto…</span>}
                   {photoError && <span className="pv-muted pv-caption" role="alert">{photoError}</span>}
                 </div>

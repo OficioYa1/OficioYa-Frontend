@@ -1,0 +1,54 @@
+/* HoloCard3D inspirado en los objetos y tarjetas 3D interactivos de thibaut.cool */
+.thibaut-holo-card-wrap {
+  perspective: 1000px;
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.thibaut-holo-card {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+  will-change: transform;
+  border-radius: 20px;
+  transition: transform 0.15s ease-out;
+}
+
+/* Capa de brillo especular holográfico móvil */
+.thibaut-holo-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  mix-blend-mode: overlay;
+}
+
+.thibaut-holo-card-wrap:hover .thibaut-holo-sheen {
+  opacity: 1;
+}
+
+/* Efecto de borde biselado estilo retro-hardware Apple */
+.thibaut-holo-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+  z-index: 12;
+}
+
+[data-theme="dark"] .thibaut-holo-card::after {
+  border-color: rgba(255, 138, 80, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thibaut-holo-card {
+    transform: none !important;
+    transition: none !important;
+  }
+}

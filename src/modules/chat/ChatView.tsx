@@ -60,7 +60,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   // Auto-scroll al final del chat
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [currentMessages, isTyping]);
+  }, [currentMessages.length, isTyping]);
 
   const handleSend = (textToSend?: string) => {
     const text = textToSend || inputText;

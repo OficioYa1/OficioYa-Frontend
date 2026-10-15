@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF8A50" />
+      <stop offset="100%" stop-color="#E65100" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#3E1F14" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  
+  <!-- Outer squircle -->
+  <rect x="3" y="3" width="58" height="58" rx="16" fill="url(#bgGrad)" stroke="#3E1F14" stroke-width="2.5" />
+  
+  <!-- Beaver ears -->
+  <circle cx="21" cy="21" r="6" fill="#6B3410" stroke="#3E1F14" stroke-width="2" />
+  <circle cx="21" cy="21" r="3" fill="#E89B60" />
+  <circle cx="43" cy="21" r="6" fill="#6B3410" stroke="#3E1F14" stroke-width="2" />
+  <circle cx="43" cy="21" r="3" fill="#E89B60" />
+
+  <!-- Beaver Head -->
+  <ellipse cx="32" cy="33" rx="19" ry="17" fill="#8B4513" stroke="#3E1F14" stroke-width="2.2" />
+  
+  <!-- Snout / Cheeks -->
+  <ellipse cx="32" cy="38" rx="12" ry="9" fill="#FCEBD4" stroke="#3E1F14" stroke-width="1.8" />
+  
+  <!-- Nose -->
+  <ellipse cx="32" cy="34" rx="4.5" ry="3" fill="#3E1F14" />
+  
+  <!-- Two Beaver Teeth -->
+  <rect x="29" y="42" width="3" height="4.5" rx="1" fill="#FFFFFF" stroke="#3E1F14" stroke-width="1" />
+  <rect x="32.5" y="42" width="3" height="4.5" rx="1" fill="#FFFFFF" stroke="#3E1F14" stroke-width="1" />
+  
+  <!-- Eyes with gleam -->
+  <circle cx="24" cy="29" r="3" fill="#3E1F14" />
+  <circle cx="23" cy="28" r="1" fill="#FFFFFF" />
+  <circle cx="40" cy="29" r="3" fill="#3E1F14" />
+  <circle cx="39" cy="28" r="1" fill="#FFFFFF" />
+  
+  <!-- Little craftsman safety helmet / visor -->
+  <path d="M19 24 C19 16 45 16 45 24 Z" fill="#FFC107" stroke="#3E1F14" stroke-width="1.8" />
+  <rect x="17" y="23" width="30" height="3" rx="1.5" fill="#FFA000" stroke="#3E1F14" stroke-width="1.2" />
+</svg>

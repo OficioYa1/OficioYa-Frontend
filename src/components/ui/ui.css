@@ -45,6 +45,12 @@
   opacity: 0.55;
 }
 
+.oy-btn:focus-visible,
+.oy-card--interactive:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
 /* Contratar ahora / acción principal: Naranja Fuego (tono AA) */
 .oy-btn--primary {
   box-shadow: 0 1px 2px rgba(62, 31, 20, 0.12), 0 4px 12px -4px rgba(234, 88, 12, 0.45);

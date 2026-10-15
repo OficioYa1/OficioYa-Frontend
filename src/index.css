@@ -169,6 +169,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   transition: background-color var(--transition-smooth), color var(--transition-smooth);
 }
@@ -185,17 +186,27 @@ button, input, select, textarea {
   font-size: inherit;
 }
 
-button {
+/* Evita auto-zoom molesto en iOS Safari al enfocar campos */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
+
+button, [role="button"] {
   cursor: pointer;
   border: none;
   background: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
   transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-base) ease,
     color var(--dur-base) ease, box-shadow var(--dur-base) ease, opacity var(--dur-base) ease;
   position: relative;
   overflow: hidden;
 }
 
-button:active {
+button:active, [role="button"]:active {
   transform: scale(0.96);
 }
 
@@ -545,6 +556,11 @@ html.theme-dark .card:hover {
 
 .slider-custom::-webkit-slider-thumb:hover {
   transform: scale(1.2);
+}
+
+/* Desplazamiento Suave Global (Item 1: animaciones suaves al hacer scroll) */
+html {
+  scroll-behavior: smooth;
 }
 
 /* Scrollbar estilizada */

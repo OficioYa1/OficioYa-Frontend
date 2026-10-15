@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -287,8 +288,10 @@ export function PixelSwap({
   const config = { duration, pixelDuration, pixelSpin, pixelScale, pixelRadius, fade, easing, onComplete, fadeOutgoing };
   const configRef = useRef(config);
   const gridRef = useRef(grid);
-  configRef.current = config;
-  gridRef.current = grid;
+  useLayoutEffect(() => {
+    configRef.current = config;
+    gridRef.current = grid;
+  });
 
   useEffect(() => {
     const container = containerRef.current;

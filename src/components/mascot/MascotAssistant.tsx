@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { MascotExpression, TradeCategory } from '../../types';
 import { MascotAvatar } from './MascotAvatar';
 import { useAuth } from '../../context/AuthContext';
 import { X, ChevronRight } from 'lucide-react';
+import { useSpring, useTransition, animated, config } from '@react-spring/web';
 import './MascotAssistant.css';
 
 interface MascotAssistantProps {
@@ -66,26 +67,29 @@ export const MascotAssistant: React.FC<MascotAssistantProps> = ({
 }) => {
   const { role } = useAuth();
   const [isOpen, setIsOpen] = useState(true);
-  const [currentState, setCurrentState] = useState<ManyState>(CONTEXT_STATES.directorio_seeker);
+  const [interactiveState, setInteractiveState] = useState<ManyState | null>(null);
+  const [isWaving, setIsWaving] = useState(false);
   const [interactionIndex, setInteractionIndex] = useState(0);
-  const [isInteracting, setIsInteracting] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Update state based on context
-  useEffect(() => {
-    if (customMessage) {
-      setCurrentState({ expression: 'entusiasta', message: customMessage, animate: 'wave' });
-      return;
-    }
-    const contextKey = activeView === 'directorio'
-      ? `directorio_${role}`
-      : activeView;
-    setCurrentState(CONTEXT_STATES[contextKey] ?? CONTEXT_STATES.directorio_seeker);
-  }, [role, activeView, customMessage]);
+  // Física de resorte para avatar y burbuja
+  const [avatarSpring, avatarApi] = useSpring(() => ({
+    scale: 1,
+    config: config.wobbly
+  }));
 
-  // Update message when trade changes
-  useEffect(() => {
-    if (currentTrade && !customMessage) {
+  const bubbleTransitions = useTransition(isOpen, {
+    from: { opacity: 0, transform: 'scale(0.85) translateY(14px)' },
+    enter: { opacity: 1, transform: 'scale(1) translateY(0px)' },
+    leave: { opacity: 0, transform: 'scale(0.9) translateY(10px)' },
+    config: { tension: 340, friction: 24 }
+  });
+
+  const defaultState: ManyState = useMemo(() => {
+    if (customMessage) {
+      return { expression: 'entusiasta', message: customMessage, animate: 'wave' };
+    }
+    if (currentTrade) {
       const tradeLabels: Partial<Record<TradeCategory, string>> = {
         electricidad: 'electricidad',
         plomeria: 'plomería',
@@ -100,68 +104,80 @@ export const MascotAssistant: React.FC<MascotAssistantProps> = ({
         albanileria: 'albañilería',
         clases: 'clases particulares',
       };
-      setCurrentState({
+      return {
         expression: 'pensativo',
         message: `Buscando expertos en ${tradeLabels[currentTrade] ?? currentTrade}. Revisa las reseñas verificadas.`,
         animate: 'idle',
-      });
+      };
     }
-  }, [currentTrade, customMessage]);
+    const contextKey = activeView === 'directorio' ? `directorio_${role}` : activeView;
+    return CONTEXT_STATES[contextKey] ?? CONTEXT_STATES.directorio_seeker;
+  }, [role, activeView, customMessage, currentTrade]);
+
+  const baseState = interactiveState ?? defaultState;
+  const currentState: ManyState = isWaving ? { ...baseState, animate: 'wave' } : baseState;
 
   // Auto-idle timer: wave every 15s to draw attention
   useEffect(() => {
     if (!isOpen) return;
     const interval = setInterval(() => {
-      if (!isInteracting) {
-        setCurrentState(prev => ({ ...prev, animate: 'wave' }));
+      if (!interactiveState) {
+        setIsWaving(true);
         setTimeout(() => {
-          setCurrentState(prev => ({ ...prev, animate: 'float' }));
+          setIsWaving(false);
         }, 900);
       }
     }, 15000);
     return () => clearInterval(interval);
-  }, [isOpen, isInteracting]);
+  }, [isOpen, interactiveState]);
 
   const handleManyClick = () => {
-    setIsInteracting(true);
+    // Reacción elástica de Many
+    avatarApi.start({
+      to: [{ scale: 1.2 }, { scale: 1 }],
+      from: { scale: 0.88 }
+    });
+
     const next = INTERACTION_MESSAGES[interactionIndex % INTERACTION_MESSAGES.length];
-    setCurrentState(next);
+    setInteractiveState(next);
     setInteractionIndex(i => i + 1);
 
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     idleTimerRef.current = setTimeout(() => {
-      setIsInteracting(false);
+      setInteractiveState(null);
     }, 4000);
   };
 
   return (
     <aside aria-label="Asistente interactivo Many" className="many-assistant">
-      {isOpen && (
-        <div className="many-bubble many-assistant__bubble">
-          <div className="many-assistant__head">
-            <span className="many-assistant__name">
-              <span className="many-assistant__status" aria-hidden="true" />
-              Many
-            </span>
-            <button
-              type="button"
-              className="many-assistant__close"
-              onClick={() => setIsOpen(false)}
-              aria-label="Cerrar asistente"
-            >
-              <X size={14} aria-hidden="true" />
+      {bubbleTransitions((style, item) =>
+        item ? (
+          <animated.div style={style} className="many-bubble many-assistant__bubble">
+            <div className="many-assistant__head">
+              <span className="many-assistant__name">
+                <span className="many-assistant__status" aria-hidden="true" />
+                Many
+              </span>
+              <button
+                type="button"
+                className="many-assistant__close"
+                onClick={() => setIsOpen(false)}
+                aria-label="Cerrar asistente"
+              >
+                <X size={14} aria-hidden="true" />
+              </button>
+            </div>
+
+            <p className="many-assistant__message" aria-live="polite">
+              {currentState.message}
+            </p>
+
+            <button type="button" className="many-assistant__hint" onClick={handleManyClick}>
+              <ChevronRight size={12} aria-hidden="true" />
+              Haz clic en Many para más consejos
             </button>
-          </div>
-
-          <p className="many-assistant__message" aria-live="polite">
-            {currentState.message}
-          </p>
-
-          <button type="button" className="many-assistant__hint" onClick={handleManyClick}>
-            <ChevronRight size={12} aria-hidden="true" />
-            Haz clic en Many para más consejos
-          </button>
-        </div>
+          </animated.div>
+        ) : null
       )}
 
       <div className="many-assistant__row">
@@ -171,13 +187,21 @@ export const MascotAssistant: React.FC<MascotAssistantProps> = ({
           </button>
         )}
 
-        <MascotAvatar
-          trade={currentTrade}
-          expression={currentState.expression}
-          size="md"
-          animate={currentState.animate}
-          onClick={handleManyClick}
-        />
+        <animated.div
+          style={{
+            transform: avatarSpring.scale.to(s => `scale(${s})`),
+            display: 'inline-flex',
+            willChange: 'transform'
+          }}
+        >
+          <MascotAvatar
+            trade={currentTrade}
+            expression={currentState.expression}
+            size="md"
+            animate={currentState.animate}
+            onClick={handleManyClick}
+          />
+        </animated.div>
       </div>
     </aside>
   );

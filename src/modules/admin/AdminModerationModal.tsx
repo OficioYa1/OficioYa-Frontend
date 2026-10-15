@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useId } from 'react';
+import React, { useState, useId } from 'react';
 import type { ComplaintTicket, Worker } from '../../types';
 import {
   X,
@@ -39,56 +39,52 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
   const dialogRef = useFlowModal(onClose);
 
   const [activeTab, setActiveTab] = useState<'tickets' | 'usuarios' | 'verificaciones'>('tickets');
-  const [tickets, setTickets] = useState<ComplaintTicket[]>([]);
-  const [selectedTicket, setSelectedTicket] = useState<ComplaintTicket | null>(null);
-  const [searchWorker, setSearchWorker] = useState('');
-
-  useEffect(() => {
+  const [tickets, setTickets] = useState<ComplaintTicket[]>(() => {
     try {
       const stored = localStorage.getItem('oy-complaints');
       if (stored) {
-        setTickets(JSON.parse(stored));
-      } else {
-        // Tickets semilla
-        const seedTickets: ComplaintTicket[] = [
-          {
-            id: 'cmp-seed-1',
-            caseNumber: 'OY-2026-9412',
-            targetWorkerId: 'w-11',
-            targetWorkerName: 'Rodrigo Barrientos',
-            type: 'Inasistencia',
-            description: 'El trabajador no se presentó al servicio acordado en Restrepo y no responde llamadas ni mensajes.',
-            evidenceFiles: [{ name: 'chat_captura.png', type: 'image/png', size: '1.2 MB' }],
-            createdAt: '2026-09-28T10:00:00Z',
-            status: 'En revisión'
-          },
-          {
-            id: 'cmp-seed-2',
-            caseNumber: 'REV-4821',
-            targetWorkerId: 'w-1',
-            targetWorkerName: 'Mateo Gómez',
-            type: 'Reseña Falsa',
-            description: 'Reporte de reseña sospechosa: usuario con perfil falso intenta desprestigiar.',
-            evidenceFiles: [],
-            createdAt: '2026-09-29T15:30:00Z',
-            status: 'Abierto',
-            isFakeReviewReport: true
-          }
-        ];
-        setTickets(seedTickets);
-        localStorage.setItem('oy-complaints', JSON.stringify(seedTickets));
+        return JSON.parse(stored);
       }
-    } catch (_e) {
-      setTickets([]);
+      const seedTickets: ComplaintTicket[] = [
+        {
+          id: 'cmp-seed-1',
+          caseNumber: 'OY-2026-9412',
+          targetWorkerId: 'w-11',
+          targetWorkerName: 'Rodrigo Barrientos',
+          type: 'Inasistencia',
+          description: 'El trabajador no se presentó al servicio acordado en Restrepo y no responde llamadas ni mensajes.',
+          evidenceFiles: [{ name: 'chat_captura.png', type: 'image/png', size: '1.2 MB' }],
+          createdAt: '2026-09-28T10:00:00Z',
+          status: 'En revisión'
+        },
+        {
+          id: 'cmp-seed-2',
+          caseNumber: 'REV-4821',
+          targetWorkerId: 'w-1',
+          targetWorkerName: 'Mateo Gómez',
+          type: 'Reseña Falsa',
+          description: 'Reporte de reseña sospechosa: usuario con perfil falso intenta desprestigiar.',
+          evidenceFiles: [],
+          createdAt: '2026-09-29T15:30:00Z',
+          status: 'Abierto',
+          isFakeReviewReport: true
+        }
+      ];
+      localStorage.setItem('oy-complaints', JSON.stringify(seedTickets));
+      return seedTickets;
+    } catch {
+      return [];
     }
-  }, []);
+  });
+  const [selectedTicket, setSelectedTicket] = useState<ComplaintTicket | null>(null);
+  const [searchWorker, setSearchWorker] = useState('');
 
   const updateTicketStatus = (ticketId: string, newStatus: TicketStatus) => {
     const updated = tickets.map(t => (t.id === ticketId ? { ...t, status: newStatus } : t));
     setTickets(updated);
     try {
       localStorage.setItem('oy-complaints', JSON.stringify(updated));
-    } catch (_e) {}
+    } catch {}
     if (selectedTicket && selectedTicket.id === ticketId) {
       setSelectedTicket({ ...selectedTicket, status: newStatus });
     }

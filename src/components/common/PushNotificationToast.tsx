@@ -16,16 +16,19 @@ export const PushNotificationToast: React.FC<PushNotificationToastProps> = ({
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (notification) {
-      setVisible(true);
-      const timer = setTimeout(() => {
-        setVisible(false);
-        setTimeout(onDismiss, 300);
-      }, 5000);
-      return () => clearTimeout(timer);
-    } else {
-      setVisible(false);
+    if (!notification) {
+      const resetTimer = setTimeout(() => setVisible(false), 0);
+      return () => clearTimeout(resetTimer);
     }
+    const showTimer = setTimeout(() => setVisible(true), 10);
+    const hideTimer = setTimeout(() => {
+      setVisible(false);
+      setTimeout(onDismiss, 300);
+    }, 5000);
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(hideTimer);
+    };
   }, [notification, onDismiss]);
 
   if (!notification && !visible) return null;

@@ -352,8 +352,10 @@ export const CircularCarousel = ({
   const [active, setActive] = useState(0);
   const [ready, setReady] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const readyRef = useRef(false);
-  readyRef.current = ready;
+  const readyRef = useRef(ready);
+  useLayoutEffect(() => {
+    readyRef.current = ready;
+  });
 
   const stateRef = useRef<CarouselState>({
     angle: 0,
@@ -403,10 +405,11 @@ export const CircularCarousel = ({
     reduced
   };
   const settingsRef = useRef(settings);
-  settingsRef.current = settings;
-
   const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
+  useLayoutEffect(() => {
+    settingsRef.current = settings;
+    onChangeRef.current = onChange;
+  });
 
   const dragSign = layout.inward ? -1 : 1;
   const directionSign = (direction === 'right' ? 1 : -1) * dragSign;
@@ -417,9 +420,11 @@ export const CircularCarousel = ({
   }, [directionSign]);
 
   const incomingRef = useRef(incoming);
-  incomingRef.current = incoming;
   const listRef = useRef(list);
-  listRef.current = list;
+  useLayoutEffect(() => {
+    incomingRef.current = incoming;
+    listRef.current = list;
+  });
   const sourcesKey = incoming.map(item => item.src).join('|');
 
   useEffect(() => {

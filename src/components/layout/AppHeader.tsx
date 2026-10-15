@@ -17,7 +17,7 @@ import {
   Inbox
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Logo, StaggeredMenu } from '../ui';
+import { Logo, StaggeredMenu, GlassDock } from '../ui';
 import type { StaggeredMenuItem } from '../ui';
 import { AppMenu } from './AppMenu';
 import './AppHeader.css';
@@ -111,20 +111,23 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </button>
         </div>
 
-        {/* Navegación principal en píldora — escritorio */}
-        <nav className="app-header__nav" aria-label="Navegación principal">
-          {navTabs.map(tab => (
-            <TabButton
-              key={tab.id}
-              id={tab.id}
-              label={tab.label}
-              icon={tab.icon}
-              current={tab.id === 'mensajes' ? (isChatOpen ? 'mensajes' : '') : currentTab}
-              onSelect={handleNavSelect}
-              badge={tab.badge}
-            />
-          ))}
-        </nav>
+        {/* Navegación principal en dock — escritorio */}
+        <div className="app-header__dock-wrap">
+          <GlassDock
+            items={navTabs.map(tab => ({
+              key: tab.id,
+              label: tab.label,
+              Icon: tab.icon,
+              badge: tab.badge,
+            }))}
+            active={isChatOpen ? 'mensajes' : currentTab}
+            onSelect={handleNavSelect}
+            magnify={1.28}
+            spread={1.5}
+            lift={6}
+            labels={true}
+          />
+        </div>
 
         <div className="app-header__actions">
           {/* Menú principal en móvil (≤ 767 px); en escritorio queda el nav en píldora */}

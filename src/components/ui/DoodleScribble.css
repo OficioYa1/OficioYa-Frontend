@@ -1,0 +1,59 @@
+/* DoodleScribble inspirado en el trazo a mano alzada de niccolomiranda.com */
+.niccolo-doodle-wrap {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.niccolo-doodle-text {
+  position: relative;
+  z-index: 2;
+  transition: color 0.25s ease;
+}
+
+.niccolo-doodle-svg {
+  position: absolute;
+  top: -20%;
+  left: -12%;
+  width: 124%;
+  height: 140%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible;
+}
+
+.niccolo-doodle-path {
+  fill: none;
+  stroke: var(--color-brand-primary, #E65100);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  transition: stroke-dashoffset 0.65s cubic-bezier(0.785, 0.135, 0.15, 0.86);
+}
+
+[data-theme="dark"] .niccolo-doodle-path {
+  stroke: #FF8A50;
+}
+
+/* Al hacer hover o si está activo por defecto, el trazo de lápiz dibuja la elipse completa */
+.niccolo-doodle-wrap:hover .niccolo-doodle-path,
+.niccolo-doodle-wrap.is-drawn .niccolo-doodle-path {
+  stroke-dashoffset: 0;
+}
+
+/* Variante de subrayado garrapateado */
+.niccolo-doodle-svg--underline {
+  top: 75%;
+  left: -5%;
+  width: 110%;
+  height: 24px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .niccolo-doodle-path {
+    transition: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+}

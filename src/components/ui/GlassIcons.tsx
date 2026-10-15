@@ -54,7 +54,7 @@ export interface GlassIconsProps {
   shine?: number;
   tint?: string;
   tintOpacity?: number;
-  plate?: 'tilt' | 'offset' | 'circle';
+  plate?: 'inside' | 'tilt' | 'offset' | 'circle';
   tilt?: number;
   spread?: number;
   hover?: 'lift' | 'float' | 'press' | 'none';
@@ -141,10 +141,10 @@ const GRADIENTS: Record<string, string> = Object.fromEntries(
 const paletteOf = (color?: string) =>
   color && color in PALETTE ? PALETTE[color as GlassIconsColor] : undefined;
 
-const PLATES = ['tilt', 'offset', 'circle'];
+const PLATES = ['inside', 'tilt', 'offset', 'circle'];
 const HOVERS = ['lift', 'float', 'press', 'none'];
 const LABELS = ['hover', 'always', 'none'];
-const PLATE_CODES: Record<string, number> = { tilt: 1, offset: 2, circle: 3 };
+const PLATE_CODES: Record<string, number> = { inside: 0, tilt: 1, offset: 2, circle: 3 };
 const SIDES: Record<string, number> = { top: 0, right: 90, bottom: 180, left: 270 };
 const STAGGER = 0.07;
 const OUTLINE_W = 1.5;
@@ -208,7 +208,7 @@ vec2 roundNormal(vec2 p, float reach, float radius) {
 }
 
 vec4 plate(vec2 p, float soft) {
-  vec2 q = uTurn * ((p - uOrigin - uShift) / uScale) + uOrigin - uOffset;
+  vec2 q = uPlate == 0 ? p : (uTurn * ((p - uOrigin - uShift) / uScale) + uOrigin - uOffset);
   float d = uPlate == 3 ? length(q) - uDisc : roundBox(q, uSize * 0.5, uRadius);
   float a = clamp(0.5 - d / soft, 0.0, 1.0);
   if (a <= 0.0) return vec4(0.0);
@@ -228,10 +228,13 @@ void main() {
   float dg = roundBox(g, reach, uRadius);
   float glass = clamp(0.5 - dg * uGlassScale / uPixel, 0.0, 1.0) * uGlassAlpha;
 
-  vec4 color = plate(p, uPixel) * uPlateAlpha;
-  if (color.a > 0.0) {
-    float drop = roundBox(g - vec2(0.0, uSize * 0.1), reach, uRadius);
-    color.rgb *= 1.0 - (1.0 - smoothstep(-uSize * 0.12, uSize * 0.14, drop)) * 0.28 * uGlassAlpha;
+  vec4 color = vec4(0.0);
+  if (uPlate != 0) {
+    color = plate(p, uPixel) * uPlateAlpha;
+    if (color.a > 0.0) {
+      float drop = roundBox(g - vec2(0.0, uSize * 0.1), reach, uRadius);
+      color.rgb *= 1.0 - (1.0 - smoothstep(-uSize * 0.12, uSize * 0.14, drop)) * 0.28 * uGlassAlpha;
+    }
   }
 
   if (glass > 0.0) {
@@ -239,10 +242,11 @@ void main() {
     float t = 1.0 - clamp(inside / uBevel, 0.0, 1.0);
     vec2 n = roundNormal(g, reach, uRadius);
     vec2 bend = n * pow(t, 2.2);
-    vec4 red = plate(p - bend * (uStrength + uSplit), uSoft);
-    vec4 green = plate(p - bend * uStrength, uSoft);
-    vec4 blue = plate(p - bend * (uStrength - uSplit), uSoft);
-    vec4 seen = vec4(red.r, green.g, blue.b, green.a) * uPlateAlpha;
+    vec2 samplePt = uPlate == 0 ? g : p;
+    vec4 red = plate(samplePt - bend * (uStrength + uSplit), uSoft);
+    vec4 green = plate(samplePt - bend * uStrength, uSoft);
+    vec4 blue = plate(samplePt - bend * (uStrength - uSplit), uSoft);
+    vec4 seen = uPlate == 0 ? vec4(red.r, green.g, blue.b, 1.0) : vec4(red.r, green.g, blue.b, green.a) * uPlateAlpha;
     float luma = dot(seen.rgb, vec3(0.2126, 0.7152, 0.0722));
     seen.rgb = clamp(mix(vec3(luma), seen.rgb, 1.25) * 1.04, 0.0, 1.0);
     seen.rgb = min(mix(seen.rgb, uTint.rgb * seen.a, uTint.a), vec3(seen.a));
@@ -252,7 +256,11 @@ void main() {
     float light = clamp((max(facing, 0.0) * 0.95 + max(-facing, 0.0) * 0.35) * t * t * t * rim * uShine, 0.0, 1.0);
     seen = seen * (1.0 - shade) + vec4(0.0, 0.0, 0.0, shade);
     seen = seen * (1.0 - light) + vec4(light);
-    color = mix(color, seen, glass);
+    if (uPlate == 0) {
+      color = seen * glass;
+    } else {
+      color = mix(color, seen, glass);
+    }
   }
   outColor = color;
 }`;
@@ -403,7 +411,11 @@ const poseOf = (state: Motion, s: Settings) => {
   let angle = 0;
   let offset: [number, number] = [0, 0];
   let grow = 1;
-  if (s.plate === 'tilt') {
+  if (s.plate === 'inside') {
+    angle = 0;
+    offset = [0, 0];
+    grow = 1;
+  } else if (s.plate === 'tilt') {
     angle = (s.tilt + 10 * lift) * swing;
     offset = [-0.08 * size * lift, -0.08 * size * lift];
   } else if (s.plate === 'offset') {
@@ -450,8 +462,8 @@ export const GlassIcons = ({
   shine = 0.85,
   tint = WHITE,
   tintOpacity = 0.15,
-  plate = 'tilt',
-  tilt = 30,
+  plate = 'inside',
+  tilt = 0,
   spread = 0.5,
   hover = 'press',
   parallax = 1,
@@ -474,7 +486,7 @@ export const GlassIcons = ({
   const tile = Math.max(24, Math.round(size));
   const radius = Math.round((tile / 2) * clamp(roundness, 0, 1));
   const edge = Math.max(2, Math.round(tile * 0.26 * clamp(bevel, 0, 1)));
-  const plateMode = PLATES.includes(plate) ? plate : 'tilt';
+  const plateMode = PLATES.includes(plate) ? plate : 'inside';
   const hoverMode = HOVERS.includes(hover) ? hover : 'press';
   const labelMode = LABELS.includes(labels) ? labels : 'always';
   const colors = items.map(item => (item.color && GRADIENTS[item.color]) || item.color || GRADIENTS.marino);
@@ -543,10 +555,10 @@ export const GlassIcons = ({
       }
     }
     if (!gl || !program) {
-      setGpu(false);
+      queueMicrotask(() => setGpu(false));
       return undefined;
     }
-    setGpu(true);
+    queueMicrotask(() => setGpu(true));
 
     const states: Motion[] = [];
     const layout = { width: 1, height: 1, dpr: 1, centers: [] as number[][] };
@@ -907,6 +919,7 @@ export const GlassIcons = ({
       data-intro={intro && !flat ? '' : undefined}
       data-labels={labelMode}
       data-hover={hoverMode}
+      data-plate={plateMode}
       data-outline={outline ? '' : undefined}
       style={
         {

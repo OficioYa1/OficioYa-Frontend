@@ -1,0 +1,236 @@
+/* AsymmetricShowcase inspirado en la galería por columnas y parallax de danilodemarco.com */
+.danilo-showcase {
+  position: relative;
+  padding: clamp(4rem, 8vw, 7rem) 1.5rem;
+  background: var(--bg-paper, #FBF4EA);
+  transition: background-color 0.3s ease;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .danilo-showcase {
+  background: #0B1430;
+}
+
+.danilo-showcase__wrap {
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.danilo-showcase__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: clamp(2.5rem, 5vw, 4.5rem);
+}
+
+.danilo-showcase__kicker {
+  font-family: var(--font-text, 'Inter', sans-serif);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-brand-primary, #E65100);
+}
+
+.danilo-showcase__title {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: clamp(2rem, 4.5vw, 3.8rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--stroke-ink, #3E1F14);
+  margin: 0;
+}
+
+[data-theme="dark"] .danilo-showcase__title {
+  color: #FBF4EA;
+}
+
+.danilo-showcase__desc {
+  font-family: var(--font-text, 'Inter', sans-serif);
+  font-size: clamp(1rem, 1.3vw, 1.2rem);
+  max-width: 680px;
+  line-height: 1.6;
+  color: rgba(62, 31, 20, 0.75);
+  margin: 0;
+}
+
+[data-theme="dark"] .danilo-showcase__desc {
+  color: rgba(251, 244, 234, 0.75);
+}
+
+/* Grilla asimétrica escalonada de 3 columnas estilo Danilo De Marco */
+.danilo-showcase__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(1.5rem, 3vw, 2.75rem);
+}
+
+@media (max-width: 1024px) {
+  .danilo-showcase__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .danilo-showcase__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Desplazamiento vertical por columnas para ritmo asimétrico */
+.danilo-showcase__col--offset-1 {
+  transform: translateY(0);
+}
+
+.danilo-showcase__col--offset-2 {
+  transform: translateY(clamp(2rem, 4vw, 4.5rem));
+}
+
+.danilo-showcase__col--offset-3 {
+  transform: translateY(clamp(1rem, 2vw, 2.5rem));
+}
+
+@media (max-width: 640px) {
+  .danilo-showcase__col--offset-2,
+  .danilo-showcase__col--offset-3 {
+    transform: none;
+  }
+}
+
+.danilo-showcase__col {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2rem, 3.5vw, 3.5rem);
+}
+
+/* Tarjeta editorial individual */
+.danilo-card {
+  position: relative;
+  background: var(--bg-surface, #FFFFFF);
+  border: 1.5px solid var(--stroke-ink, #3E1F14);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 4px 6px 0 var(--stroke-ink, #3E1F14);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+[data-theme="dark"] .danilo-card {
+  background: #142247;
+  border-color: rgba(255, 138, 80, 0.4);
+  box-shadow: 4px 6px 0 rgba(255, 138, 80, 0.3);
+}
+
+.danilo-card:hover {
+  transform: translateY(-8px) scale(1.015);
+  box-shadow: 8px 12px 0 var(--stroke-ink, #3E1F14);
+}
+
+[data-theme="dark"] .danilo-card:hover {
+  box-shadow: 8px 12px 0 rgba(255, 138, 80, 0.6);
+}
+
+/* Encabezado con número editorial (01. Nhoba) */
+.danilo-card__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 1.25rem 1.25rem 0.75rem;
+}
+
+.danilo-card__index {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-brand-primary, #E65100);
+  letter-spacing: -0.02em;
+}
+
+.danilo-card__title {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--stroke-ink, #3E1F14);
+  margin: 0;
+  flex: 1;
+  margin-left: 0.6rem;
+}
+
+[data-theme="dark"] .danilo-card__title {
+  color: #FBF4EA;
+}
+
+.danilo-card__rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-text, 'Inter', sans-serif);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--stroke-ink, #3E1F14);
+  background: rgba(255, 193, 7, 0.2);
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(62, 31, 20, 0.2);
+}
+
+[data-theme="dark"] .danilo-card__rating {
+  color: #FBF4EA;
+  background: rgba(255, 193, 7, 0.25);
+  border-color: rgba(255, 193, 7, 0.4);
+}
+
+/* Imagen con zoom sutil en hover */
+.danilo-card__media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: rgba(62, 31, 20, 0.05);
+}
+
+.danilo-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.danilo-card:hover .danilo-card__img {
+  transform: scale(1.08);
+}
+
+/* Pie de tarjeta con metadatos técnicos */
+.danilo-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid rgba(62, 31, 20, 0.1);
+  font-family: var(--font-text, 'Inter', sans-serif);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .danilo-card__footer {
+  border-color: rgba(255, 138, 80, 0.15);
+}
+
+.danilo-card__trade {
+  color: var(--color-brand-primary, #E65100);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.danilo-card__zone {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: rgba(62, 31, 20, 0.65);
+}
+
+[data-theme="dark"] .danilo-card__zone {
+  color: rgba(251, 244, 234, 0.65);
+}

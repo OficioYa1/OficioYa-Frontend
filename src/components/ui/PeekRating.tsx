@@ -41,7 +41,7 @@ interface GestureState {
 
 const EASE_OUT = 'cubic-bezier(0.23, 1, 0.32, 1)';
 const SHAPES: Record<PeekRatingShape, typeof Star> = { star: Star, heart: Heart, bolt: Zap };
-export const RATING_LABELS = ['Malo', 'Regular', 'Bueno', 'Muy bueno', 'Excelente'];
+const RATING_LABELS = ['Malo', 'Regular', 'Bueno', 'Muy bueno', 'Excelente'];
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const reducedMotion = () =>
@@ -137,7 +137,9 @@ export const PeekRating: React.FC<PeekRatingProps> = ({
     onPreview?.(index === null ? null : index + 1);
   };
   const setHoverRef = useRef(setHover);
-  setHoverRef.current = setHover;
+  useLayoutEffect(() => {
+    setHoverRef.current = setHover;
+  });
 
   const measure = () => {
     const row = rowRef.current;

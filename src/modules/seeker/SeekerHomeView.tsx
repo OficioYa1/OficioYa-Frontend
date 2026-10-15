@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Search, Zap, Wrench, Paintbrush, Key, MapPin, ArrowRight } from 'lucide-react';
+import { Zap, Wrench, Paintbrush, Key, MapPin } from 'lucide-react';
 import type { Worker, TradeCategory } from '../../types';
 import type { Coordinates } from '../../utils/geo';
 import { PageHero } from '../../components/layout/PageHero';
+import { Seek } from '../../components/ui';
 import { SeekerDirectory } from './SeekerDirectory';
 import './Seeker.css';
 
@@ -44,33 +45,15 @@ export const SeekerHomeView: React.FC<SeekerHomeViewProps> = ({
           { icon: <Key size={24} />, tone: 'almendra', style: { top: '44%', right: '3%', rotate: '-6deg' } }
         ]}
       >
-        <form
-          className="seeker-hero-search"
-          role="search"
-          onSubmit={e => {
-            e.preventDefault();
-            handlePostRequest();
-          }}
-        >
-          <Search size={24} className="seeker-hero-search__icon" aria-hidden="true" />
-          <input
-            type="text"
-            className="seeker-hero-search__input"
+        <div className="seeker-hero-search-wrap">
+          <Seek
             placeholder="¿Qué necesitas solucionar?"
-            aria-label="Describe lo que necesitas solucionar"
             value={problemDescription}
-            onChange={e => setProblemDescription(e.target.value)}
+            onChange={setProblemDescription}
+            onSearch={handlePostRequest}
+            width={480}
           />
-          <button
-            type="submit"
-            className="btn btn-primary seeker-hero-search__submit"
-            disabled={!problemDescription}
-            aria-label="Publicar solicitud"
-          >
-            <span className="seeker-hero-search__submit-text">Solicitar</span>
-            <ArrowRight size={18} aria-hidden="true" />
-          </button>
-        </form>
+        </div>
       </PageHero>
 
       <section aria-labelledby="seeker-home-nearby">

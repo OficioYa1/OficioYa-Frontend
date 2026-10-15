@@ -1,0 +1,41 @@
+/* RollingText inspirado en danilodemarco.com nav items */
+.danilo-rolling-text {
+  display: inline-flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  height: 1.25em;
+  line-height: 1.25em;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.danilo-rolling-track {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.danilo-rolling-primary,
+.danilo-rolling-secondary {
+  display: block;
+  height: 1.25em;
+  line-height: 1.25em;
+  white-space: nowrap;
+}
+
+.danilo-rolling-secondary {
+  color: var(--color-brand-primary, #E65100);
+}
+
+/* Efecto hover: desliza la pista vertical hacia arriba exactamente 50% (una línea completa) */
+.danilo-rolling-text:hover .danilo-rolling-track,
+.danilo-rolling-text.is-active .danilo-rolling-track {
+  transform: translateY(-50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .danilo-rolling-track {
+    transition: none !important;
+  }
+}

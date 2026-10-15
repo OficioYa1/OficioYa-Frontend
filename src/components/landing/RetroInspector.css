@@ -1,0 +1,284 @@
+/* RetroInspector inspirado en la experiencia iMac G3 y hardware retro de thibaut.cool */
+.thibaut-inspector-section {
+  position: relative;
+  padding: clamp(4rem, 8vw, 7.5rem) 1.5rem;
+  background: var(--bg-paper, #FBF4EA);
+  transition: background-color 0.3s ease;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .thibaut-inspector-section {
+  background: #0B1430;
+}
+
+.thibaut-inspector-wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.thibaut-inspector-header {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto clamp(2.5rem, 5vw, 4rem);
+}
+
+.thibaut-inspector-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-text, 'Inter', sans-serif);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-brand-primary, #E65100);
+  margin-bottom: 0.75rem;
+}
+
+.thibaut-inspector-title {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: clamp(2rem, 4.2vw, 3.4rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: var(--stroke-ink, #3E1F14);
+  margin: 0 0 1rem;
+}
+
+[data-theme="dark"] .thibaut-inspector-title {
+  color: #FBF4EA;
+}
+
+.thibaut-inspector-sub {
+  font-family: var(--font-text, 'Inter', sans-serif);
+  font-size: clamp(1rem, 1.25vw, 1.15rem);
+  line-height: 1.6;
+  color: rgba(62, 31, 20, 0.75);
+  margin: 0;
+}
+
+[data-theme="dark"] .thibaut-inspector-sub {
+  color: rgba(251, 244, 234, 0.75);
+}
+
+/* Consola de hardware translúcido retro estilo iMac G3 / Macintosh */
+.thibaut-console {
+  position: relative;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 2px solid var(--stroke-ink, #3E1F14);
+  border-radius: 24px;
+  padding: clamp(1.5rem, 3.5vw, 2.5rem);
+  box-shadow: 6px 8px 0 var(--stroke-ink, #3E1F14);
+  overflow: hidden;
+}
+
+[data-theme="dark"] .thibaut-console {
+  background: rgba(20, 34, 71, 0.85);
+  border-color: rgba(255, 138, 80, 0.5);
+  box-shadow: 6px 8px 0 rgba(255, 138, 80, 0.35);
+}
+
+/* Barra superior retro estilo Mac OS / Ventana de sistema */
+.thibaut-console__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1.5rem;
+  border-bottom: 1.5px solid rgba(62, 31, 20, 0.15);
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+[data-theme="dark"] .thibaut-console__topbar {
+  border-color: rgba(255, 138, 80, 0.2);
+}
+
+.thibaut-console__dots {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.thibaut-console__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+.thibaut-console__dot--red    { background: #FF5F56; }
+.thibaut-console__dot--yellow { background: #FFBD2E; }
+.thibaut-console__dot--green  { background: #27C93F; }
+
+.thibaut-console__tag {
+  font-family: monospace;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--stroke-ink, #3E1F14);
+  background: rgba(62, 31, 20, 0.06);
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  letter-spacing: 0.08em;
+}
+
+[data-theme="dark"] .thibaut-console__tag {
+  color: #FBF4EA;
+  background: rgba(255, 138, 80, 0.15);
+}
+
+/* Selector de pestañas táctiles con clics de hardware */
+.thibaut-console__tabs {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: none;
+  margin-bottom: 2rem;
+}
+
+.thibaut-console__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.thibaut-console__tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 9999px;
+  border: 1.5px solid var(--stroke-ink, #3E1F14);
+  background: var(--bg-surface, #FFFFFF);
+  font-family: var(--font-text, 'Inter', sans-serif);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--stroke-ink, #3E1F14);
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 2px 3px 0 var(--stroke-ink, #3E1F14);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.2s ease,
+              color 0.2s ease;
+}
+
+[data-theme="dark"] .thibaut-console__tab-btn {
+  background: #142247;
+  color: #FBF4EA;
+  border-color: rgba(255, 138, 80, 0.5);
+  box-shadow: 2px 3px 0 rgba(255, 138, 80, 0.35);
+}
+
+.thibaut-console__tab-btn:hover {
+  transform: translateY(-2px);
+}
+
+.thibaut-console__tab-btn.is-active {
+  background: var(--color-brand-primary, #E65100);
+  color: #FFFFFF;
+  border-color: var(--stroke-ink, #3E1F14);
+  box-shadow: 3px 4px 0 var(--stroke-ink, #3E1F14);
+}
+
+/* Cuerpo de la ficha técnica: Despiece de herramientas + Especificaciones */
+.thibaut-console__body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+@media (max-width: 860px) {
+  .thibaut-console__body {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+.thibaut-console__screen {
+  position: relative;
+  border: 1.5px solid var(--stroke-ink, #3E1F14);
+  border-radius: 16px;
+  overflow: hidden;
+  background: #1C1917;
+  aspect-ratio: 4 / 3;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.thibaut-console__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.thibaut-console__screen:hover .thibaut-console__img {
+  transform: scale(1.04);
+}
+
+/* Scanlines retro sutiles */
+.thibaut-console__scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background-size: 100% 4px;
+  opacity: 0.4;
+}
+
+/* Lista de especificaciones del oficio */
+.thibaut-specs {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.thibaut-specs__trade-name {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: clamp(1.5rem, 2.5vw, 2.1rem);
+  font-weight: 800;
+  color: var(--stroke-ink, #3E1F14);
+  margin: 0;
+}
+
+[data-theme="dark"] .thibaut-specs__trade-name {
+  color: #FBF4EA;
+}
+
+.thibaut-specs__items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.thibaut-spec-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: rgba(62, 31, 20, 0.04);
+  border: 1px solid rgba(62, 31, 20, 0.08);
+  font-family: var(--font-text, 'Inter', sans-serif);
+  font-size: 0.875rem;
+}
+
+[data-theme="dark"] .thibaut-spec-row {
+  background: rgba(255, 138, 80, 0.07);
+  border-color: rgba(255, 138, 80, 0.15);
+}
+
+.thibaut-spec-row__label {
+  font-weight: 600;
+  color: rgba(62, 31, 20, 0.75);
+}
+
+[data-theme="dark"] .thibaut-spec-row__label {
+  color: rgba(251, 244, 234, 0.75);
+}
+
+.thibaut-spec-row__value {
+  font-weight: 800;
+  color: var(--color-brand-primary, #E65100);
+}

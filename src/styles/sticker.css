@@ -93,8 +93,7 @@ html.theme-dark .card:hover { box-shadow: none; }
 }
 
 /* ── Paneles flotantes propios ── */
-.inbox-panel,
-.app-menu {
+.inbox-panel {
   border: var(--stroke-w) solid var(--stroke-ink);
   box-shadow: none;
 }

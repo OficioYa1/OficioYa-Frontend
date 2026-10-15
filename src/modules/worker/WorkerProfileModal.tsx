@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Worker, Review } from '../../types';
-import { CircularCarousel, PeekRating } from '../../components/ui';
+import { CircularCarousel, PeekRating, SlideConfirm } from '../../components/ui';
 import {
   X,
   Star,
@@ -31,6 +31,22 @@ interface WorkerProfileModalProps {
   onOpenReport: (worker: Worker) => void;
 }
 
+function createFakeReviewTicket(worker: Worker, review: Review, reportReasonText: string) {
+  return {
+    id: `cmp-rev-${Date.now()}`,
+    caseNumber: `REV-${Math.floor(1000 + Math.random() * 9000)}`,
+    targetWorkerId: worker.id,
+    targetWorkerName: worker.name,
+    type: 'Reseña Falsa' as const,
+    description: `Reporte de reseña de "${review.author}": ${reportReasonText}`,
+    evidenceFiles: [],
+    createdAt: new Date().toISOString(),
+    status: 'En revisión' as const,
+    isFakeReviewReport: true,
+    reviewId: review.id
+  };
+}
+
 export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
   worker,
   onClose,
@@ -50,21 +66,9 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
 
     try {
       const existing = JSON.parse(localStorage.getItem('oy-complaints') || '[]');
-      const fakeReviewTicket = {
-        id: `cmp-rev-${Date.now()}`,
-        caseNumber: `REV-${Math.floor(1000 + Math.random() * 9000)}`,
-        targetWorkerId: worker.id,
-        targetWorkerName: worker.name,
-        type: 'Reseña Falsa',
-        description: `Reporte de reseña de "${review.author}": ${reportReasonText}`,
-        evidenceFiles: [],
-        createdAt: new Date().toISOString(),
-        status: 'En revisión',
-        isFakeReviewReport: true,
-        reviewId: review.id
-      };
+      const fakeReviewTicket = createFakeReviewTicket(worker, review, reportReasonText);
       localStorage.setItem('oy-complaints', JSON.stringify([fakeReviewTicket, ...existing]));
-    } catch (_e) {}
+    } catch {}
 
     setReportedReviews(prev => ({ ...prev, [review.id]: true }));
     setReportingReviewId(null);
@@ -488,15 +492,21 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
             <Send size={16} aria-hidden="true" /> Enviar petición
           </button>
 
-          <button
-            onClick={() => {
-              if (worker.available && !worker.isPaused) onOpenBooking(worker);
-            }}
-            disabled={!canBook}
-            className="btn btn-primary wk-actions__btn wk-actions__btn--main"
-          >
-            <Calendar size={16} aria-hidden="true" /> {worker.isPaused ? 'Pausado' : worker.available ? 'Contratar Servicio' : 'No disponible'}
-          </button>
+          {canBook ? (
+            <SlideConfirm
+              width={260}
+              label="Desliza para contratar"
+              confirmedLabel="¡Contratado!"
+              onConfirm={() => onOpenBooking(worker)}
+            />
+          ) : (
+            <button
+              disabled
+              className="btn btn-primary wk-actions__btn wk-actions__btn--main"
+            >
+              <Calendar size={16} aria-hidden="true" /> {worker.isPaused ? 'Pausado' : 'No disponible'}
+            </button>
+          )}
         </div>
       </div>
     </div>

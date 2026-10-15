@@ -1,6 +1,7 @@
 import React, {
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -88,7 +89,9 @@ export const SquishSwitch: React.FC<SquishSwitchProps> = ({
   const trackRef = useRef<HTMLSpanElement>(null);
   const grip = useRef<Grip | null>(null);
   const onRef = useRef(on);
-  onRef.current = on;
+  useLayoutEffect(() => {
+    onRef.current = on;
+  });
   const skipClick = useRef(false);
   const autoId = useId();
   const buttonId = id ?? autoId;

@@ -1009,7 +1009,7 @@ export const getStoredData = <T>(key: string, fallback: T): T => {
     const raw = localStorage.getItem(key);
     if (!raw) return fallback;
     return JSON.parse(raw);
-  } catch (_e) {
+  } catch {
     return fallback;
   }
 };
@@ -1017,7 +1017,7 @@ export const getStoredData = <T>(key: string, fallback: T): T => {
 export const setStoredData = <T>(key: string, data: T): void => {
   try {
     localStorage.setItem(key, JSON.stringify(data));
-  } catch (_e) {
+  } catch {
     // quota exceeded fallback
   }
 };

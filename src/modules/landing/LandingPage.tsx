@@ -1,23 +1,63 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { TradeCategory } from '../../types';
 import {
-  Wrench, Zap, PaintBucket, KeyRound, MapPin,
-  ArrowRight, UserCheck, Award, Star, Tv2, BookOpen,
-  CheckCircle2, TrendingUp, Plus, Minus,
+  Wrench, Zap, PaintBucket, KeyRound,
+  ArrowRight, Award, Tv2, BookOpen,
+  Plus, Minus, Quote, ShieldCheck,
+  LogIn, Search, HelpCircle, Briefcase, ChevronDown, Menu, X,
+  UserCheck, Star, CheckCircle2
 } from 'lucide-react';
 import './LandingPage.css';
 import './LandingSticker.css';
+import './LandingLiquidNav.css';
 import { AppFooter } from '../../components/layout/AppFooter';
 import { TrueFocus } from '../../components/ui/TrueFocus';
 import { BRAND_ASSETS } from '../../utils/assets';
 import { PixelSwap } from '../../components/ui/PixelSwap';
-import { StrokeText, BorderGlow, DriftWall } from '../../components/ui';
+import { StrokeText, BorderGlow, DriftWall, CustomCursor, RollingText, RotaryDial, CursorQuickPrompt } from '../../components/ui';
 import type { DriftWallItem } from '../../components/ui';
+import { EditorialManifesto } from '../../components/landing/EditorialManifesto';
+import { AsymmetricShowcase } from '../../components/landing/AsymmetricShowcase';
+import { SkillsTrain } from '../../components/landing/SkillsTrain';
+import { StickyProcess } from '../../components/landing/StickyProcess';
+import { RetroInspector } from '../../components/landing/RetroInspector';
+import { PaperBroadsheet } from '../../components/landing/PaperBroadsheet';
 import { INITIAL_WORKERS } from '../../services/mockData';
+import { ScrollToTop } from '../../components/common/ScrollToTop';
 
 const PlasmaWarp = React.lazy(() => import('../../components/background/PlasmaWarp'));
 
-interface LandingPageProps { onEnterApp: (role?: 'seeker' | 'provider') => void; }
+const TESTIMONIALS = [
+  {
+    name: 'Camila Restrepo',
+    zone: 'Cedritos · Bogotá',
+    trade: 'Plomería de emergencia',
+    rating: 5,
+    comment: 'Tenía una fuga urgente bajo el lavaplatos un domingo a las 8 p.m. Don Carlos llegó en 18 minutos y dejó todo impecable. El trato directo y transparente me dio total tranquilidad.',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+  },
+  {
+    name: 'Andrés Felipe Morales',
+    zone: 'Chapinero Alto · Bogotá',
+    trade: 'Electricidad e iluminación',
+    rating: 5,
+    comment: 'Instalaron todo el cableado y luminarias de mi apartamento. Poder revisar las fotos de sus trabajos anteriores antes de contratar fue el factor decisivo. Recomendadísimo.',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+  },
+  {
+    name: 'Valentina Gómez',
+    zone: 'Modelia · Bogotá',
+    trade: 'Aseo profundo y desinfección',
+    rating: 5,
+    comment: 'Doña Claudia hizo el aseo de entrega de mudanza. Dejó los tapetes y muebles a vapor como nuevos. Pagué directo por Nequi sin enredos de comisiones ni intermediarios.',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80'
+  }
+];
+
+interface LandingPageProps {
+  onEnterApp: (role?: 'seeker' | 'provider') => void;
+  onOpenContact?: () => void;
+}
 
 interface TradeOption {
   key: TradeCategory; label: string; icon: React.ReactNode;
@@ -33,12 +73,6 @@ const TRADES: TradeOption[] = [
   { key: 'clases',          label: 'Clases',          icon: <BookOpen size={15} />,    tagline: 'Profesores particulares verificados para todas las materias.' },
 ];
 
-const STATS = [
-  { label: 'Profesionales activos',  value: '2.400+',  icon: <UserCheck size={22} />,    tone: 'trust' },
-  { label: 'Servicios completados',  value: '18.000+', icon: <CheckCircle2 size={22} />, tone: 'status' },
-  { label: 'Calificación promedio',  value: '4.8 / 5', icon: <Star size={22} />,         tone: 'accent' },
-  { label: 'Tiempo de respuesta',    value: '< 20 min',icon: <TrendingUp size={22} />,   tone: 'action' },
-];
 
 const FAQS = [
   { q: '¿Cómo verifican a los profesionales?', a: 'Validamos antecedentes judiciales, revisamos su cédula de ciudadanía y requerimos al menos 3 reseñas de clientes reales antes de activar su perfil.' },
@@ -67,15 +101,21 @@ function useReveal() {
       window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
   useEffect(() => {
-    const el = ref.current; if (!el || visible) return;
+    const el = ref.current;
+    if (!el || visible) return;
     const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          obs.disconnect();
+        }
+      },
       { threshold: 0.12 }
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, []);
-  return { ref, visible };
+  }, [visible]);
+  return [ref, visible] as const;
 }
 
 // Texto con efecto hover de color (solo con puntero fino, ver LandingSticker.css)
@@ -90,10 +130,11 @@ function HoverText({ children, tone = 'action' }: { children: React.ReactNode; t
 function ManySwap({ src, alt, imgClassName, onClick }: { src: string; alt: string; imgClassName: string; onClick: () => void }) {
   const [faces, setFaces] = useState<[{ src: string; alt: string }, { src: string; alt: string }]>([{ src, alt }, { src, alt }]);
   const [front, setFront] = useState(false);
+  const prevSrcRef = useRef(src);
 
   useEffect(() => {
-    const shown = faces[front ? 1 : 0];
-    if (shown.src === src) return;
+    if (prevSrcRef.current === src) return;
+    prevSrcRef.current = src;
     const next = !front;
     setFaces(prev => {
       const copy: typeof prev = [prev[0], prev[1]];
@@ -101,7 +142,7 @@ function ManySwap({ src, alt, imgClassName, onClick }: { src: string; alt: strin
       return copy;
     });
     setFront(next);
-  }, [src]);
+  }, [src, alt, front]);
 
   const face = (f: { src: string; alt: string }) => (
     <img src={f.src} alt={f.alt} className={imgClassName} onClick={onClick} draggable={false} />
@@ -144,15 +185,15 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenContact }) => {
   const [selectedTrade, setSelectedTrade] = useState<TradeCategory>('electricidad');
   const [manyAnimate, setManyAnimate] = useState<'float' | 'wave'>('float');
   const [heroVisible, setHeroVisible] = useState(false);
+  const [showSearchMenu, setShowSearchMenu] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  const statsReveal  = useReveal();
-  const stepsReveal  = useReveal();
-  const faqReveal    = useReveal();
-  const ctaReveal    = useReveal();
+  const [faqRef, faqVisible]     = useReveal();
+  const [ctaRef, ctaVisible]     = useReveal();
 
   useEffect(() => {
     const t = setTimeout(() => setHeroVisible(true), 80);
@@ -186,8 +227,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
         </div>
       </div>
 
-      {/* ── NAV ── */}
-      <nav className="lp-nav">
+      {/* ── NAV LIQUID 3D ── */}
+      <nav className={`lp-nav lp-nav--liquid-3d ${mobileNavOpen ? 'lp-nav--mobile-open' : ''}`}>
         <div className="lp-wrap lp-nav-inner">
           <div className="lp-brand">
             <img src={BRAND_ASSETS.logo} alt="OficioYa" className="lp-brand-logo" />
@@ -197,13 +238,117 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
             </div>
           </div>
 
-          {/* Nav links con hover de color — sin recuadros */}
-          <div className="lp-nav-actions">
-            <button type="button" className="lp-nav-link" onClick={handleStartAsSeeker}>Buscar</button>
-            <button type="button" className="lp-nav-link" onClick={() => document.getElementById('faq-section')?.scrollIntoView({ behavior: 'smooth' })}>Preguntas</button>
-            <button type="button" className="lp-nav-link" onClick={handleStartAsProvider}>Para trabajadores</button>
-            <button onClick={handleStartAsSeeker} className="lp-btn-cta">
-              Explorar <ArrowRight size={14} />
+          {/* Botón hamburguesa para móvil */}
+          <button
+            type="button"
+            className="lp-nav-mobile-toggle"
+            onClick={() => setMobileNavOpen(!mobileNavOpen)}
+            aria-label={mobileNavOpen ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={mobileNavOpen}
+          >
+            {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+
+          {/* Nav links con micro-interacciones Liquid 3D */}
+          <div className={`lp-nav-actions ${mobileNavOpen ? 'lp-nav-actions--mobile-open' : ''}`}>
+            {/* Buscar con submenú desplegable Liquid 3D */}
+            <div
+              className="lp-nav-item-wrap"
+              onMouseEnter={() => setShowSearchMenu(true)}
+              onMouseLeave={() => setShowSearchMenu(false)}
+            >
+              <button
+                type="button"
+                className={`lp-nav-link lp-nav-link--liquid ${showSearchMenu ? 'lp-nav-link--active' : ''}`}
+                onClick={handleStartAsSeeker}
+                data-cursor-text="Directorio"
+                aria-haspopup="true"
+                aria-expanded={showSearchMenu}
+              >
+                <Search size={15} className="lp-nav-link__icon" aria-hidden="true" />
+                <RollingText text="Buscar" alternateText="Directorio" />
+                <ChevronDown size={13} className={`lp-nav-chevron ${showSearchMenu ? 'lp-nav-chevron--open' : ''}`} aria-hidden="true" />
+              </button>
+
+              {/* Submenú flotante Liquid 3D de oficios */}
+              {showSearchMenu && (
+                <div className="lp-liquid-menu" role="menu">
+                  <div className="lp-liquid-menu__header">
+                    <span className="lp-liquid-menu__title">Oficios Verificados en Bogotá</span>
+                    <span className="lp-liquid-menu__badge">Sin intermediarios</span>
+                  </div>
+                  <div className="lp-liquid-menu__grid">
+                    {TRADES.map(trade => (
+                      <button
+                        key={trade.key}
+                        type="button"
+                        role="menuitem"
+                        className="lp-liquid-menu__item"
+                        onClick={() => {
+                          setSelectedTrade(trade.key);
+                          setMobileNavOpen(false);
+                          handleStartAsSeeker();
+                        }}
+                      >
+                        <span className="lp-liquid-menu__icon-box">
+                          {trade.icon}
+                        </span>
+                        <div className="lp-liquid-menu__item-text">
+                          <span className="lp-liquid-menu__item-label">{trade.label}</span>
+                          <span className="lp-liquid-menu__item-sub">{trade.tagline.slice(0, 32)}...</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Preguntas */}
+            <button
+              type="button"
+              className="lp-nav-link lp-nav-link--liquid"
+              onClick={() => {
+                setMobileNavOpen(false);
+                document.getElementById('faq-section')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              data-cursor-text="Dudas"
+            >
+              <HelpCircle size={15} className="lp-nav-link__icon" aria-hidden="true" />
+              <RollingText text="Preguntas" alternateText="FAQ" />
+            </button>
+
+            {/* Para trabajadores */}
+            <button
+              type="button"
+              className="lp-nav-link lp-nav-link--liquid"
+              onClick={() => {
+                setMobileNavOpen(false);
+                handleStartAsProvider();
+              }}
+              data-cursor-text="Trabajar"
+            >
+              <Briefcase size={15} className="lp-nav-link__icon" aria-hidden="true" />
+              <RollingText text="Para trabajadores" alternateText="Ofrecer oficio" />
+            </button>
+
+            {/* Iniciar sesión Liquid 3D Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileNavOpen(false);
+                handleStartAsSeeker();
+              }}
+              className="lp-btn-liquid-3d"
+              data-cursor-text="Entrar"
+              aria-label="Iniciar sesión en OficioYa"
+            >
+              <span className="lp-btn-liquid-3d__glare" aria-hidden="true" />
+              <span className="lp-btn-liquid-3d__content">
+                <LogIn size={15} aria-hidden="true" />
+                <span>Iniciar sesión</span>
+                <ArrowRight size={14} className="lp-btn-liquid-3d__arrow" aria-hidden="true" />
+              </span>
             </button>
           </div>
         </div>
@@ -217,7 +362,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
           <span className="lp-sticker lp-sticker--esmeralda lp-sticker--b"><UserCheck size={26} /></span>
           <span className="lp-sticker lp-sticker--fuego lp-sticker--c"><Zap size={26} /></span>
           <span className="lp-sticker lp-sticker--marino lp-sticker--d"><Award size={26} /></span>
-          <span className="lp-sticker lp-sticker--almendra lp-sticker--pill lp-sticker--e">★ 4.9</span>
+          <span className="lp-sticker lp-sticker--almendra lp-sticker--pill lp-sticker--e">Verificado</span>
         </div>
 
         {/* Badge ciudad — texto suelto, sin recuadro opaco */}
@@ -298,75 +443,33 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
         </div>
       </section>
 
-      {/* ── STATS — texto flotante, sin cards ── */}
-      <div ref={statsReveal.ref} className={`lp-numbers ${statsReveal.visible ? 'lp-numbers--in' : ''}`}>
-        <div className="lp-wrap">
-          {/* Título suelto, sin recuadro */}
-          <p className="lp-numbers-kicker">
-            OficioYa en números
-          </p>
-          <div className="lp-numbers-grid">
-            {STATS.map((s, i) => (
-              <div key={s.label} className="lp-number" style={{ '--lp-i': i } as React.CSSProperties}>
-                <div className={`lp-number-value lp-number-value--${s.tone}`}>
-                  {s.value}
-                </div>
-                <div className="lp-number-label">
-                  {s.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* ── MANIFIESTO EDITORIAL (Inspirado en danilodemarco.com) ── */}
+      <EditorialManifesto onExplore={handleStartAsSeeker} />
 
-      {/* ── CÓMO FUNCIONA ── */}
-      <section ref={stepsReveal.ref} className={`lp-how ${stepsReveal.visible ? 'lp-how--in' : ''}`}>
-        <div className="lp-wrap">
-          {/* Título + subtítulo sueltos */}
-          <div className="lp-how-head">
-            <p className="lp-how-kicker">
-              Simple y transparente
-            </p>
-            <h2 className="lp-stroke-title lp-how-title">
-              <StrokeText text="Tres pasos," trigger="scroll" fontSize={56} />{' '}
-              <StrokeText text="cero intermediarios." trigger="scroll" fontSize={56} />
-            </h2>
-            <p className="lp-how-sub">
-              Sin comisiones ocultas, sin grupos de WhatsApp incómodos.
-            </p>
-          </div>
+      {/* ── CARAVANA / TREN DE OFICIOS (Inspirado en ollivere.webflow.io) ── */}
+      <SkillsTrain onSelectTrade={(trade) => handleTradeSelect(trade as any)} />
 
-          <div className="lp-how-grid">
-            {([
-              { n: '01', icon: <MapPin size={22} />, tone: 'trust', title: 'Búsqueda hiperlocal', desc: 'Activa tu GPS o selecciona tu localidad. Ves en tiempo real quién está disponible a menos de 2 km.' },
-              { n: '02', icon: <Award size={22} />, tone: 'accent', title: 'Reputación verificada', desc: 'Calificaciones reales de vecinos, fotos de trabajos terminados y antecedentes validados.' },
-              { n: '03', icon: <UserCheck size={22} />, tone: 'status', title: 'Trato directo', desc: 'Contactas, acordás la tarifa y pagás en efectivo, transferencia o Bre-B. Sin intermediarios.' },
-            ] as const).map((s, i) => (
-              <div
-                key={s.n}
-                className={`lp-how-card lp-how-card--${s.tone}`}
-                style={{ '--lp-i': i } as React.CSSProperties}
-              >
-                {/* Número decorativo — sin recuadro */}
-                <span className="lp-how-n" aria-hidden="true">
-                  {s.n}
-                </span>
-                <div className="lp-how-icon">
-                  {s.icon}
-                </div>
-                {/* Título hover color */}
-                <h3 className="lp-how-card-title">
-                  <HoverText tone={s.tone}>{s.title}</HoverText>
-                </h3>
-                <p className="lp-how-card-desc">
-                  {s.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ── METODOLOGÍA SIN VUELTAS: PROCESO STICKY (Inspirado en ollivere.webflow.io) ── */}
+      <StickyProcess onStart={handleStartAsSeeker} />
+
+      {/* ── INSPECTOR DE HERRAMIENTAS Y FICHA TÉCNICA 3D (Inspirado en thibaut.cool) ── */}
+      <RetroInspector onSelectTrade={(trade) => handleTradeSelect(trade as any)} />
+
+      {/* ── EDICIÓN EDITORIAL IMPRESA / BROADSHEET & CLASIFICADOS (Inspirado en niccolomiranda.com) ── */}
+      <PaperBroadsheet onExplore={handleStartAsSeeker} />
+
+      {/* ── SELECTOR MECÁNICO / DISCO TELEFÓNICO (Inspirado en bleibtgleich.dev) ── */}
+      <RotaryDial
+        onSelectTrade={(category) => {
+          if (category !== 'urgencias') {
+            handleTradeSelect(category as any);
+          }
+          handleStartAsSeeker();
+        }}
+      />
+
+      {/* ── SELECCIÓN EDITORIAL ASIMÉTRICA (Inspirado en danilodemarco.com) ── */}
+      <AsymmetricShowcase onSelectWorker={() => handleStartAsSeeker()} />
 
       {/* ── TRABAJOS REALES: muro de portafolio ── */}
       <section className="lp-work" aria-labelledby="lp-work-title">
@@ -388,8 +491,50 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
         </div>
       </section>
 
+      {/* ── TESTIMONIOS VERIFICADOS (Item 18) ── */}
+      <section className="lp-testimonials" aria-labelledby="lp-testimonials-title">
+        <div className="lp-wrap">
+          <div className="lp-testimonials-head">
+            <span className="lp-sticker lp-sticker--esmeralda lp-sticker--pill">Opiniones reales</span>
+            <h2 id="lp-testimonials-title" className="oy-display lp-testimonials-title">
+              Historias de clientes en Bogotá
+            </h2>
+            <p className="lp-testimonials-sub">
+              Vecinos reales que resolvieron sus problemas de hogar sin comisiones, con precio acordado y garantía.
+            </p>
+          </div>
+
+          <div className="lp-testimon-grid">
+            {TESTIMONIALS.map((t, idx) => (
+              <div key={idx} className="lp-testi-card">
+                <div className="lp-testi-card__stars">
+                  {Array.from({ length: t.rating }).map((_, i) => (
+                    <Star key={i} size={16} fill="var(--color-star)" color="var(--stroke-ink)" />
+                  ))}
+                  <span className="lp-testi-card__badge">
+                    <ShieldCheck size={13} aria-hidden="true" /> Verificado
+                  </span>
+                </div>
+                <p className="lp-testi-card__comment">
+                  <Quote size={16} className="lp-testi-card__quote-icon" aria-hidden="true" />
+                  "{t.comment}"
+                </p>
+                <div className="lp-testi-card__author">
+                  <img src={t.avatar} alt={t.name} className="lp-testi-card__avatar" loading="lazy" />
+                  <div className="lp-testi-card__meta">
+                    <strong className="lp-testi-card__name">{t.name}</strong>
+                    <span className="lp-testi-card__trade">{t.trade}</span>
+                    <span className="lp-testi-card__zone">{t.zone}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── FAQ DESPLEGABLE ── */}
-      <section id="faq-section" ref={faqReveal.ref} className="lp-faq">
+      <section id="faq-section" ref={faqRef} className="lp-faq">
         <div className="lp-wrap lp-faq-wrap">
           <span className="lp-sticker lp-sticker--amarillo lp-sticker--pill">Preguntas frecuentes</span>
           <h2 className="oy-display lp-faq-title">
@@ -397,7 +542,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
             <StrokeText text="necesitas saber." tone="cacao" trigger="scroll" fontSize={64} />
           </h2>
 
-          <div className={`lp-faq-list ${faqReveal.visible ? 'lp-faq-list--in' : ''}`}>
+          <div className={`lp-faq-list ${faqVisible ? 'lp-faq-list--in' : ''}`}>
             {FAQS.map((faq, i) => (
               <FaqItem key={i} q={faq.q} a={faq.a} />
             ))}
@@ -413,7 +558,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
       </section>
 
       {/* ── CTA WORKER ── */}
-      <section ref={ctaReveal.ref} className={`lp-cta-dark ${ctaReveal.visible ? 'lp-reveal' : ''}`}>
+      <section ref={ctaRef} className={`lp-cta-dark ${ctaVisible ? 'lp-reveal' : ''}`}>
         <div className="lp-wrap">
           <div className="lp-cta-card">
             <React.Suspense fallback={null}>
@@ -470,7 +615,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
       </section>
 
       {/* ── FOOTER ── */}
-      <AppFooter />
+      <AppFooter onOpenContact={onOpenContact} />
+
+      {/* Botón Flotante para Volver Arriba (Item 7) */}
+      <ScrollToTop />
+
+      {/* Búsqueda Rápida al Puntero con tecla '/' (Inspirado en bleibtgleich.dev) */}
+      <CursorQuickPrompt onSearch={handleStartAsSeeker} />
+
+      {/* Puntero Magnético de Alta Fidelidad (Inspirado en danilodemarco.com) */}
+      <CustomCursor />
     </div>
   );
 };
