@@ -76,7 +76,7 @@
   align-items: center;
   gap: 4px;
   margin-inline: auto;
-  padding: 4px;
+  padding: 4px 10px;
   border: var(--stroke-w) solid var(--stroke-ink);
   border-radius: var(--radius-pill);
   background: var(--color-surface);
@@ -88,14 +88,17 @@
   align-items: center;
   gap: 6px;
   margin-left: auto;
+  overflow: visible;
 }
 
 .app-header__tab {
   position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   min-height: 40px;
+  min-width: 40px;
   padding: 8px 12px;
   border: none;
   border-radius: var(--radius-pill);
@@ -103,12 +106,22 @@
   color: var(--color-text-muted);
   font-family: var(--font-ui);
   cursor: pointer;
+  overflow: visible !important;
   transition: transform 160ms var(--ease-out), background-color 160ms ease, color 160ms ease;
 }
 
 .app-header__tab--active {
   background: var(--role-primary);
   color: var(--role-on-primary);
+  padding: 8px 16px;
+}
+
+.app-header__tab-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
 }
 
 .app-header__tab-label {
@@ -120,18 +133,34 @@
 
 .app-header__badge {
   position: absolute;
-  top: 0;
-  right: 2px;
+  top: -7px;
+  right: -9px;
   min-width: 18px;
-  padding: 1px 5px;
-  border: 1px solid var(--stroke-ink);
-  border-radius: var(--radius-pill);
-  background: var(--oy-amarillo-canario);
-  color: var(--oy-cacao-profundo);
-  font-size: 10px;
+  height: 18px;
+  padding: 0 4.5px;
+  border: 1.5px solid var(--stroke-ink);
+  border-radius: 9999px;
+  background: var(--oy-amarillo-canario, #FFD027);
+  color: var(--oy-cacao-profundo, #3E1F14);
+  font-size: 10.5px;
   font-weight: 800;
-  line-height: 14px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+  pointer-events: none;
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+html.theme-dark .app-header__badge,
+[data-theme="dark"] .app-header__badge {
+  background: var(--oy-amarillo-canario, #FFD027);
+  color: #120D0A;
+  border-color: #0B1430;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 .app-header__account-wrap { position: relative; }

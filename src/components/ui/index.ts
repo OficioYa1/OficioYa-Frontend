@@ -56,3 +56,5 @@ export { Seek } from './Seek';
 export type { SeekProps } from './Seek';
 export { GlassDock } from './GlassDock';
 export type { GlassDockProps, GlassDockItem } from './GlassDock';
+export { JellyRadio } from './JellyRadio';
+export type { JellyRadioProps, JellyRadioItem } from './JellyRadio';

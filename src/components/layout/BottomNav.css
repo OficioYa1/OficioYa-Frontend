@@ -47,6 +47,7 @@
   color: var(--color-text-muted);
   font-family: var(--font-text);
   cursor: pointer;
+  overflow: visible !important;
   -webkit-tap-highlight-color: transparent;
   transition: color 160ms ease, transform 160ms var(--ease-out);
 }

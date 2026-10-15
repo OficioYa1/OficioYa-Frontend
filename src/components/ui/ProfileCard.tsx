@@ -25,6 +25,8 @@ export interface ProfileCardProps {
   meta?: ReactNode;
   contactText?: string;
   onContactClick?: () => void;
+  /** Callback al hacer click en la tarjeta, foto o resumen del profesional */
+  onClick?: () => void;
   /** Nivel del titular con el nombre. */
   headingLevel?: 2 | 3 | 4;
   frame?: ProfileCardFrame;
@@ -56,8 +58,9 @@ const ProfileCardBase = ({
   status,
   verified = false,
   meta,
-  contactText = 'Contactar',
+  contactText,
   onContactClick,
+  onClick,
   headingLevel = 3,
   frame = 'almendra',
   holo = 0.35,
@@ -176,7 +179,21 @@ const ProfileCardBase = ({
   return (
     <article
       ref={rootRef}
-      className={`oy-pcard oy-pcard--${frame}${className ? ` ${className}` : ''}`}
+      className={`oy-pcard oy-pcard--${frame}${onClick ? ' oy-pcard--clickable' : ''}${className ? ` ${className}` : ''}`}
+      onClick={onClick}
+      onKeyDown={
+        onClick
+          ? e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+      tabIndex={onClick ? 0 : undefined}
+      role={onClick ? 'button' : undefined}
+      aria-label={onClick ? `Ver perfil de ${name}, ${title}` : undefined}
       style={
         {
           '--pc-holo': clamp(holo, 0, 1),

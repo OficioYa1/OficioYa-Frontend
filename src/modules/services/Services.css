@@ -511,3 +511,197 @@
   align-items: center;
   gap: 6px;
 }
+
+/* ── Formularios Desplegables Inline en Tarjeta (Sin Popups) ── */
+.svc-inline-form {
+  border-top: var(--stroke-w) solid var(--stroke-ink);
+  background: var(--color-bg);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.svc-inline-form--complete {
+  background: var(--wash-esmeralda);
+}
+
+.svc-inline-form--cancel {
+  background: var(--wash-amarillo);
+}
+
+.svc-inline-form--review {
+  background: var(--wash-marino);
+}
+
+html.role-provider .svc-inline-form--review {
+  background: var(--wash-fuego);
+}
+
+.svc-inline-form__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.svc-inline-form__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.svc-inline-form__icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  background: var(--color-surface);
+  flex: none;
+}
+
+.svc-inline-form__icon--esmeralda { color: var(--oy-verde-esmeralda); }
+.svc-inline-form__icon--danger { color: var(--color-danger); }
+.svc-inline-form__icon--amarillo { color: var(--oy-amarillo-canario); }
+
+.svc-inline-form__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-text-main);
+}
+
+.svc-inline-form__close {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  flex: none;
+}
+
+.svc-inline-form__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.svc-inline-upload-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.svc-inline-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: var(--stroke-w) dashed var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.svc-inline-upload-btn:hover {
+  background: var(--color-bg);
+  border-color: var(--oy-verde-esmeralda);
+}
+
+.svc-inline-url-row {
+  display: flex;
+  gap: 8px;
+}
+
+.svc-inline-input {
+  width: 100%;
+  font-size: 13px;
+  padding: 8px 12px;
+}
+
+.svc-inline-preview {
+  position: relative;
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.svc-inline-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.svc-inline-remove-photo {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  border: none;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.svc-inline-form__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.svc-inline-form__actions .btn {
+  min-height: 36px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+}
+
+.svc-reasons--compact {
+  max-height: 190px;
+  overflow-y: auto;
+  gap: 6px;
+  padding-right: 4px;
+}
+
+.svc-reason--compact {
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: var(--radius-card);
+}
+
+.svc-rating--compact {
+  margin-bottom: var(--space-2);
+}
+
+.svc-inline-textarea {
+  width: 100%;
+  font-size: 13px;
+  padding: 8px 12px;
+  resize: vertical;
+}
+
+.svc-inline-success {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  border: var(--stroke-w) solid var(--oy-verde-esmeralda);
+}
+

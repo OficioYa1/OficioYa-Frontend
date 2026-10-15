@@ -51,7 +51,8 @@ export const SeekerHomeView: React.FC<SeekerHomeViewProps> = ({
             value={problemDescription}
             onChange={setProblemDescription}
             onSearch={handlePostRequest}
-            width={480}
+            width={640}
+            size={80}
           />
         </div>
       </PageHero>

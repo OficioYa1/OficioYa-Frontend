@@ -9,15 +9,25 @@
   transition: background-color 0.3s ease;
 }
 
+html.theme-dark .ollivere-train-section,
 [data-theme="dark"] .ollivere-train-section {
   background: rgba(255, 138, 80, 0.04);
   border-color: rgba(255, 138, 80, 0.15);
 }
 
 .ollivere-train-header {
-  max-width: 1180px;
+  max-width: 1540px;
   margin: 0 auto clamp(2rem, 4vw, 3.5rem);
   padding: 0 1.5rem;
+}
+
+.ollivere-train-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .ollivere-train-kicker {
@@ -30,7 +40,81 @@
   text-transform: uppercase;
   letter-spacing: 0.15em;
   color: var(--color-brand-primary, #E65100);
-  margin-bottom: 0.75rem;
+}
+
+.ollivere-kicker-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FF6F00;
+  box-shadow: 0 0 8px rgba(255, 111, 0, 0.8);
+  animation: kickerPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes kickerPulse {
+  0%, 100% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.3); opacity: 1; }
+}
+
+/* Barra de controles interactivos */
+.ollivere-train-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(62, 31, 20, 0.06);
+  padding: 4px 6px;
+  border-radius: 9999px;
+  border: 1px solid rgba(62, 31, 20, 0.14);
+  backdrop-filter: blur(8px);
+}
+
+html.theme-dark .ollivere-train-controls,
+[data-theme="dark"] .ollivere-train-controls {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 138, 80, 0.25);
+}
+
+.ollivere-ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 6px 12px;
+  font-family: var(--font-text, 'Inter', sans-serif);
+  font-size: 0.78125rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: var(--stroke-ink, #3E1F14);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+html.theme-dark .ollivere-ctrl-btn,
+[data-theme="dark"] .ollivere-ctrl-btn {
+  color: #FBF4EA;
+}
+
+.ollivere-ctrl-btn:hover {
+  background: rgba(255, 111, 0, 0.15);
+  color: #E65100;
+  transform: translateY(-1px);
+}
+
+.ollivere-ctrl-btn:active {
+  transform: translateY(0);
+}
+
+.ollivere-ctrl-btn--toggle.is-paused {
+  background: #E65100;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(230, 81, 0, 0.35);
+}
+
+.ollivere-ctrl-btn.is-active {
+  background: rgba(255, 111, 0, 0.2);
+  color: #E65100;
 }
 
 .ollivere-train-title {
@@ -43,6 +127,7 @@
   margin: 0 0 0.75rem 0;
 }
 
+html.theme-dark .ollivere-train-title,
 [data-theme="dark"] .ollivere-train-title {
   color: #FBF4EA;
 }
@@ -51,68 +136,110 @@
   font-family: var(--font-text, 'Inter', sans-serif);
   font-size: clamp(0.95rem, 1.2vw, 1.1rem);
   color: rgba(62, 31, 20, 0.75);
-  max-width: 650px;
-  line-height: 1.5;
+  max-width: 680px;
+  line-height: 1.55;
   margin: 0;
 }
 
+html.theme-dark .ollivere-train-sub,
 [data-theme="dark"] .ollivere-train-sub {
-  color: rgba(251, 244, 234, 0.75);
+  color: rgba(251, 244, 234, 0.85);
 }
 
 /* Pista de rieles del tren */
 .ollivere-train-track {
   position: relative;
   width: 100%;
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: hidden;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  padding: 3rem 0 3.75rem;
   cursor: grab;
-  padding: 1.5rem 0 3.5rem;
-}
-
-.ollivere-train-track::-webkit-scrollbar {
-  display: none;
+  user-select: none;
 }
 
 .ollivere-train-track:active {
   cursor: grabbing;
 }
 
-/* Riel inferior continuo */
+/* Riel inferior continuo con traviesas */
 .ollivere-train-rails {
   position: absolute;
-  bottom: 2rem;
+  bottom: 2.25rem;
   left: 0;
   right: 0;
   height: 6px;
   background: var(--stroke-ink, #3E1F14);
-  opacity: 0.25;
+  opacity: 0.35;
+  z-index: 0;
 }
 
 .ollivere-train-rails::before {
   content: '';
   position: absolute;
-  top: -4px;
+  top: -6px;
   left: 0;
   right: 0;
-  height: 2px;
-  background: repeating-linear-gradient(90deg, var(--stroke-ink, #3E1F14) 0px, var(--stroke-ink, #3E1F14) 16px, transparent 16px, transparent 32px);
-  opacity: 0.4;
+  height: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--stroke-ink, #3E1F14) 0px,
+    var(--stroke-ink, #3E1F14) 16px,
+    transparent 16px,
+    transparent 32px
+  );
+  opacity: 0.55;
+  animation: railTiesRoll 1.4s linear infinite;
 }
 
+.ollivere-train-track.speed-fast .ollivere-train-rails::before {
+  animation-duration: 0.7s;
+}
+
+.ollivere-train-track.is-paused .ollivere-train-rails::before,
+.ollivere-train-track:hover .ollivere-train-rails::before {
+  animation-play-state: paused;
+}
+
+@keyframes railTiesRoll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-32px); }
+}
+
+html.theme-dark .ollivere-train-rails,
 [data-theme="dark"] .ollivere-train-rails {
   background: rgba(255, 138, 80, 0.5);
+}
+
+/* Stream continuo en bucle infinito */
+.ollivere-train-stream {
+  display: flex;
+  width: max-content;
+  gap: 1.5rem;
+  animation: trainMarch 38s linear infinite;
+  will-change: transform;
+  z-index: 1;
+}
+
+.ollivere-train-track.speed-fast .ollivere-train-stream {
+  animation-duration: 19s;
+}
+
+.ollivere-train-stream.is-paused,
+.ollivere-train-track:hover .ollivere-train-stream {
+  animation-play-state: paused;
+}
+
+@keyframes trainMarch {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-50% - 0.75rem)); }
 }
 
 /* Convoy de vagones deslizantes */
 .ollivere-train-convoy {
   display: inline-flex;
   align-items: flex-end;
-  gap: 1.25rem;
-  padding: 0 max(1.5rem, calc((100vw - 1180px) / 2));
-  will-change: transform;
+  gap: 1.5rem;
+  padding: 0 1rem;
 }
 
 /* Vagón locomotora Many */
@@ -122,30 +249,153 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  width: 220px;
-  height: 170px;
+  width: 230px;
+  height: 175px;
   background: #FF6F00;
   border: 2px solid var(--stroke-ink, #3E1F14);
   border-radius: 20px 8px 8px 8px;
   padding: 1rem;
   box-shadow: 4px 6px 0 var(--stroke-ink, #3E1F14);
   flex-shrink: 0;
+  z-index: 2;
+  animation: engineChug 1.8s ease-in-out infinite alternate;
+}
+
+.ollivere-train-stream.is-paused .ollivere-wagon-engine,
+.ollivere-train-track:hover .ollivere-wagon-engine {
+  animation-play-state: paused;
+}
+
+@keyframes engineChug {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-3px); }
+}
+
+/* Chimenea y humo de vapor */
+.ollivere-engine__chimney {
+  position: absolute;
+  top: -18px;
+  right: 28px;
+  width: 18px;
+  height: 22px;
+  background: #3E1F14;
+  border: 2px solid #3E1F14;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  z-index: 1;
+}
+
+html.theme-dark .ollivere-engine__chimney,
+[data-theme="dark"] .ollivere-engine__chimney {
+  background: #23120B;
+  border-color: rgba(255, 138, 80, 0.7);
+}
+
+.ollivere-steam-puff {
+  position: absolute;
+  top: -8px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.5) 60%, transparent 100%);
+  pointer-events: none;
+}
+
+.puff-1 { animation: steamPuff 2.2s infinite ease-out; }
+.puff-2 { animation: steamPuff 2.2s infinite ease-out 0.75s; }
+.puff-3 { animation: steamPuff 2.2s infinite ease-out 1.5s; }
+
+@keyframes steamPuff {
+  0% {
+    transform: translate(0, 0) scale(0.6);
+    opacity: 0.95;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-32px, -45px) scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* Faro delantero con haz de luz */
+.ollivere-engine__headlight {
+  position: absolute;
+  bottom: 34px;
+  left: -10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #FFD54F;
+  border: 2.5px solid #3E1F14;
+  box-shadow: 0 0 16px rgba(255, 213, 79, 0.95);
+  z-index: 5;
+}
+
+.ollivere-headlight-lens {
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  opacity: 0.85;
+}
+
+.ollivere-headlight-beam {
+  position: absolute;
+  right: 14px;
+  top: -16px;
+  width: 110px;
+  height: 50px;
+  background: linear-gradient(to left, rgba(255, 213, 79, 0.4), transparent);
+  clip-path: polygon(100% 30%, 100% 70%, 0% 100%, 0% 0%);
+  pointer-events: none;
+  filter: blur(2px);
+}
+
+/* Many el Castor Conductor */
+.ollivere-engine__mascot-wrap {
+  position: absolute;
+  top: -46px;
+  left: 16px;
+  display: flex;
+  align-items: flex-start;
+  z-index: 3;
 }
 
 .ollivere-wagon-engine__mascot {
-  position: absolute;
-  top: -42px;
-  left: 20px;
   width: 76px;
   height: 76px;
   object-fit: contain;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
   animation: engineBounce 1.2s infinite ease-in-out alternate;
 }
 
 @keyframes engineBounce {
   0% { transform: translateY(0); }
   100% { transform: translateY(-5px); }
+}
+
+.ollivere-whistle-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  font-family: var(--font-text, sans-serif);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: #3E1F14;
+  background: #FFFFFF;
+  border: 1.5px solid #3E1F14;
+  border-radius: 12px;
+  transform: translate(2px, -6px) rotate(-6deg);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.15);
+  animation: whistleWiggle 2.4s infinite ease-in-out;
+  white-space: nowrap;
+}
+
+@keyframes whistleWiggle {
+  0%, 100% { transform: translate(2px, -6px) rotate(-6deg); }
+  50% { transform: translate(2px, -8px) rotate(-2deg); }
 }
 
 .ollivere-wagon-engine__label {
@@ -173,17 +423,33 @@
   flex-direction: column;
   justify-content: space-between;
   width: 230px;
-  height: 155px;
+  height: 160px;
   border: 2px solid var(--stroke-ink, #3E1F14);
   border-radius: 12px;
   padding: 1.2rem;
   box-shadow: 4px 6px 0 var(--stroke-ink, #3E1F14);
   flex-shrink: 0;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
+  z-index: 2;
+  animation: wagonChug 2.2s ease-in-out infinite alternate;
+  animation-delay: calc(var(--wagon-i, 0) * 0.18s);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.ollivere-train-stream.is-paused .ollivere-wagon,
+.ollivere-train-track:hover .ollivere-wagon {
+  animation-play-state: paused;
+}
+
+@keyframes wagonChug {
+  0% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-2px) rotate(0.4deg); }
+  100% { transform: translateY(1.5px) rotate(-0.3deg); }
+}
+
+html.theme-dark .ollivere-wagon,
+html.theme-dark .ollivere-wagon-engine,
 [data-theme="dark"] .ollivere-wagon,
 [data-theme="dark"] .ollivere-wagon-engine {
   border-color: rgba(255, 138, 80, 0.6);
@@ -191,46 +457,46 @@
 }
 
 .ollivere-wagon:hover {
-  transform: translateY(-8px) scale(1.03);
+  transform: translateY(-8px) scale(1.03) !important;
   box-shadow: 6px 12px 0 var(--stroke-ink, #3E1F14);
 }
 
+html.theme-dark .ollivere-wagon:hover,
 [data-theme="dark"] .ollivere-wagon:hover {
   box-shadow: 6px 12px 0 rgba(255, 138, 80, 0.7);
 }
 
-/* Colores temáticos por tipo de vagón */
-.ollivere-wagon--electricidad {
-  background: #FFF8E1;
-  color: #B26A00;
-}
-.ollivere-wagon--plomeria {
-  background: #E1F5FE;
-  color: #0277BD;
-}
-.ollivere-wagon--cerrajeria {
-  background: #EDE7F6;
-  color: #512DA8;
-}
-.ollivere-wagon--pintura {
-  background: #FCE4EC;
-  color: #C2185B;
-}
-.ollivere-wagon--aseo {
-  background: #E8F5E9;
-  color: #2E7D32;
-}
-.ollivere-wagon--electrodomesticos {
-  background: #E0F2F1;
-  color: #00695C;
+/* Enganche mecánico entre vagones */
+.ollivere-wagon__coupler {
+  position: absolute;
+  left: -24px;
+  bottom: 34px;
+  width: 24px;
+  height: 6px;
+  background: var(--stroke-ink, #3E1F14);
+  border-radius: 3px;
+  z-index: -1;
 }
 
-[data-theme="dark"] .ollivere-wagon--electricidad { background: #2a2008; color: #FFD54F; }
-[data-theme="dark"] .ollivere-wagon--plomeria     { background: #082236; color: #4FC3F7; }
-[data-theme="dark"] .ollivere-wagon--cerrajeria   { background: #1c1333; color: #B39DDB; }
-[data-theme="dark"] .ollivere-wagon--pintura      { background: #2f0e1c; color: #F48FB1; }
-[data-theme="dark"] .ollivere-wagon--aseo         { background: #0c2514; color: #81C784; }
-[data-theme="dark"] .ollivere-wagon--electrodomesticos { background: #092823; color: #80CBC4; }
+html.theme-dark .ollivere-wagon__coupler,
+[data-theme="dark"] .ollivere-wagon__coupler {
+  background: rgba(255, 138, 80, 0.6);
+}
+
+/* Colores temáticos por tipo de vagón */
+.ollivere-wagon--electricidad { background: #FFF8E1; color: #B26A00; }
+.ollivere-wagon--plomeria     { background: #E1F5FE; color: #0277BD; }
+.ollivere-wagon--cerrajeria   { background: #EDE7F6; color: #512DA8; }
+.ollivere-wagon--pintura      { background: #FCE4EC; color: #C2185B; }
+.ollivere-wagon--aseo         { background: #E8F5E9; color: #2E7D32; }
+.ollivere-wagon--electrodomesticos { background: #E0F2F1; color: #00695C; }
+
+html.theme-dark .ollivere-wagon--electricidad, [data-theme="dark"] .ollivere-wagon--electricidad { background: #2a2008; color: #FFD54F; }
+html.theme-dark .ollivere-wagon--plomeria,     [data-theme="dark"] .ollivere-wagon--plomeria     { background: #082236; color: #4FC3F7; }
+html.theme-dark .ollivere-wagon--cerrajeria,   [data-theme="dark"] .ollivere-wagon--cerrajeria   { background: #1c1333; color: #B39DDB; }
+html.theme-dark .ollivere-wagon--pintura,      [data-theme="dark"] .ollivere-wagon--pintura      { background: #2f0e1c; color: #F48FB1; }
+html.theme-dark .ollivere-wagon--aseo,         [data-theme="dark"] .ollivere-wagon--aseo         { background: #0c2514; color: #81C784; }
+html.theme-dark .ollivere-wagon--electrodomesticos, [data-theme="dark"] .ollivere-wagon--electrodomesticos { background: #092823; color: #80CBC4; }
 
 .ollivere-wagon__top {
   display: flex;
@@ -246,6 +512,11 @@
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.06);
+}
+
+html.theme-dark .ollivere-wagon__icon,
+[data-theme="dark"] .ollivere-wagon__icon {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .ollivere-wagon__number {
@@ -268,16 +539,25 @@
   font-family: var(--font-text, 'Inter', sans-serif);
   font-size: 0.75rem;
   font-weight: 700;
-  opacity: 0.8;
+  opacity: 0.85;
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  margin-top: 0.25rem;
 }
 
-/* Ruedas mecánicas de los vagones */
+.ollivere-wagon__arrow {
+  transition: transform 0.2s ease;
+}
+
+.ollivere-wagon:hover .ollivere-wagon__arrow {
+  transform: translateX(3px);
+}
+
+/* Ruedas mecánicas animadas de los vagones */
 .ollivere-wagon__wheels {
   position: absolute;
-  bottom: -14px;
+  bottom: -15px;
   left: 24px;
   right: 24px;
   display: flex;
@@ -286,14 +566,72 @@
 }
 
 .ollivere-wagon__wheel {
-  width: 26px;
-  height: 26px;
+  position: relative;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--stroke-ink, #3E1F14);
-  border: 3px solid #FFF;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.35);
+  animation: wheelSpin 1.4s linear infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+.ollivere-train-track.speed-fast .ollivere-wagon__wheel {
+  animation-duration: 0.7s;
+}
+
+.ollivere-train-stream.is-paused .ollivere-wagon__wheel,
+.ollivere-train-track:hover .ollivere-wagon__wheel {
+  animation-play-state: paused;
+}
+
+.ollivere-wheel-rim {
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(255, 255, 255, 0.8);
+}
+
+.ollivere-wheel-rim::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FF6F00;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes wheelSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+html.theme-dark .ollivere-wagon__wheel,
 [data-theme="dark"] .ollivere-wagon__wheel {
   border-color: #0B1430;
+  background: #FF6F00;
+}
+
+html.theme-dark .ollivere-wheel-rim::after,
+[data-theme="dark"] .ollivere-wheel-rim::after {
+  background: #FFFFFF;
+}
+
+/* Accesibilidad: Respeto a reducción de movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .ollivere-train-stream,
+  .ollivere-wagon__wheel,
+  .ollivere-train-rails::before,
+  .ollivere-wagon-engine,
+  .ollivere-wagon,
+  .ollivere-steam-puff {
+    animation: none !important;
+  }
 }

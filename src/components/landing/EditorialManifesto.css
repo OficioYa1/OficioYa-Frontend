@@ -10,6 +10,7 @@
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+html.theme-dark .danilo-manifesto,
 [data-theme="dark"] .danilo-manifesto {
   background: #0d172e;
   color: #FBF4EA;
@@ -17,7 +18,7 @@
 }
 
 .danilo-manifesto__wrap {
-  max-width: 1200px;
+  max-width: 1540px;
   margin: 0 auto;
   position: relative;
 }
@@ -55,7 +56,13 @@
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.035em;
+  color: inherit;
   margin: 0;
+}
+
+html.theme-dark .danilo-manifesto__title,
+[data-theme="dark"] .danilo-manifesto__title {
+  color: #FBF4EA;
 }
 
 .danilo-manifesto__row {
@@ -86,9 +93,11 @@
               background-color 0.25s ease;
 }
 
+html.theme-dark .danilo-manifesto__capsule,
 [data-theme="dark"] .danilo-manifesto__capsule {
   border-color: rgba(255, 138, 80, 0.6);
   box-shadow: 2px 3px 0 rgba(255, 138, 80, 0.4);
+  background: rgba(255, 138, 80, 0.15);
 }
 
 .danilo-manifesto__capsule:hover {
@@ -97,6 +106,7 @@
   background: var(--color-brand-primary, #E65100);
 }
 
+html.theme-dark .danilo-manifesto__capsule:hover,
 [data-theme="dark"] .danilo-manifesto__capsule:hover {
   box-shadow: 4px 6px 0 rgba(255, 138, 80, 0.8);
 }
@@ -126,6 +136,7 @@
   transition: color 0.25s ease;
 }
 
+html.theme-dark .danilo-manifesto__capsule-text,
 [data-theme="dark"] .danilo-manifesto__capsule-text {
   color: #FBF4EA;
 }
@@ -150,6 +161,7 @@
   border-top: 1px dashed rgba(62, 31, 20, 0.2);
 }
 
+html.theme-dark .danilo-manifesto__footer,
 [data-theme="dark"] .danilo-manifesto__footer {
   border-color: rgba(255, 138, 80, 0.2);
 }
@@ -166,8 +178,9 @@
   text-transform: uppercase;
 }
 
+html.theme-dark .danilo-manifesto__meta,
 [data-theme="dark"] .danilo-manifesto__meta {
-  color: rgba(251, 244, 234, 0.7);
+  color: rgba(251, 244, 234, 0.85);
 }
 
 .danilo-manifesto__meta-tag {
@@ -177,8 +190,11 @@
   padding: 0.25rem 0.65rem;
   border-radius: 4px;
   background: rgba(62, 31, 20, 0.05);
+  color: inherit;
 }
 
+html.theme-dark .danilo-manifesto__meta-tag,
 [data-theme="dark"] .danilo-manifesto__meta-tag {
-  background: rgba(255, 138, 80, 0.1);
+  background: rgba(255, 138, 80, 0.15);
+  color: #FBF4EA;
 }

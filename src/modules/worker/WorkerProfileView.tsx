@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import type { Worker, Review } from '../../types';
-import { CircularCarousel, PeekRating, SpringCounter, SpringTilt, SlideConfirm } from '../../components/ui';
+import { CircularCarousel, PeekRating, SpringCounter, SpringTilt } from '../../components/ui';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft,
@@ -9,7 +9,6 @@ import {
   ShieldCheck,
   MapPin,
   Calendar,
-  MessageCircle,
   Send,
   AlertTriangle,
   CheckCircle2,
@@ -21,9 +20,13 @@ import {
   Tag,
   Flag,
   Clock,
-  Sparkles
+  Sparkles,
+  Lock,
+  X
 } from 'lucide-react';
+import type { ServiceRequest } from '../../types';
 import { TRADE_LABELS, rateUnitShort } from '../../utils/workerProfile';
+import { WorkerInlineHireFlow } from './WorkerInlineHireFlow';
 import './Worker.css';
 
 interface WorkerProfileViewProps {
@@ -33,6 +36,7 @@ interface WorkerProfileViewProps {
   onOpenChat: (worker: Worker) => void;
   onOpenSendRequest: (worker: Worker) => void;
   onOpenReport: (worker: Worker) => void;
+  onCreateServiceAndStartChat?: (newService: ServiceRequest, summaryMessage: string) => void;
 }
 
 function createFakeReviewTicket(worker: Worker, review: Review, reportReasonText: string) {
@@ -54,15 +58,59 @@ function createFakeReviewTicket(worker: Worker, review: Review, reportReasonText
 export const WorkerProfileView: React.FC<WorkerProfileViewProps> = ({
   worker,
   onBack,
-  onOpenBooking,
+  onOpenBooking: _onOpenBooking,
   onOpenChat,
-  onOpenSendRequest,
-  onOpenReport
+  onOpenSendRequest: _onOpenSendRequest,
+  onOpenReport,
+  onCreateServiceAndStartChat
 }) => {
   const [activeTab, setActiveTab] = useState<'info' | 'oficios' | 'resenas' | 'galeria'>('info');
   const [reportedReviews, setReportedReviews] = useState<Record<string, boolean>>({});
   const [reportingReviewId, setReportingReviewId] = useState<string | null>(null);
   const [reportReasonText, setReportReasonText] = useState('');
+  const [inlineFlow, setInlineFlow] = useState<'peticion' | 'contratar' | null>(null);
+  const [isShaking, setIsShaking] = useState(false);
+  const [showLockedNotice, setShowLockedNotice] = useState(false);
+  const noticeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleToggleFlow = (mode: 'peticion' | 'contratar') => {
+    if (inlineFlow === mode) {
+      setInlineFlow(null);
+    } else {
+      setInlineFlow(mode);
+      setShowLockedNotice(false);
+      setTimeout(() => {
+        const el = document.getElementById('worker-inline-flow');
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  };
+
+  const handleLockedContractClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 500);
+
+    setShowLockedNotice(true);
+    if (noticeTimeoutRef.current) clearTimeout(noticeTimeoutRef.current);
+    noticeTimeoutRef.current = setTimeout(() => {
+      setShowLockedNotice(false);
+    }, 7000);
+
+    setTimeout(() => {
+      const el = document.getElementById('wk-locked-notice');
+      el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
+  };
+
+  const handleFlowSubmit = (newService: ServiceRequest, summaryMessage: string) => {
+    setInlineFlow(null);
+    if (onCreateServiceAndStartChat) {
+      onCreateServiceAndStartChat(newService, summaryMessage);
+    } else {
+      onOpenChat(worker);
+    }
+  };
 
   // RF-38: Reportar reseña potencialmente falsa
   const handleReportFakeReview = (review: Review) => {
@@ -176,38 +224,101 @@ export const WorkerProfileView: React.FC<WorkerProfileViewProps> = ({
           </div>
         </div>
 
-        {/* Acciones principales integradas en el Hero Banner */}
+        {/* Acciones principales integradas en el Hero Banner (Sin botón de chatear) */}
         <div className="wk-fullpage__hero-actions">
           <button
             type="button"
-            onClick={() => onOpenChat(worker)}
-            className="btn btn-secondary wk-fullpage__action-btn"
-          >
-            <MessageCircle size={17} aria-hidden="true" /> Chatear
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onOpenSendRequest(worker)}
-            className="btn btn-secondary wk-fullpage__action-btn"
+            onClick={() => handleToggleFlow('peticion')}
+            className={`btn wk-fullpage__action-btn ${inlineFlow === 'peticion' ? 'btn-primary' : 'btn-secondary'}`}
             disabled={worker.isPaused}
+            aria-expanded={inlineFlow === 'peticion'}
           >
-            <Send size={17} aria-hidden="true" /> Enviar petición
+            <Send size={17} aria-hidden="true" />
+            {inlineFlow === 'peticion' ? 'Cerrar petición' : 'Enviar petición'}
           </button>
 
-          <button
+          <motion.button
             type="button"
-            onClick={() => {
-              if (worker.available && !worker.isPaused) onOpenBooking(worker);
-            }}
-            disabled={!canBook}
-            className="btn btn-primary wk-fullpage__action-btn wk-fullpage__action-btn--primary"
+            onClick={handleLockedContractClick}
+            animate={isShaking ? { x: [0, -8, 8, -6, 6, -3, 3, 0] } : { x: 0 }}
+            transition={{ duration: 0.45, ease: 'easeInOut' }}
+            className="btn wk-fullpage__action-btn wk-fullpage__action-btn--locked"
+            aria-label="Contratar Servicio (Bloqueado: el profesional debe aceptar la petición para hacer la reserva)"
+            title="El profesional debe aceptar la petición para hacer la reserva"
           >
-            <Calendar size={17} aria-hidden="true" />
-            {worker.isPaused ? 'Pausado' : worker.available ? 'Contratar Servicio' : 'No disponible'}
-          </button>
+            <Lock size={15} aria-hidden="true" className="wk-locked-icon" />
+            <span>Contratar Servicio</span>
+            <span className="wk-locked-tag">Bloqueado</span>
+          </motion.button>
         </div>
       </header>
+
+      {/* ── AVISO ANIMADO DE BLOQUEO DE RESERVA ── */}
+      <AnimatePresence>
+        {showLockedNotice && (
+          <motion.div
+            id="wk-locked-notice"
+            initial={{ opacity: 0, y: -12, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 450, damping: 28 }}
+            className="wk-locked-notice"
+            role="alert"
+          >
+            <div className="wk-locked-notice__icon-wrap">
+              <Lock size={20} aria-hidden="true" />
+            </div>
+            <div className="wk-locked-notice__content">
+              <strong className="wk-locked-notice__title">
+                El profesional debe aceptar la petición para hacer la reserva
+              </strong>
+              <p className="wk-locked-notice__desc">
+                Para coordinar disponibilidad y tarifas, primero debes enviar una petición de servicio. Una vez <strong>{worker.name}</strong> la revise y la acepte en el chat, se formalizará la reserva.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLockedNotice(false);
+                  handleToggleFlow('peticion');
+                }}
+                className="btn btn-primary wk-locked-notice__btn"
+              >
+                <Send size={14} aria-hidden="true" />
+                Enviar petición ahora
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowLockedNotice(false)}
+              className="wk-locked-notice__close"
+              aria-label="Cerrar aviso"
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── FORMULARIO INLINE LIMPIO (SIN POP-UPS) ── */}
+      <AnimatePresence>
+        {inlineFlow && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+            style={{ overflow: 'hidden' }}
+          >
+            <WorkerInlineHireFlow
+              worker={worker}
+              mode={inlineFlow}
+              onModeChange={setInlineFlow}
+              onClose={() => setInlineFlow(null)}
+              onSubmit={handleFlowSubmit}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Alerta si el perfil se encuentra suspendido */}
       {worker.isPaused && (
@@ -605,33 +716,30 @@ export const WorkerProfileView: React.FC<WorkerProfileViewProps> = ({
         </AnimatePresence>
       </main>
 
-      {/* ── BARRA FLOTANTE MÓVIL DE CONTACTO INMEDIATO ── */}
+      {/* ── BARRA FLOTANTE MÓVIL DE ACCIONES RÁPIDAS (Sin botón de chatear) ── */}
       <div className="wk-fullpage__floating-bar" aria-label="Acciones rápidas móviles">
         <button
           type="button"
-          onClick={() => onOpenChat(worker)}
-          className="btn btn-secondary wk-fullpage__floating-btn"
+          onClick={() => handleToggleFlow('peticion')}
+          className={`btn wk-fullpage__floating-btn ${inlineFlow === 'peticion' ? 'btn-primary' : 'btn-secondary'}`}
+          disabled={worker.isPaused}
         >
-          <MessageCircle size={18} aria-hidden="true" /> Chatear
+          <Send size={18} aria-hidden="true" />
+          {inlineFlow === 'peticion' ? 'Cerrar petición' : 'Enviar petición'}
         </button>
 
-        {canBook ? (
-          <SlideConfirm
-            width={260}
-            label="Desliza para contratar"
-            confirmedLabel="¡Contratado!"
-            onConfirm={() => onOpenBooking(worker)}
-          />
-        ) : (
-          <button
-            type="button"
-            disabled
-            className="btn btn-primary wk-fullpage__floating-btn wk-fullpage__floating-btn--primary"
-          >
-            <Calendar size={18} aria-hidden="true" />
-            {worker.isPaused ? 'Pausado' : 'No disponible'}
-          </button>
-        )}
+        <motion.button
+          type="button"
+          onClick={handleLockedContractClick}
+          animate={isShaking ? { x: [0, -8, 8, -6, 6, -3, 3, 0] } : { x: 0 }}
+          transition={{ duration: 0.45, ease: 'easeInOut' }}
+          className="btn wk-fullpage__floating-btn wk-fullpage__action-btn--locked"
+          aria-label="Contratar Servicio (Bloqueado)"
+        >
+          <Lock size={16} aria-hidden="true" className="wk-locked-icon" />
+          <span>Contratar Servicio</span>
+          <span className="wk-locked-tag">Bloqueado</span>
+        </motion.button>
       </div>
     </div>
   );

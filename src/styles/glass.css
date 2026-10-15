@@ -284,6 +284,8 @@ html.theme-dark .card { box-shadow: var(--glass-shine), var(--depth-1); }
 /* ── 8. Banda de página: panel líquido Azul Marino ───────────── */
 .oy-hero {
   isolation: isolate;
+  width: 100%;
+  box-sizing: border-box;
   margin: var(--space-4) 0 var(--space-8);
   padding: clamp(32px, 6vw, 72px) clamp(22px, 5vw, 56px);
   border: 1px solid rgba(255, 255, 255, 0.14);

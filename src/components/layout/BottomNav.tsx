@@ -16,8 +16,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   currentTab,
   onSelectTab,
   unreadCount = 0,
-  isChatOpen = false,
-  onToggleChat
+  isChatOpen: _isChatOpen = false,
+  onToggleChat: _onToggleChat
 }) => {
   const { role } = useAuth();
 
@@ -37,14 +37,10 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         { key: 'perfil', label: 'Perfil', Icon: User },
       ];
 
-  const activeKey = isChatOpen ? 'mensajes' : currentTab;
+  const activeKey = currentTab;
 
   const handleSelect = (key: string) => {
-    if (key === 'mensajes' && onToggleChat) {
-      onToggleChat();
-    } else {
-      onSelectTab(key);
-    }
+    onSelectTab(key);
   };
 
   return (

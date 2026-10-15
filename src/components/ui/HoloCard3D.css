@@ -42,6 +42,7 @@
   z-index: 12;
 }
 
+html.theme-dark .thibaut-holo-card::after,
 [data-theme="dark"] .thibaut-holo-card::after {
   border-color: rgba(255, 138, 80, 0.3);
 }

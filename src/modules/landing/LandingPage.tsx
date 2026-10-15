@@ -14,7 +14,7 @@ import { AppFooter } from '../../components/layout/AppFooter';
 import { TrueFocus } from '../../components/ui/TrueFocus';
 import { BRAND_ASSETS } from '../../utils/assets';
 import { PixelSwap } from '../../components/ui/PixelSwap';
-import { StrokeText, BorderGlow, DriftWall, CustomCursor, RollingText, RotaryDial, CursorQuickPrompt } from '../../components/ui';
+import { StrokeText, BorderGlow, DriftWall, RollingText, RotaryDial } from '../../components/ui';
 import type { DriftWallItem } from '../../components/ui';
 import { EditorialManifesto } from '../../components/landing/EditorialManifesto';
 import { AsymmetricShowcase } from '../../components/landing/AsymmetricShowcase';
@@ -340,13 +340,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
                 handleStartAsSeeker();
               }}
               className="lp-btn-liquid-3d"
-              data-cursor-text="Entrar"
-              aria-label="Iniciar sesión en OficioYa"
+              data-cursor-text="Iniciar Sesion"
+              aria-label="Iniciar Sesion en OficioYa"
             >
               <span className="lp-btn-liquid-3d__glare" aria-hidden="true" />
               <span className="lp-btn-liquid-3d__content">
                 <LogIn size={15} aria-hidden="true" />
-                <span>Iniciar sesión</span>
+                <span>Iniciar Sesion</span>
                 <ArrowRight size={14} className="lp-btn-liquid-3d__arrow" aria-hidden="true" />
               </span>
             </button>
@@ -619,12 +619,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
 
       {/* Botón Flotante para Volver Arriba (Item 7) */}
       <ScrollToTop />
-
-      {/* Búsqueda Rápida al Puntero con tecla '/' (Inspirado en bleibtgleich.dev) */}
-      <CursorQuickPrompt onSearch={handleStartAsSeeker} />
-
-      {/* Puntero Magnético de Alta Fidelidad (Inspirado en danilodemarco.com) */}
-      <CustomCursor />
     </div>
   );
 };

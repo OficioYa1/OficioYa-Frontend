@@ -34,6 +34,7 @@ import { GlassIcons } from '../../components/ui/GlassIcons';
 import type { GlassIconsColor } from '../../components/ui/GlassIcons';
 import { ProfileCard } from '../../components/ui/ProfileCard';
 import { PageHero } from '../../components/layout/PageHero';
+import { JellyRadio, type JellyRadioItem } from '../../components/ui/JellyRadio';
 import './Seeker.css';
 
 type SortKey = 'distancia' | 'reputacion' | 'precio' | 'trabajos';
@@ -320,6 +321,13 @@ const NLP_DICTIONARY: { keywords: string[]; trade: TradeCategory; label: string;
   }
 ];
 
+const SORT_OPTIONS: { value: SortKey; label: string; icon: React.ReactNode }[] = [
+  { value: 'distancia', label: 'Más cercanos', icon: <MapPin size={14} /> },
+  { value: 'reputacion', label: 'Mejor reputación', icon: <Star size={14} /> },
+  { value: 'precio', label: 'Menor tarifa', icon: <DollarSign size={14} /> },
+  { value: 'trabajos', label: 'Más trabajos', icon: <Hammer size={14} /> }
+];
+
 export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
   workers,
   userLocation,
@@ -581,12 +589,31 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
   const nlpApplied = Boolean(nlpMatch) && selectedCategory === nlpMatch?.trade;
   const selectedCategoryLabel = CATEGORIES.find(c => c.id === selectedCategory)?.label;
 
-  const SORT_OPTIONS: { value: SortKey; label: string; icon: React.ReactNode }[] = [
-    { value: 'distancia', label: 'Más cercanos', icon: <MapPin size={14} /> },
-    { value: 'reputacion', label: 'Mejor reputación', icon: <Star size={14} /> },
-    { value: 'precio', label: 'Menor tarifa', icon: <DollarSign size={14} /> },
-    { value: 'trabajos', label: 'Más trabajos', icon: <Hammer size={14} /> }
-  ];
+  const tradeCategoryItems: JellyRadioItem[] = useMemo(
+    () => [
+      {
+        value: 'todos',
+        label: 'Todos los oficios',
+        icon: <Search size={14} aria-hidden="true" />
+      },
+      ...CATEGORIES.map(c => ({
+        value: c.id,
+        label: c.label,
+        icon: c.icon
+      }))
+    ],
+    []
+  );
+
+  const sortItems: JellyRadioItem[] = useMemo(
+    () =>
+      SORT_OPTIONS.map(opt => ({
+        value: opt.value,
+        label: opt.label,
+        icon: opt.icon
+      })),
+    []
+  );
 
   return (
     <div className="seeker-directory">
@@ -705,46 +732,30 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
         />
       </section>
 
-      {/* Oficios en chips (RF-12) */}
-      <div className="seeker-chip-row" role="group" aria-label="Filtrar por oficio">
-        <button
-          type="button"
-          className="oy-chip"
-          aria-pressed={!selectedCategory}
-          onClick={() => handleCategoryChange('todos')}
-        >
-          <Search size={14} aria-hidden="true" /> Todos los oficios
-        </button>
-        {CATEGORIES.map(c => (
-          <button
-            key={c.id}
-            type="button"
-            className="oy-chip"
-            aria-pressed={selectedCategory === c.id}
-            onClick={() => handleCategoryChange(c.id)}
-          >
-            {c.icon} {c.label}
-          </button>
-        ))}
+      {/* Oficios con JellyRadio (RF-12) */}
+      <div className="seeker-jelly-scroll" role="group" aria-label="Filtrar por oficio">
+        <JellyRadio
+          items={tradeCategoryItems}
+          value={selectedCategory || 'todos'}
+          onChange={(val) => handleCategoryChange(val)}
+          ariaLabel="Filtrar por oficio"
+          size="md"
+        />
       </div>
 
-      {/* Orden (RF-17, RF-18) y disponibilidad inmediata (RF-32) */}
+      {/* Orden (RF-17, RF-18) y disponibilidad inmediata (RF-32) con JellyRadio */}
       <div className="seeker-sortbar">
         <div className="seeker-sortbar__group" role="group" aria-label="Ordenar resultados">
           <span className="oy-label seeker-sortbar__label">
-            <ArrowUpDown size={14} aria-hidden="true" /> Ordenar
+            <ArrowUpDown size={14} aria-hidden="true" /> ORDENAR
           </span>
-          {SORT_OPTIONS.map(opt => (
-            <button
-              key={opt.value}
-              type="button"
-              className="oy-chip"
-              aria-pressed={sortBy === opt.value}
-              onClick={() => setSortBy(opt.value)}
-            >
-              {opt.icon} {opt.label}
-            </button>
-          ))}
+          <JellyRadio
+            items={sortItems}
+            value={sortBy}
+            onChange={(val) => setSortBy(val as SortKey)}
+            ariaLabel="Ordenar resultados"
+            size="sm"
+          />
         </div>
         <div className="seeker-available-toggle">
           <span>Disponibles ya</span>
@@ -881,8 +892,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
                         <strong>${worker.hourlyRate.toLocaleString()}/h</strong>
                       </span>
                     }
-                    contactText="Ver perfil"
-                    onContactClick={() => onSelectWorker(worker)}
+                    onClick={() => onSelectWorker(worker)}
                     headingLevel={3}
                     frame="almendra"
                     className="seeker-profile-card"
@@ -1128,7 +1138,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
                         </span>
                         <span className="seeker-catalog-card__foot">
                           <span>Tarifa ref.: ${cat.avgRate.toLocaleString()} COP/h</span>
-                          <span className="seeker-catalog-card__cta">Explorar &rarr;</span>
+                          <span className="seeker-catalog-card__cta">Iniciar Sesion &rarr;</span>
                         </span>
                       </button>
                     </li>

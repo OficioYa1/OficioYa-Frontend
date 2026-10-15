@@ -17,7 +17,7 @@ import {
   Inbox
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Logo, StaggeredMenu, GlassDock } from '../ui';
+import { Logo, StaggeredMenu } from '../ui';
 import type { StaggeredMenuItem } from '../ui';
 import { AppMenu } from './AppMenu';
 import './AppHeader.css';
@@ -46,7 +46,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   currentTab,
   onSelectTab,
   unreadCount,
-  isChatOpen,
+  isChatOpen: _isChatOpen,
   onToggleChat,
   notificationCount = 0,
   onOpenNotifications
@@ -77,8 +77,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         ];
 
   const handleNavSelect = (id: string) => {
-    if (id === 'mensajes') onToggleChat?.();
-    else onSelectTab(id);
+    onSelectTab(id);
   };
 
   const menuItems: StaggeredMenuItem[] = navTabs.map(tab => ({
@@ -86,7 +85,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     label: tab.label,
     icon: tab.icon,
     badge: tab.badge,
-    active: tab.id === 'mensajes' ? !!isChatOpen : currentTab === tab.id
+    active: currentTab === tab.id
   }));
 
   return (
@@ -111,23 +110,20 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </button>
         </div>
 
-        {/* Navegación principal en dock — escritorio */}
-        <div className="app-header__dock-wrap">
-          <GlassDock
-            items={navTabs.map(tab => ({
-              key: tab.id,
-              label: tab.label,
-              Icon: tab.icon,
-              badge: tab.badge,
-            }))}
-            active={isChatOpen ? 'mensajes' : currentTab}
-            onSelect={handleNavSelect}
-            magnify={1.28}
-            spread={1.5}
-            lift={6}
-            labels={true}
-          />
-        </div>
+        {/* Navegación principal en píldora — escritorio */}
+        <nav className="app-header__nav" aria-label="Navegación principal">
+          {navTabs.map(tab => (
+            <TabButton
+              key={tab.id}
+              id={tab.id}
+              label={tab.label}
+              icon={tab.icon}
+              current={currentTab}
+              onSelect={handleNavSelect}
+              badge={tab.badge}
+            />
+          ))}
+        </nav>
 
         <div className="app-header__actions">
           {/* Menú principal en móvil (≤ 767 px); en escritorio queda el nav en píldora */}
@@ -211,9 +207,11 @@ const TabButton = ({ id, label, icon: Icon, current, onSelect, badge = 0 }: TabB
       aria-current={active ? 'page' : undefined}
       className={`app-header__tab${active ? ' app-header__tab--active' : ''}`}
     >
-      <Icon size={20} strokeWidth={active ? 2.5 : 2} aria-hidden={true} />
+      <span className="app-header__tab-icon-wrap">
+        <Icon size={20} strokeWidth={active ? 2.5 : 2} aria-hidden={true} />
+        {badge > 0 && <span className="app-header__badge" aria-hidden="true">{badge}</span>}
+      </span>
       {active && <span className="app-header__tab-label">{label}</span>}
-      {badge > 0 && <span className="app-header__badge" aria-hidden="true">{badge}</span>}
     </button>
   );
 };

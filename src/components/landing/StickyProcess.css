@@ -6,12 +6,13 @@
   transition: background-color 0.3s ease;
 }
 
+html.theme-dark .ollivere-process-section,
 [data-theme="dark"] .ollivere-process-section {
   background: #0B1430;
 }
 
 .ollivere-process-wrap {
-  max-width: 1180px;
+  max-width: 1540px;
   margin: 0 auto;
 }
 
@@ -44,6 +45,7 @@
   margin: 0 0 1rem;
 }
 
+html.theme-dark .ollivere-process-title,
 [data-theme="dark"] .ollivere-process-title {
   color: #FBF4EA;
 }
@@ -56,8 +58,9 @@
   margin: 0 auto;
 }
 
+html.theme-dark .ollivere-process-desc,
 [data-theme="dark"] .ollivere-process-desc {
-  color: rgba(251, 244, 234, 0.75);
+  color: rgba(251, 244, 234, 0.85);
 }
 
 /* Barra de progreso interactiva estilo Martin Ollivere */
@@ -75,8 +78,9 @@
   box-shadow: 4px 6px 0 var(--stroke-ink, #3E1F14);
 }
 
+html.theme-dark .ollivere-sticky-header,
 [data-theme="dark"] .ollivere-sticky-header {
-  background: rgba(11, 20, 48, 0.85);
+  background: rgba(11, 20, 48, 0.88);
   border-color: rgba(255, 138, 80, 0.4);
   box-shadow: 4px 6px 0 rgba(255, 138, 80, 0.3);
 }
@@ -91,6 +95,7 @@
   margin-bottom: 1rem;
 }
 
+html.theme-dark .ollivere-progress-track,
 [data-theme="dark"] .ollivere-progress-track {
   background: rgba(255, 138, 80, 0.15);
 }
@@ -130,8 +135,9 @@
   cursor: pointer;
 }
 
+html.theme-dark .ollivere-step-pill,
 [data-theme="dark"] .ollivere-step-pill {
-  color: rgba(251, 244, 234, 0.5);
+  color: rgba(251, 244, 234, 0.65);
 }
 
 .ollivere-step-pill.is-active {
@@ -139,31 +145,32 @@
   background: rgba(230, 81, 0, 0.1);
 }
 
+html.theme-dark .ollivere-step-pill.is-active,
+[data-theme="dark"] .ollivere-step-pill.is-active {
+  background: rgba(230, 81, 0, 0.22);
+  color: #FFA726;
+}
+
 .ollivere-step-pill__num {
-  font-family: var(--font-display, 'DM Sans', sans-serif);
-  font-size: 0.9375rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
   font-weight: 800;
+  opacity: 0.85;
 }
 
-/* Grilla visual con tarjetas deslizantes */
-.ollivere-cards-grid {
+/* Grilla de tarjetas de proceso estilo editorial */
+.ollivere-process-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 2rem;
-}
-
-@media (max-width: 860px) {
-  .ollivere-cards-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .ollivere-card {
   position: relative;
-  background: var(--bg-surface, #FFFFFF);
-  border: 1.5px solid var(--stroke-ink, #3E1F14);
+  background: #FFFFFF;
+  border: 2px solid var(--stroke-ink, #3E1F14);
   border-radius: 20px;
-  padding: clamp(1.75rem, 3.5vw, 2.5rem);
+  padding: clamp(1.5rem, 3vw, 2.25rem);
   box-shadow: 4px 6px 0 var(--stroke-ink, #3E1F14);
   display: flex;
   flex-direction: column;
@@ -173,6 +180,7 @@
               box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+html.theme-dark .ollivere-card,
 [data-theme="dark"] .ollivere-card {
   background: #142247;
   border-color: rgba(255, 138, 80, 0.4);
@@ -184,6 +192,7 @@
   box-shadow: 6px 10px 0 var(--stroke-ink, #3E1F14);
 }
 
+html.theme-dark .ollivere-card:hover,
 [data-theme="dark"] .ollivere-card:hover {
   box-shadow: 6px 10px 0 rgba(255, 138, 80, 0.6);
 }
@@ -209,6 +218,7 @@
   margin: 0 0 0.75rem;
 }
 
+html.theme-dark .ollivere-card__title,
 [data-theme="dark"] .ollivere-card__title {
   color: #FBF4EA;
 }
@@ -221,8 +231,9 @@
   margin: 0 0 1.5rem;
 }
 
+html.theme-dark .ollivere-card__desc,
 [data-theme="dark"] .ollivere-card__desc {
-  color: rgba(251, 244, 234, 0.75);
+  color: rgba(251, 244, 234, 0.85);
 }
 
 .ollivere-card__detail {
@@ -238,7 +249,8 @@
   color: var(--stroke-ink, #3E1F14);
 }
 
+html.theme-dark .ollivere-card__detail,
 [data-theme="dark"] .ollivere-card__detail {
-  background: rgba(255, 138, 80, 0.1);
+  background: rgba(255, 138, 80, 0.15);
   color: #FBF4EA;
 }

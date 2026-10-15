@@ -7,12 +7,13 @@
   overflow: hidden;
 }
 
+html.theme-dark .thibaut-inspector-section,
 [data-theme="dark"] .thibaut-inspector-section {
   background: #0B1430;
 }
 
 .thibaut-inspector-wrap {
-  max-width: 1180px;
+  max-width: 1540px;
   margin: 0 auto;
 }
 
@@ -45,6 +46,7 @@
   margin: 0 0 1rem;
 }
 
+html.theme-dark .thibaut-inspector-title,
 [data-theme="dark"] .thibaut-inspector-title {
   color: #FBF4EA;
 }
@@ -57,8 +59,9 @@
   margin: 0;
 }
 
+html.theme-dark .thibaut-inspector-sub,
 [data-theme="dark"] .thibaut-inspector-sub {
-  color: rgba(251, 244, 234, 0.75);
+  color: rgba(251, 244, 234, 0.85);
 }
 
 /* Consola de hardware translúcido retro estilo iMac G3 / Macintosh */
@@ -74,8 +77,9 @@
   overflow: hidden;
 }
 
+html.theme-dark .thibaut-console,
 [data-theme="dark"] .thibaut-console {
-  background: rgba(20, 34, 71, 0.85);
+  background: rgba(20, 34, 71, 0.88);
   border-color: rgba(255, 138, 80, 0.5);
   box-shadow: 6px 8px 0 rgba(255, 138, 80, 0.35);
 }
@@ -92,8 +96,9 @@
   gap: 1rem;
 }
 
+html.theme-dark .thibaut-console__topbar,
 [data-theme="dark"] .thibaut-console__topbar {
-  border-color: rgba(255, 138, 80, 0.2);
+  border-color: rgba(255, 138, 80, 0.25);
 }
 
 .thibaut-console__dots {
@@ -124,9 +129,10 @@
   letter-spacing: 0.08em;
 }
 
+html.theme-dark .thibaut-console__tag,
 [data-theme="dark"] .thibaut-console__tag {
   color: #FBF4EA;
-  background: rgba(255, 138, 80, 0.15);
+  background: rgba(255, 138, 80, 0.2);
 }
 
 /* Selector de pestañas táctiles con clics de hardware */
@@ -163,6 +169,7 @@
               color 0.2s ease;
 }
 
+html.theme-dark .thibaut-console__tab-btn,
 [data-theme="dark"] .thibaut-console__tab-btn {
   background: #142247;
   color: #FBF4EA;
@@ -179,6 +186,14 @@
   color: #FFFFFF;
   border-color: var(--stroke-ink, #3E1F14);
   box-shadow: 3px 4px 0 var(--stroke-ink, #3E1F14);
+}
+
+html.theme-dark .thibaut-console__tab-btn.is-active,
+[data-theme="dark"] .thibaut-console__tab-btn.is-active {
+  background: var(--color-brand-primary, #E65100);
+  color: #FFFFFF;
+  border-color: rgba(255, 138, 80, 0.8);
+  box-shadow: 3px 4px 0 rgba(255, 138, 80, 0.6);
 }
 
 /* Cuerpo de la ficha técnica: Despiece de herramientas + Especificaciones */
@@ -242,6 +257,7 @@
   margin: 0;
 }
 
+html.theme-dark .thibaut-specs__trade-name,
 [data-theme="dark"] .thibaut-specs__trade-name {
   color: #FBF4EA;
 }
@@ -264,6 +280,7 @@
   font-size: 0.875rem;
 }
 
+html.theme-dark .thibaut-spec-row,
 [data-theme="dark"] .thibaut-spec-row {
   background: rgba(255, 138, 80, 0.07);
   border-color: rgba(255, 138, 80, 0.15);
@@ -274,8 +291,9 @@
   color: rgba(62, 31, 20, 0.75);
 }
 
+html.theme-dark .thibaut-spec-row__label,
 [data-theme="dark"] .thibaut-spec-row__label {
-  color: rgba(251, 244, 234, 0.75);
+  color: rgba(251, 244, 234, 0.85);
 }
 
 .thibaut-spec-row__value {

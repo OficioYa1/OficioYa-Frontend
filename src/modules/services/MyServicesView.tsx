@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { PageHero } from '../../components/layout/PageHero';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 import { mediaService, MediaUploadError } from '../../services/mock/mediaService';
+import { motion, AnimatePresence } from 'motion/react';
 import './Services.css';
 import {
   Wrench,
@@ -73,27 +74,24 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
   const { role } = useAuth();
   const [filterStatus, setFilterStatus] = useState<ServiceStatus | 'todos'>('todos');
 
-  // Modal Cancelación con justificación obligatoria (RF-76)
-  const [cancellingService, setCancellingService] = useState<ServiceRequest | null>(null);
-  const [selectedReason, setSelectedReason] = useState<string>(CANCEL_REASONS[0]);
-  const otherReason = '';
+  type InlineActionType = 'complete' | 'cancel' | 'review';
+  const [activeInlineAction, setActiveInlineAction] = useState<{
+    serviceId: string;
+    type: InlineActionType;
+  } | null>(null);
 
-  // Modal Finalización con Evidencia Fotográfica (RF-62, RF-29)
-  const [completingService, setCompletingService] = useState<ServiceRequest | null>(null);
+  // Formulario Cancelación con justificación obligatoria (RF-76)
+  const [selectedReason, setSelectedReason] = useState<string>(CANCEL_REASONS[0]);
+
+  // Formulario Finalización con Evidencia Fotográfica (RF-62, RF-29)
   const [completionPhotoUrl, setCompletionPhotoUrl] = useState<string>('');
   const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
   const [evidenceError, setEvidenceError] = useState<string | null>(null);
 
-  // Modal Calificación Bilateral (RF-34, RF-35, RF-36)
-  const [reviewingService, setReviewingService] = useState<ServiceRequest | null>(null);
+  // Formulario Calificación Bilateral (RF-34, RF-35, RF-36)
   const [reviewRating, setReviewRating] = useState<number>(5);
   const [reviewComment, setReviewComment] = useState<string>('');
   const [reviewSuccess, setReviewSuccess] = useState<boolean>(false);
-
-  // Trabajador calificando al contratante (RF-35)
-  const [ratingClientService, setRatingClientService] = useState<ServiceRequest | null>(null);
-  const [clientRatingValue, setClientRatingValue] = useState<number>(5);
-  const [clientRatingComment, setClientRatingComment] = useState<string>('Excelente cliente, trato muy amable y pago puntual.');
 
   // Vista de estadísticas / más solicitados (RF-46)
   const [showStatsModal, setShowStatsModal] = useState(false);
@@ -127,17 +125,9 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
     ).values()
   );
 
-  const handleConfirmCancel = () => {
-    if (!cancellingService) return;
-    const finalReason = selectedReason === 'Otro motivo' ? otherReason : selectedReason;
-    onUpdateServiceStatus(cancellingService.id, 'cancelado', finalReason);
-    setCancellingService(null);
-  };
-
-  const handleConfirmFinalize = (service: ServiceRequest) => {
-    setCompletionPhotoUrl('');
-    setEvidenceError(null);
-    setCompletingService(service);
+  const handleConfirmCancel = (srv: ServiceRequest) => {
+    onUpdateServiceStatus(srv.id, 'cancelado', selectedReason);
+    setActiveInlineAction(null);
   };
 
   // RF-62: foto del trabajo terminado tomada con la cámara o elegida de la galería
@@ -159,48 +149,41 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
 
   // RF-78: el profesional cambia el estado (Pendiente / En progreso / Finalizado)
   const handleProviderStatus = (service: ServiceRequest, next: ServiceStatus) => {
-    if (next === 'finalizado') handleConfirmFinalize(service);
-    else onUpdateServiceStatus(service.id, next);
+    if (next === 'finalizado') {
+      setCompletionPhotoUrl('');
+      setEvidenceError(null);
+      setActiveInlineAction({ serviceId: service.id, type: 'complete' });
+    } else {
+      onUpdateServiceStatus(service.id, next);
+    }
   };
 
-  const handleExecuteFinalize = () => {
-    if (!completingService) return;
+  const handleExecuteFinalize = (srv: ServiceRequest) => {
     const evidence = completionPhotoUrl.trim();
     onUpdateServiceStatus(
-      completingService.id,
+      srv.id,
       'finalizado',
       undefined,
       evidence ? { completionEvidence: [evidence] } : undefined
     );
-    const finalized = completingService;
-    setCompletingService(null);
-
-    // Habilitar calificación bilateral (RF-29, RF-34, RF-35)
-    if (role === 'seeker') {
-      setReviewingService(finalized);
-      setReviewRating(5);
-      setReviewComment('');
-      setReviewSuccess(false);
-    } else {
-      setRatingClientService(finalized);
-    }
+    // Habilitar calificación bilateral inmediata desplegada inline
+    setReviewRating(5);
+    setReviewComment(role === 'seeker' ? '' : 'Excelente cliente, trato muy amable y pago puntual.');
+    setReviewSuccess(false);
+    setActiveInlineAction({ serviceId: srv.id, type: 'review' });
   };
 
-  const handleSendReview = () => {
-    if (!reviewingService) return;
-    onSubmitReview(reviewingService.id, reviewRating, reviewComment);
+  const handleSendReview = (srv: ServiceRequest) => {
+    if (role === 'seeker') {
+      onSubmitReview(srv.id, reviewRating, reviewComment);
+    } else {
+      onRateClient?.(srv.id, reviewRating, reviewComment);
+    }
     setReviewSuccess(true);
     setTimeout(() => {
-      setReviewingService(null);
+      setActiveInlineAction(null);
       setReviewSuccess(false);
     }, 1800);
-  };
-
-  const handleSendClientRating = () => {
-    if (ratingClientService) {
-      onRateClient?.(ratingClientService.id, clientRatingValue, clientRatingComment);
-    }
-    setRatingClientService(null);
   };
 
   const isSeeker = role === 'seeker';
@@ -384,7 +367,19 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                             <Clock size={13} aria-hidden="true" /> Esperando respuesta del profesional
                           </span>
                         )}
-                        <button onClick={() => setCancellingService(srv)} className="btn btn-secondary svc-btn-cancel">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'cancel') {
+                              setActiveInlineAction(null);
+                            } else {
+                              setSelectedReason(CANCEL_REASONS[0]);
+                              setActiveInlineAction({ serviceId: srv.id, type: 'cancel' });
+                            }
+                          }}
+                          className="btn btn-secondary svc-btn-cancel"
+                          aria-expanded={activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'cancel'}
+                        >
                           <XCircle size={15} aria-hidden="true" /> {isSeeker ? 'Retirar solicitud' : 'Rechazar'}
                         </button>
                       </>
@@ -392,11 +387,36 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
 
                     {srv.status === 'en_curso' && (
                       <>
-                        <button onClick={() => handleConfirmFinalize(srv)} className="btn btn-primary svc-btn-complete">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'complete') {
+                              setActiveInlineAction(null);
+                            } else {
+                              setCompletionPhotoUrl('');
+                              setEvidenceError(null);
+                              setActiveInlineAction({ serviceId: srv.id, type: 'complete' });
+                            }
+                          }}
+                          className="btn btn-primary svc-btn-complete"
+                          aria-expanded={activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'complete'}
+                        >
                           <CheckCircle2 size={15} aria-hidden="true" /> Marcar Completado
                         </button>
 
-                        <button onClick={() => setCancellingService(srv)} className="btn btn-secondary svc-btn-cancel">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'cancel') {
+                              setActiveInlineAction(null);
+                            } else {
+                              setSelectedReason(CANCEL_REASONS[0]);
+                              setActiveInlineAction({ serviceId: srv.id, type: 'cancel' });
+                            }
+                          }}
+                          className="btn btn-secondary svc-btn-cancel"
+                          aria-expanded={activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'cancel'}
+                        >
                           <XCircle size={15} aria-hidden="true" /> Cancelar Servicio
                         </button>
                       </>
@@ -411,12 +431,19 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                             </span>
                           ) : (
                             <button
+                              type="button"
                               onClick={() => {
-                                setReviewingService(srv);
-                                setReviewRating(5);
-                                setReviewComment('');
+                                if (activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'review') {
+                                  setActiveInlineAction(null);
+                                } else {
+                                  setReviewRating(5);
+                                  setReviewComment('');
+                                  setReviewSuccess(false);
+                                  setActiveInlineAction({ serviceId: srv.id, type: 'review' });
+                                }
                               }}
                               className="btn btn-primary svc-btn-sm"
+                              aria-expanded={activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'review'}
                             >
                               <Star size={14} aria-hidden="true" /> Calificar Profesional
                             </button>
@@ -426,7 +453,21 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                             <CheckCircle2 size={14} aria-hidden="true" /> Contratante calificado ({srv.clientRatingByWorker}/5)
                           </span>
                         ) : (
-                          <button onClick={() => setRatingClientService(srv)} className="btn btn-secondary svc-btn-sm">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'review') {
+                                setActiveInlineAction(null);
+                              } else {
+                                setReviewRating(5);
+                                setReviewComment('Excelente cliente, trato muy amable y pago puntual.');
+                                setReviewSuccess(false);
+                                setActiveInlineAction({ serviceId: srv.id, type: 'review' });
+                              }
+                            }}
+                            className="btn btn-secondary svc-btn-sm"
+                            aria-expanded={activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'review'}
+                          >
                             <Star size={14} aria-hidden="true" /> Calificar Contratante
                           </button>
                         )}
@@ -438,232 +479,274 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                     )}
                   </div>
                 )}
+
+                {/* Formulario Desplegable Animado Inline (Sin Popups) */}
+                <AnimatePresence>
+                  {activeInlineAction?.serviceId === srv.id && (
+                    <motion.div
+                      key={`inline-${activeInlineAction.type}-${srv.id}`}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                      className={`svc-inline-form svc-inline-form--${activeInlineAction.type}`}
+                      style={{ overflow: 'hidden' }}
+                    >
+                      {/* FORMULARIO DE COMPLETAR */}
+                      {activeInlineAction.type === 'complete' && (
+                        <>
+                          <div className="svc-inline-form__header">
+                            <div className="svc-inline-form__title-row">
+                              <span className="svc-inline-form__icon svc-inline-form__icon--esmeralda" aria-hidden="true">
+                                <Camera size={18} />
+                              </span>
+                              <div>
+                                <h4 className="svc-inline-form__title">Finalizar Trabajo</h4>
+                                <span className="svc-muted" style={{ fontSize: '11.5px' }}>
+                                  Adjunta evidencia fotográfica opcional del arreglo terminado
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              className="oy-icon-btn svc-inline-form__close"
+                              onClick={() => setActiveInlineAction(null)}
+                              aria-label="Cerrar formulario"
+                            >
+                              <X size={15} />
+                            </button>
+                          </div>
+
+                          <div className="svc-inline-form__body">
+                            <div className="svc-inline-upload-box">
+                              <label htmlFor={`inline-photo-${srv.id}`} className="svc-inline-upload-btn">
+                                <Camera size={16} aria-hidden="true" />
+                                <span>{isUploadingEvidence ? 'Subiendo foto…' : 'Tomar o subir foto de evidencia'}</span>
+                              </label>
+                              <input
+                                id={`inline-photo-${srv.id}`}
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                style={{ display: 'none' }}
+                                onChange={handleEvidenceFile}
+                                disabled={isUploadingEvidence}
+                              />
+                              {evidenceError && (
+                                <span className="svc-muted" role="alert" style={{ color: 'var(--color-danger)' }}>
+                                  {evidenceError}
+                                </span>
+                              )}
+
+                              <div className="svc-inline-url-row">
+                                <input
+                                  type="text"
+                                  className="input-base svc-inline-input"
+                                  value={completionPhotoUrl.startsWith('data:') ? '' : completionPhotoUrl}
+                                  onChange={e => setCompletionPhotoUrl(e.target.value)}
+                                  placeholder="O pega una URL de la imagen..."
+                                />
+                              </div>
+
+                              {completionPhotoUrl && (
+                                <div className="svc-inline-preview">
+                                  <img src={completionPhotoUrl} alt="Vista previa de evidencia" />
+                                  <button
+                                    type="button"
+                                    className="svc-inline-remove-photo"
+                                    onClick={() => setCompletionPhotoUrl('')}
+                                    aria-label="Quitar foto"
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="svc-inline-form__actions">
+                              <button
+                                type="button"
+                                onClick={() => setActiveInlineAction(null)}
+                                className="btn btn-secondary"
+                              >
+                                Cancelar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleExecuteFinalize(srv)}
+                                className="btn btn-primary svc-btn-complete"
+                                disabled={isUploadingEvidence}
+                              >
+                                <CheckCircle2 size={14} aria-hidden="true" /> Confirmar y Finalizar
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* FORMULARIO DE CANCELAR */}
+                      {activeInlineAction.type === 'cancel' && (
+                        <>
+                          <div className="svc-inline-form__header">
+                            <div className="svc-inline-form__title-row">
+                              <span className="svc-inline-form__icon svc-inline-form__icon--danger" aria-hidden="true">
+                                <XCircle size={18} />
+                              </span>
+                              <div>
+                                <h4 className="svc-inline-form__title">
+                                  {srv.status === 'pendiente'
+                                    ? (isSeeker ? 'Retirar Solicitud' : 'Rechazar Solicitud')
+                                    : 'Cancelar Servicio en Progreso'}
+                                </h4>
+                                <span className="svc-muted" style={{ fontSize: '11.5px' }}>
+                                  Por transparencia y reputación, selecciona el motivo obligatorio
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              className="oy-icon-btn svc-inline-form__close"
+                              onClick={() => setActiveInlineAction(null)}
+                              aria-label="Cerrar formulario"
+                            >
+                              <X size={15} />
+                            </button>
+                          </div>
+
+                          <div className="svc-inline-form__body">
+                            <fieldset className="svc-reasons svc-reasons--compact">
+                              <legend className="sr-only">Motivo de cancelación</legend>
+                              {CANCEL_REASONS.map((r, i) => (
+                                <label
+                                  key={i}
+                                  className="svc-reason svc-reason--compact"
+                                  data-checked={selectedReason === r ? '' : undefined}
+                                >
+                                  <input
+                                    type="radio"
+                                    name={`cancelReason-${srv.id}`}
+                                    checked={selectedReason === r}
+                                    onChange={() => setSelectedReason(r)}
+                                  />
+                                  <span>{r}</span>
+                                </label>
+                              ))}
+                            </fieldset>
+
+                            <div className="svc-inline-form__actions">
+                              <button
+                                type="button"
+                                onClick={() => setActiveInlineAction(null)}
+                                className="btn btn-secondary"
+                              >
+                                Volver
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleConfirmCancel(srv)}
+                                className="btn btn-primary svc-btn-danger"
+                              >
+                                <XCircle size={14} aria-hidden="true" /> Confirmar Cancelación
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* FORMULARIO DE CALIFICAR */}
+                      {activeInlineAction.type === 'review' && (
+                        <>
+                          {!reviewSuccess ? (
+                            <>
+                              <div className="svc-inline-form__header">
+                                <div className="svc-inline-form__title-row">
+                                  <span className="svc-inline-form__icon svc-inline-form__icon--amarillo" aria-hidden="true">
+                                    <Star size={18} />
+                                  </span>
+                                  <div>
+                                    <h4 className="svc-inline-form__title">
+                                      {isSeeker
+                                        ? `Calificar a ${srv.workerName}`
+                                        : `Calificar al Contratante ${srv.clientName}`}
+                                    </h4>
+                                    <span className="svc-muted" style={{ fontSize: '11.5px' }}>
+                                      {isSeeker
+                                        ? `Vinculada a la orden verificada ${srv.id}`
+                                        : 'Valora el trato, las facilidades y la puntualidad'}
+                                    </span>
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  className="oy-icon-btn svc-inline-form__close"
+                                  onClick={() => setActiveInlineAction(null)}
+                                  aria-label="Cerrar formulario"
+                                >
+                                  <X size={15} />
+                                </button>
+                              </div>
+
+                              <div className="svc-inline-form__body">
+                                <div className="svc-rating svc-rating--compact">
+                                  <PeekRating
+                                    value={reviewRating}
+                                    onChange={v => setReviewRating(v || 1)}
+                                    allowClear={false}
+                                    size={28}
+                                    ariaLabel={isSeeker ? 'Calificación del profesional' : 'Calificación del contratante'}
+                                  />
+                                </div>
+
+                                <textarea
+                                  className="input-base svc-inline-textarea"
+                                  rows={2}
+                                  aria-label={isSeeker ? 'Comentario de la reseña' : 'Comentario sobre el contratante'}
+                                  placeholder={
+                                    isSeeker
+                                      ? 'Puntualidad, calidad técnica y cumplimiento del servicio...'
+                                      : 'Trato amable, facilidades brindadas y pago puntual...'
+                                  }
+                                  value={reviewComment}
+                                  onChange={e => setReviewComment(e.target.value)}
+                                />
+
+                                <div className="svc-inline-form__actions">
+                                  <button
+                                    type="button"
+                                    onClick={() => setActiveInlineAction(null)}
+                                    className="btn btn-secondary"
+                                  >
+                                    Omitir
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSendReview(srv)}
+                                    className="btn btn-primary"
+                                  >
+                                    <Star size={14} aria-hidden="true" /> Publicar Calificación
+                                  </button>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="svc-inline-success" role="status">
+                              <MascotAvatar expression="entusiasta" size="sm" animate="none" />
+                              <div>
+                                <h5 style={{ margin: 0, fontSize: '13px', fontWeight: 800 }}>¡Calificación Registrada!</h5>
+                                <p className="svc-muted" style={{ margin: 0, fontSize: '11.5px' }}>
+                                  La reputación digital se actualizó en tiempo real.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </article>
             );
           })}
-        </div>
-      )}
-
-      {/* Modal Finalizar Trabajo con Evidencia Fotográfica (RF-29, RF-62) */}
-      {completingService && (
-        <div className="oy-modal-backdrop svc-backdrop">
-          <div
-            className="oy-modal svc-modal svc-modal--esmeralda svc-modal--md"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="svc-finalize-title"
-          >
-            <div className="oy-modal__head">
-              <div className="svc-modal__headline">
-                <span className="svc-modal__icon" aria-hidden="true"><Camera size={22} /></span>
-                <div>
-                  <h3 id="svc-finalize-title" className="oy-modal__title">Finalizar Trabajo</h3>
-                  <span className="svc-muted">Adjunta evidencia fotográfica del arreglo terminado</span>
-                </div>
-              </div>
-              <button className="oy-icon-btn" onClick={() => setCompletingService(null)} aria-label="Cerrar">
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="oy-modal__body">
-              <label htmlFor="svc-photo-file" className="svc-label">Toma o elige la foto del trabajo terminado</label>
-              <input
-                id="svc-photo-file"
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="input-base"
-                onChange={handleEvidenceFile}
-                disabled={isUploadingEvidence}
-              />
-              {isUploadingEvidence && <span className="svc-muted" role="status">Subiendo foto…</span>}
-              {evidenceError && <span className="svc-muted" role="alert">{evidenceError}</span>}
-
-              <label htmlFor="svc-photo-url" className="svc-label">O pega la URL de la foto</label>
-              <input
-                id="svc-photo-url"
-                type="text"
-                className="input-base"
-                value={completionPhotoUrl.startsWith('data:') ? '' : completionPhotoUrl}
-                onChange={e => setCompletionPhotoUrl(e.target.value)}
-                placeholder="URL de la fotografía del trabajo terminado"
-              />
-              {completionPhotoUrl && (
-                <div className="svc-preview">
-                  <img src={completionPhotoUrl} alt="Vista previa trabajo" />
-                </div>
-              )}
-
-              <div className="svc-modal__actions">
-                <button onClick={() => setCompletingService(null)} className="btn btn-secondary">
-                  Cancelar
-                </button>
-                <button onClick={handleExecuteFinalize} className="btn btn-primary svc-btn-complete" disabled={isUploadingEvidence}>
-                  Confirmar y Cerrar Servicio
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Cancelar Servicio con Justificación Obligatoria (RF-76) */}
-      {cancellingService && (
-        <div className="oy-modal-backdrop svc-backdrop">
-          <div
-            className="oy-modal svc-modal svc-modal--danger"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="svc-cancel-title"
-          >
-            <div className="oy-modal__head">
-              <div>
-                <h3 id="svc-cancel-title" className="oy-modal__title">Cancelar Servicio</h3>
-                <span className="svc-muted">
-                  Para cancelar un servicio aceptado se requiere una justificación obligatoria por transparencia.
-                </span>
-              </div>
-              <button className="oy-icon-btn" onClick={() => setCancellingService(null)} aria-label="Cerrar">
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="oy-modal__body">
-              <fieldset className="svc-reasons">
-                <legend className="svc-label">Motivo de la cancelación</legend>
-                {CANCEL_REASONS.map((r, i) => (
-                  <label key={i} className="svc-reason" data-checked={selectedReason === r ? '' : undefined}>
-                    <input
-                      type="radio"
-                      name="cancelReason"
-                      checked={selectedReason === r}
-                      onChange={() => setSelectedReason(r)}
-                    />
-                    {r}
-                  </label>
-                ))}
-              </fieldset>
-
-              <div className="svc-modal__actions">
-                <button onClick={() => setCancellingService(null)} className="btn btn-secondary">
-                  Atrás
-                </button>
-                <button onClick={handleConfirmCancel} className="btn btn-primary svc-btn-danger">
-                  Confirmar Cancelación
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Calificar Trabajador (RF-34, RF-36) */}
-      {reviewingService && (
-        <div className="oy-modal-backdrop svc-backdrop">
-          <div
-            className="oy-modal svc-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="svc-review-title"
-          >
-            {!reviewSuccess ? (
-              <>
-                <div className="oy-modal__head">
-                  <div>
-                    <h3 id="svc-review-title" className="oy-modal__title">Calificar a {reviewingService.workerName}</h3>
-                    <span className="svc-muted">
-                      Tu reseña quedará vinculada a la transacción verificada {reviewingService.id}
-                    </span>
-                  </div>
-                  <button className="oy-icon-btn" onClick={() => setReviewingService(null)} aria-label="Cerrar">
-                    <X size={18} />
-                  </button>
-                </div>
-
-                <div className="oy-modal__body">
-                  <div className="svc-rating">
-                    <PeekRating value={reviewRating} onChange={v => setReviewRating(v || 1)} allowClear={false} size={34} ariaLabel="Calificación del profesional" />
-                  </div>
-
-                  <textarea
-                    className="input-base"
-                    rows={3}
-                    aria-label="Comentario de la reseña"
-                    placeholder="Describe la puntualidad, calidad técnica y cumplimiento del servicio..."
-                    value={reviewComment}
-                    onChange={e => setReviewComment(e.target.value)}
-                  />
-
-                  <div className="svc-modal__actions">
-                    <button onClick={() => setReviewingService(null)} className="btn btn-secondary">
-                      Omitir por ahora
-                    </button>
-                    <button onClick={handleSendReview} className="btn btn-primary">
-                      Publicar Reseña
-                    </button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="svc-success" role="status">
-                <MascotAvatar expression="entusiasta" size="md" animate="none" />
-                <h4 id="svc-review-title" className="oy-modal__title">¡Reseña Publicada!</h4>
-                <p className="svc-muted">
-                  La reputación digital del trabajador se ha recalculado en tiempo real.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Modal Calificar Contratante (RF-35) */}
-      {ratingClientService && (
-        <div className="oy-modal-backdrop svc-backdrop">
-          <div
-            className="oy-modal svc-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="svc-client-title"
-          >
-            <div className="oy-modal__head">
-              <div>
-                <h3 id="svc-client-title" className="oy-modal__title">
-                  Calificar al Contratante {ratingClientService.clientName}
-                </h3>
-                <span className="svc-muted">
-                  Valora el trato, las facilidades brindadas y la puntualidad del pago.
-                </span>
-              </div>
-              <button className="oy-icon-btn" onClick={() => setRatingClientService(null)} aria-label="Cerrar">
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="oy-modal__body">
-              <div className="svc-rating">
-                <PeekRating value={clientRatingValue} onChange={v => setClientRatingValue(v || 1)} allowClear={false} size={34} ariaLabel="Calificación del contratante" />
-              </div>
-
-              <textarea
-                className="input-base"
-                rows={2}
-                aria-label="Comentario sobre el contratante"
-                value={clientRatingComment}
-                onChange={e => setClientRatingComment(e.target.value)}
-              />
-
-              <div className="svc-modal__actions">
-                <button onClick={() => setRatingClientService(null)} className="btn btn-secondary">
-                  Cancelar
-                </button>
-                <button onClick={handleSendClientRating} className="btn btn-primary">
-                  Guardar Valoración
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 

@@ -171,7 +171,7 @@ export const PaperBroadsheet: React.FC<PaperBroadsheetProps> = ({ onExplore }) =
             <span><Award size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} /> Perfiles Verificados</span>
           </div>
 
-          <div className="niccolo-doodle-cta" onClick={handleCtaClick} data-cursor-text="Explorar">
+          <div className="niccolo-doodle-cta" onClick={handleCtaClick} data-cursor-text="Iniciar Sesion">
             <span>Consultar los</span>
             <DoodleScribble type="ellipse">
               <span>Clasificados</span>

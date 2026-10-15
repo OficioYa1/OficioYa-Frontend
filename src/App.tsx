@@ -63,7 +63,7 @@ import './App.css';
 
 
 const KNOWN_TABS = new Set([
-  'inicio_seeker', 'buscar', 'solicitudes',
+  'inicio_seeker', 'buscar', 'solicitudes', 'mensajes',
   'inicio_pro', 'oportunidades', 'alertas', 'clientes', 'perfil',
 ]);
 
@@ -146,7 +146,6 @@ const MainAppContent: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [activeChatConvId, setActiveChatConvId] = useState<string | undefined>(undefined);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
@@ -359,28 +358,63 @@ const MainAppContent: React.FC = () => {
     );
   };
 
-  const handleOpenChat = (worker: Worker) => {
+  const handleOpenChat = (worker: Worker, initialMessage?: string) => {
     setSelectedWorkerForProfile(null);
     let conv = conversations.find(c => c.workerId === worker.id);
+    const convId = conv ? conv.id : `conv-${Date.now()}`;
+
     if (!conv) {
       conv = {
-        id: `conv-${Date.now()}`,
+        id: convId,
         workerId: worker.id,
         workerName: worker.name,
         workerTrade: worker.tradeLabel,
         workerAvatarColor: worker.avatarColor,
         workerInitials: worker.initials,
         unreadCount: 0,
-        lastMessage: 'Conversación iniciada',
+        lastMessage: initialMessage ? 'Petición enviada' : 'Conversación iniciada',
         lastMessageTime: 'Ahora'
       };
       setConversations(prev => [conv!, ...prev]);
+    }
+
+    if (initialMessage) {
+      const clientMsg: ChatMessage = {
+        id: `msg-${Date.now()}-summary`,
+        conversationId: convId,
+        senderId: user?.id || 'usr-default',
+        senderRole: 'seeker',
+        text: initialMessage,
+        timestamp: 'Ahora',
+        status: 'delivered'
+      };
+      const workerReply: ChatMessage = {
+        id: `msg-${Date.now()}-reply`,
+        conversationId: convId,
+        senderId: worker.id,
+        senderRole: 'provider',
+        text: `¡Hola ${user?.name ? user.name.split(' ')[0] : ''}! Recibí tu solicitud para ${worker.tradeLabel}. Con gusto la reviso de inmediato para coordinar los detalles.`,
+        timestamp: 'Ahora',
+        status: 'read'
+      };
       setMessages(prev => ({
         ...prev,
-        [conv!.id]: [
+        [convId]: [...(prev[convId] || []), clientMsg, workerReply]
+      }));
+      setConversations(prev =>
+        prev.map(c =>
+          c.id === convId
+            ? { ...c, lastMessage: initialMessage, lastMessageTime: 'Ahora' }
+            : c
+        )
+      );
+    } else if (!conversations.some(c => c.id === convId)) {
+      setMessages(prev => ({
+        ...prev,
+        [convId]: [
           {
             id: `msg-${Date.now()}`,
-            conversationId: conv!.id,
+            conversationId: convId,
             senderId: worker.id,
             senderRole: 'provider',
             text: `¡Hola! Soy ${worker.name}, especialista en ${worker.tradeLabel} en Bogotá. ¿En qué te puedo asesorar?`,
@@ -390,8 +424,27 @@ const MainAppContent: React.FC = () => {
         ]
       }));
     }
-    setActiveChatConvId(conv.id);
-    setIsChatOpen(true);
+
+    setActiveChatConvId(convId);
+    setSelectedWorkerForProfile(null);
+    setCurrentTab('mensajes');
+  };
+
+  const handleCreateServiceAndStartChat = (newService: ServiceRequest, summaryMessage: string) => {
+    setServices(prev => [newService, ...prev]);
+    triggerPushNotification(
+      '¡Petición enviada con éxito!',
+      `Se enviaron los detalles a ${newService.workerName}. Iniciando conversación en el chat.`,
+      'request'
+    );
+    const targetWorker = workers.find(w => w.id === newService.workerId) || ({
+      id: newService.workerId,
+      name: newService.workerName,
+      tradeLabel: newService.workerTrade,
+      avatarColor: newService.workerAvatarColor,
+      initials: newService.workerName.slice(0, 2).toUpperCase()
+    } as Worker);
+    handleOpenChat(targetWorker, summaryMessage);
   };
 
   const handleSendMessage = (conversationId: string, text: string) => {
@@ -662,8 +715,11 @@ const MainAppContent: React.FC = () => {
           setCurrentTab(tab);
         }}
         unreadCount={totalUnreadCount}
-        isChatOpen={isChatOpen}
-        onToggleChat={() => setIsChatOpen(!isChatOpen)}
+        isChatOpen={currentTab === 'mensajes'}
+        onToggleChat={() => {
+          setSelectedWorkerForProfile(null);
+          setCurrentTab(currentTab === 'mensajes' ? (role === 'seeker' ? 'inicio_seeker' : 'inicio_pro') : 'mensajes');
+        }}
         notificationCount={notifications.filter(n => !n.read).length}
         onOpenNotifications={() => setIsInboxOpen(open => !open)}
       />
@@ -678,7 +734,7 @@ const MainAppContent: React.FC = () => {
 
       <div className="app-main-body">
         {/* Área Central de Contenido */}
-        <main className="app-content-area" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+        <main className="app-content-area">
           {liveProfileWorker ? (
             <WorkerProfileView
               worker={liveProfileWorker}
@@ -687,6 +743,7 @@ const MainAppContent: React.FC = () => {
               onOpenChat={handleOpenChat}
               onOpenSendRequest={handleOpenSendRequest}
               onOpenReport={handleOpenReportFromWorker}
+              onCreateServiceAndStartChat={handleCreateServiceAndStartChat}
             />
           ) : (
             <>
@@ -755,24 +812,18 @@ const MainAppContent: React.FC = () => {
             />
           )}
 
-          {/* Drawer de Mensajes / Chat (Overlay Sidebar) */}
-          {isChatOpen && (
-            <>
-              <div 
-                className="hide-on-desktop"
-                onClick={() => setIsChatOpen(false)}
-                style={{ position: 'fixed', inset: 0, background: 'rgba(62,31,20,0.45)', zIndex: 999 }}
-              />
-              <ChatView
-                conversations={conversations}
-                messages={messages}
-                initialConversationId={activeChatConvId}
-                onSendMessage={handleSendMessage}
-                onReceiveMessage={handleReceiveMessage}
-                workers={workers}
-                onClose={() => setIsChatOpen(false)}
-              />
-            </>
+          {/* Pestaña: Mensajes / Chats en Pantalla Completa */}
+          {currentTab === 'mensajes' && (
+            <ChatView
+              conversations={conversations}
+              messages={messages}
+              initialConversationId={activeChatConvId}
+              onSendMessage={handleSendMessage}
+              onReceiveMessage={handleReceiveMessage}
+              workers={workers}
+              onSelectWorker={(w) => setSelectedWorkerForProfile(w)}
+              onNavigateToDirectory={() => setCurrentTab(role === 'seeker' ? 'buscar' : 'oportunidades')}
+            />
           )}
 
           {!KNOWN_TABS.has(currentTab) && (
@@ -813,12 +864,14 @@ const MainAppContent: React.FC = () => {
         currentTab={currentTab}
         onSelectTab={(tab) => {
           setSelectedWorkerForProfile(null);
-          setIsChatOpen(false);
           setCurrentTab(tab);
         }}
         unreadCount={totalUnreadCount}
-        isChatOpen={isChatOpen}
-        onToggleChat={() => setIsChatOpen(open => !open)}
+        isChatOpen={currentTab === 'mensajes'}
+        onToggleChat={() => {
+          setSelectedWorkerForProfile(null);
+          setCurrentTab(currentTab === 'mensajes' ? (role === 'seeker' ? 'inicio_seeker' : 'inicio_pro') : 'mensajes');
+        }}
       />
 
       {/* Widget Interactivo de la Mascota Many */}

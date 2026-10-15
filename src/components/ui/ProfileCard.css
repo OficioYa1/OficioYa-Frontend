@@ -213,3 +213,48 @@
   .oy-pcard__photo,
   .oy-pcard__monogram { transform: none; }
 }
+
+/* ── Modo clickeable (acceso al perfil completo al tocar foto o texto) ── */
+.oy-pcard--clickable {
+  cursor: pointer;
+}
+
+.oy-pcard--clickable .oy-pcard__body {
+  transition:
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.oy-pcard--clickable .oy-pcard__tile,
+.oy-pcard--clickable .oy-pcard__info,
+.oy-pcard--clickable .oy-pcard__name,
+.oy-pcard--clickable .oy-pcard__title,
+.oy-pcard--clickable .oy-pcard__meta {
+  cursor: pointer;
+}
+
+.oy-pcard--clickable:focus-visible {
+  outline: 3px solid var(--brand-amber, #E58F49);
+  outline-offset: 4px;
+  border-radius: var(--radius-frame);
+}
+
+.oy-pcard--clickable:hover .oy-pcard__body {
+  border-color: var(--brand-amber, #E58F49);
+  box-shadow:
+    0 12px 32px -4px rgba(62, 31, 20, 0.16),
+    0 4px 12px -2px rgba(62, 31, 20, 0.08);
+}
+
+html.theme-dark .oy-pcard--clickable:hover .oy-pcard__body,
+[data-theme="dark"] .oy-pcard--clickable:hover .oy-pcard__body {
+  border-color: var(--brand-amber, #E58F49);
+  box-shadow:
+    0 16px 36px -4px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(229, 143, 73, 0.25);
+}
+
+.oy-pcard--clickable:active .oy-pcard__body {
+  transform: rotateX(var(--pc-rotate-x)) rotateY(var(--pc-rotate-y)) scale(0.985);
+}
+

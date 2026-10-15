@@ -7,12 +7,13 @@
   overflow: hidden;
 }
 
+html.theme-dark .danilo-showcase,
 [data-theme="dark"] .danilo-showcase {
   background: #0B1430;
 }
 
 .danilo-showcase__wrap {
-  max-width: 1300px;
+  max-width: 1540px;
   margin: 0 auto;
 }
 
@@ -42,6 +43,7 @@
   margin: 0;
 }
 
+html.theme-dark .danilo-showcase__title,
 [data-theme="dark"] .danilo-showcase__title {
   color: #FBF4EA;
 }
@@ -55,8 +57,9 @@
   margin: 0;
 }
 
+html.theme-dark .danilo-showcase__desc,
 [data-theme="dark"] .danilo-showcase__desc {
-  color: rgba(251, 244, 234, 0.75);
+  color: rgba(251, 244, 234, 0.85);
 }
 
 /* Grilla asimétrica escalonada de 3 columnas estilo Danilo De Marco */
@@ -117,6 +120,7 @@
   cursor: pointer;
 }
 
+html.theme-dark .danilo-card,
 [data-theme="dark"] .danilo-card {
   background: #142247;
   border-color: rgba(255, 138, 80, 0.4);
@@ -128,6 +132,7 @@
   box-shadow: 8px 12px 0 var(--stroke-ink, #3E1F14);
 }
 
+html.theme-dark .danilo-card:hover,
 [data-theme="dark"] .danilo-card:hover {
   box-shadow: 8px 12px 0 rgba(255, 138, 80, 0.6);
 }
@@ -158,6 +163,7 @@
   margin-left: 0.6rem;
 }
 
+html.theme-dark .danilo-card__title,
 [data-theme="dark"] .danilo-card__title {
   color: #FBF4EA;
 }
@@ -176,6 +182,7 @@
   border: 1px solid rgba(62, 31, 20, 0.2);
 }
 
+html.theme-dark .danilo-card__rating,
 [data-theme="dark"] .danilo-card__rating {
   color: #FBF4EA;
   background: rgba(255, 193, 7, 0.25);
@@ -214,6 +221,7 @@
   font-weight: 600;
 }
 
+html.theme-dark .danilo-card__footer,
 [data-theme="dark"] .danilo-card__footer {
   border-color: rgba(255, 138, 80, 0.15);
 }
@@ -231,6 +239,7 @@
   color: rgba(62, 31, 20, 0.65);
 }
 
+html.theme-dark .danilo-card__zone,
 [data-theme="dark"] .danilo-card__zone {
-  color: rgba(251, 244, 234, 0.65);
+  color: rgba(251, 244, 234, 0.75);
 }

@@ -33,6 +33,7 @@
   transition: stroke-dashoffset 0.65s cubic-bezier(0.785, 0.135, 0.15, 0.86);
 }
 
+html.theme-dark .niccolo-doodle-path,
 [data-theme="dark"] .niccolo-doodle-path {
   stroke: #FF8A50;
 }

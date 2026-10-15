@@ -104,14 +104,7 @@ const stillness = () =>
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
-const SHUT = 64;
-const LENS = 28;
-const INSET = (SHUT - LENS) / 2;
-
-/* the field's corner. 32 is half of its 64px height, which is
-   the circle it is when shut and the pill it is when open. */
-const CORNER = 32;
-
+const DEFAULT_SHUT = 80;
 const WIDE = 320;
 const SNUG = 280;
 
@@ -120,6 +113,7 @@ export interface SeekProps {
   spring?: number;
   width?: number;
   corner?: number;
+  size?: number;
   placeholder?: string;
   initialOpen?: boolean;
   value?: string;
@@ -136,8 +130,10 @@ export function Seek({
   spring = 50,
   /* The field's resting width, px */
   width,
-  /* the field's own corner, 0..32 */
-  corner = CORNER,
+  /* the button size (diameter when shut and height when open), defaults to 80px */
+  size = DEFAULT_SHUT,
+  /* the field's own corner */
+  corner,
   placeholder = "Buscar oficio o profesional...",
   initialOpen = false,
   value: controlledValue,
@@ -188,10 +184,16 @@ export function Seek({
     window.clearTimeout(rest.current);
   }, []);
 
-  const target = open ? Math.max(SHUT, span) : SHUT;
+  const shut = size;
+  const lens = Math.round(shut * 0.45);
+  const inset = (shut - lens) / 2;
+  const maxCorner = shut / 2;
+  const fieldCorner = corner !== undefined ? corner : maxCorner;
+
+  const target = open ? Math.max(shut, span) : shut;
   const w = useSpring(target, clamp(spring, 0, 100), still);
 
-  const p = clamp((w - SHUT) / Math.max(1, Math.max(SHUT, span) - SHUT), 0, 1);
+  const p = clamp((w - shut) / Math.max(1, Math.max(shut, span) - shut), 0, 1);
 
   /* ── the magnet ────────────────────────────────────────── */
   useEffect(() => {
@@ -266,17 +268,17 @@ export function Seek({
       data-flat={still || undefined}
       style={{
         ...style,
-        "--sek-r": `${clamp(corner, 0, CORNER)}px`,
+        "--sek-r": `${clamp(fieldCorner, 0, maxCorner)}px`,
         "--w": `${w.toFixed(2)}px`,
         "--p": p.toFixed(3),
         "--say": clamp((p - 0.55) / 0.45, 0, 1).toFixed(3),
         "--lx": `${lean.x.toFixed(2)}px`,
         "--ly": `${lean.y.toFixed(2)}px`,
-        "--inset": `${INSET}px`,
-        "--lens": `${LENS}px`,
-        "--shut": `${SHUT}px`,
-        "--frame": `${Math.max(SHUT, span) + 26}px`,
-        "--frameh": `${SHUT + 40}px`,
+        "--inset": `${inset}px`,
+        "--lens": `${lens}px`,
+        "--shut": `${shut}px`,
+        "--frame": `${Math.max(shut, span)}px`,
+        "--frameh": `${shut}px`,
       } as React.CSSProperties}
     >
       <div className="sek-skin">

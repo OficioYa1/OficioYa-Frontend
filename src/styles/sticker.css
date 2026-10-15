@@ -162,6 +162,8 @@ h1, h2, h3 {
 /* ── Banda de página: el "póster" que abre cada vista ── */
 .oy-hero {
   position: relative;
+  width: 100%;
+  box-sizing: border-box;
   margin: var(--space-6) 0 var(--space-8);
   padding: clamp(28px, 5vw, 56px) clamp(20px, 4vw, 48px);
   overflow: hidden;
@@ -188,7 +190,7 @@ h1, h2, h3 {
   gap: var(--space-6);
 }
 
-.oy-hero__text { max-width: 720px; }
+.oy-hero__text { max-width: 960px; }
 
 .oy-hero__title {
   margin: var(--space-3) 0 0;

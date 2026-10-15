@@ -111,9 +111,9 @@ export const EditorialManifesto: React.FC<EditorialManifestoProps> = ({ onExplor
                 gap: '0.5rem',
                 boxShadow: '3px 4px 0 var(--stroke-ink, #3E1F14)'
               }}
-              data-cursor-text="Explorar"
+              data-cursor-text="Iniciar Sesion"
             >
-              <span>Conectar ahora</span>
+              <span>Iniciar Sesion</span>
               <ArrowUpRight size={18} />
             </motion.button>
           )}

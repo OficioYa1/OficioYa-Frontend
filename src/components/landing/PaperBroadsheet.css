@@ -10,6 +10,7 @@
   border-bottom: 2px solid #1D1D1B;
 }
 
+html.theme-dark .niccolo-paper-section,
 [data-theme="dark"] .niccolo-paper-section {
   background: #1D1D1B;
   color: #CDC6BE;
@@ -17,7 +18,7 @@
 }
 
 .niccolo-paper-wrap {
-  max-width: 1200px;
+  max-width: 1540px;
   margin: 0 auto;
 }
 
@@ -85,6 +86,7 @@
   padding-right: clamp(1rem, 2vw, 2rem);
 }
 
+html.theme-dark .niccolo-lead-col,
 [data-theme="dark"] .niccolo-lead-col {
   border-color: rgba(205, 198, 190, 0.2);
 }
@@ -130,6 +132,7 @@
   border-radius: 4px;
 }
 
+html.theme-dark .niccolo-dropcap-p::first-letter,
 [data-theme="dark"] .niccolo-dropcap-p::first-letter {
   background-color: #CDC6BE;
   color: #1D1D1B;
@@ -148,6 +151,7 @@
   margin-top: 1.5rem;
 }
 
+html.theme-dark .niccolo-stamp-wrap,
 [data-theme="dark"] .niccolo-stamp-wrap {
   background: rgba(205, 198, 190, 0.05);
   border-color: rgba(205, 198, 190, 0.3);
@@ -203,6 +207,7 @@
   transition: transform 0.25s ease, background-color 0.25s ease;
 }
 
+html.theme-dark .niccolo-classified-card,
 [data-theme="dark"] .niccolo-classified-card {
   background: rgba(20, 34, 71, 0.6);
   border-color: rgba(205, 198, 190, 0.3);
@@ -213,6 +218,7 @@
   background: rgba(255, 255, 255, 0.9);
 }
 
+html.theme-dark .niccolo-classified-card:hover,
 [data-theme="dark"] .niccolo-classified-card:hover {
   background: rgba(20, 34, 71, 0.9);
 }
@@ -272,6 +278,7 @@
   border-top: 1px solid rgba(29, 29, 27, 0.2);
 }
 
+html.theme-dark .niccolo-paper-footer,
 [data-theme="dark"] .niccolo-paper-footer {
   border-color: rgba(205, 198, 190, 0.2);
 }
