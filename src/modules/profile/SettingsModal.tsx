@@ -16,10 +16,14 @@ import {
   AlertTriangle,
   FileText,
   Settings,
+  Upload,
+  Loader2,
 } from 'lucide-react';
 import { SquishSwitch } from '../../components/ui/SquishSwitch';
 import { useFlowModal } from '../requests/useFlowModal';
 import '../requests/Flows.css';
+import './SettingsModal.css';
+import { mediaService, MediaUploadError, validateImageFile } from '../../services/mock/mediaService';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -109,6 +113,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || '');
   const [savedSuccess, setSavedSuccess] = useState(false);
 
+  // OFY-59: carga de foto desde el dispositivo (adaptador Cloudinary simulado)
+  const [uploading, setUploading] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+  const [photoNotice, setPhotoNotice] = useState('');
+  const isUploadedPhoto = avatarUrl.startsWith('data:');
+
   // OFY-58: Modal de confirmación de eliminación lógica de cuenta
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
@@ -132,6 +142,38 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
     updateUserProfile({ name, phone, city, avatarUrl });
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2000);
+  };
+
+  const handlePhotoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    setPhotoError('');
+    setPhotoNotice('');
+    const problem = validateImageFile(file);
+    if (problem) {
+      setPhotoError(problem);
+      return;
+    }
+    setUploading(true);
+    try {
+      const media = await mediaService.uploadImage(file, { folder: 'avatars', maxSide: 512 });
+      setAvatarUrl(media.url);
+      updateUserProfile({ avatarUrl: media.url });
+      setPhotoNotice('Foto de perfil actualizada.');
+    } catch (err) {
+      setPhotoError(err instanceof MediaUploadError ? err.message : 'No pudimos subir la foto. Intenta de nuevo en un momento.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setAvatarUrl('');
+    updateUserProfile({ avatarUrl: undefined });
+    setPhotoError('');
+    setPhotoNotice('Quitamos tu foto. Se mostrarán tus iniciales.');
   };
 
   // OFY-58: Borrado lógico de cuenta propia
@@ -187,7 +229,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                 aria-hidden={avatarUrl ? undefined : true}
               >
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" />
+                  <img src={avatarUrl} alt={`Foto de perfil de ${user?.name ?? 'tu cuenta'}`} />
                 ) : user?.name ? (
                   user.name.slice(0, 2).toUpperCase()
                 ) : (
@@ -273,7 +315,52 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
 
             {/* OFY-59: Cargar y actualizar foto de perfil */}
             <div className="oy-flow-field">
-              <label className="oy-flow-label" htmlFor={`${uid}-avatar`}>URL Foto de perfil / Avatar</label>
+              <span className="oy-flow-label" id={`${uid}-photo`}>Foto de perfil</span>
+              <div className="settings-photo" role="group" aria-labelledby={`${uid}-photo`}>
+                <input
+                  id={`${uid}-photo-file`}
+                  type="file"
+                  accept="image/*"
+                  className="settings-photo__input"
+                  onChange={handlePhotoFile}
+                  disabled={uploading}
+                  aria-describedby={`${uid}-photo-hint`}
+                />
+                <label
+                  htmlFor={`${uid}-photo-file`}
+                  className="btn btn-secondary oy-flow-small settings-photo__pick"
+                  aria-disabled={uploading || undefined}
+                >
+                  {uploading ? (
+                    <Loader2 size={16} className="settings-photo__spin" aria-hidden="true" />
+                  ) : (
+                    <Upload size={16} aria-hidden="true" />
+                  )}
+                  {uploading ? 'Subiendo foto…' : 'Subir desde mi dispositivo'}
+                </label>
+                {avatarUrl && !uploading && (
+                  <button type="button" className="btn btn-secondary oy-flow-small" onClick={handleRemovePhoto}>
+                    <Trash2 size={16} aria-hidden="true" /> Quitar foto
+                  </button>
+                )}
+              </div>
+              <p id={`${uid}-photo-hint`} className="oy-flow-section__hint">
+                JPG, PNG, WebP o GIF de hasta 5 MB. La ajustamos a 512 px para que cargue rápido.
+              </p>
+              {photoError && (
+                <p className="oy-flow-note oy-flow-note--fuego settings-photo__msg" role="alert">
+                  <AlertTriangle size={16} aria-hidden="true" /> {photoError}
+                </p>
+              )}
+              {photoNotice && !photoError && (
+                <span className="oy-flow-saved" role="status">
+                  <CheckCircle2 size={16} aria-hidden="true" /> {photoNotice}
+                </span>
+              )}
+            </div>
+
+            <div className="oy-flow-field">
+              <label className="oy-flow-label" htmlFor={`${uid}-avatar`}>O pega la URL de una foto</label>
               <div className="oy-flow-input-icon">
                 <Camera size={16} aria-hidden="true" />
                 <input
@@ -281,8 +368,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                   type="text"
                   inputMode="url"
                   className="input-base"
-                  placeholder="https://images.unsplash.com/..."
-                  value={avatarUrl}
+                  placeholder={isUploadedPhoto ? 'Usando la foto que subiste' : 'https://images.unsplash.com/...'}
+                  value={isUploadedPhoto ? '' : avatarUrl}
                   onChange={e => setAvatarUrl(e.target.value)}
                 />
               </div>

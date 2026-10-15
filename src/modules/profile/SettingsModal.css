@@ -1,0 +1,47 @@
+/* Carga de foto de perfil (OFY-59) */
+.settings-photo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.settings-photo__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.settings-photo__pick {
+  cursor: pointer;
+}
+
+.settings-photo__input:focus-visible + .settings-photo__pick {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.settings-photo__pick[aria-disabled='true'] {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.settings-photo__msg {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.settings-photo__spin {
+  animation: settings-photo-spin 0.9s linear infinite;
+}
+
+@keyframes settings-photo-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-photo__spin { animation: none; }
+}
