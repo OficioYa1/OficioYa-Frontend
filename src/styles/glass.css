@@ -1,0 +1,596 @@
+/* ============================================================
+   OFICIOYA · LIQUID GLASS
+   Capa visual del rediseño (plan "Liquid Glass" en Claude Docs).
+   Colores: SOLO los del manual de identidad (tokens.css).
+   Estructura: lienzo cálido + fondo líquido difuminado + superficies
+   de vidrio en tres profundidades, con canto de luz (facetas) arriba.
+   Movimiento: curva editorial cubic-bezier(0.19, 1, 0.22, 1).
+   Se importa después de sticker.css y la reemplaza donde coinciden.
+   ============================================================ */
+
+/* ── 1. Tokens de vidrio ─────────────────────────────────────── */
+:root,
+html.theme-light {
+  --canvas: #FBF4EA;                 /* Almendra muy diluida */
+  --color-bg: var(--canvas);
+  --color-surface: rgba(255, 255, 255, 0.62);
+  --color-surface-hover: rgba(255, 255, 255, 0.82);
+  --color-surface-elevated: rgba(255, 255, 255, 0.86);
+  --color-input-bg: rgba(255, 255, 255, 0.72);
+  --color-text-main: var(--oy-cacao-profundo);   /* 14.9:1 sobre el lienzo */
+  --color-text-muted: #5B4636;                   /* 8.2:1 */
+  --color-text-subtle: #7A6553;                  /* 5.0:1 */
+  --color-border: rgba(62, 31, 20, 0.12);
+  --color-border-subtle: rgba(62, 31, 20, 0.06);
+
+  --glass-1: rgba(255, 255, 255, 0.52);          /* tarjetas, chips */
+  --glass-2: rgba(255, 255, 255, 0.72);          /* barras, menús */
+  --glass-3: rgba(255, 255, 255, 0.88);          /* modales */
+  --glass-bg: var(--glass-2);
+  --glass-border: rgba(255, 255, 255, 0.75);
+  --glass-edge: rgba(255, 255, 255, 0.9);        /* canto de luz superior */
+  --glass-line: rgba(62, 31, 20, 0.10);          /* contorno inferior */
+  --glass-blur: 22px;
+  --glass-sat: 160%;
+  --glass-shine: inset 0 1px 0 var(--glass-edge), inset 0 -1px 0 rgba(62, 31, 20, 0.04);
+  --depth-1: 0 1px 2px rgba(62, 31, 20, 0.04), 0 10px 30px -14px rgba(30, 58, 138, 0.18);
+  --depth-2: 0 2px 6px rgba(62, 31, 20, 0.05), 0 24px 60px -20px rgba(30, 58, 138, 0.28);
+  --depth-3: 0 4px 12px rgba(62, 31, 20, 0.06), 0 40px 100px -24px rgba(30, 58, 138, 0.38);
+
+  --stroke-ink: var(--glass-line);
+  --stroke-w: 1px;
+
+  --wash-marino: rgba(30, 58, 138, 0.08);
+  --wash-esmeralda: rgba(16, 185, 129, 0.10);
+  --wash-almendra: rgba(248, 216, 168, 0.32);
+  --wash-amarillo: rgba(255, 199, 44, 0.16);
+  --wash-fuego: rgba(234, 88, 12, 0.08);
+  --wash-gris: rgba(255, 255, 255, 0.45);
+
+  --liquid-a: var(--oy-azul-marino);
+  --liquid-b: var(--oy-ambar-calido);
+  --liquid-c: var(--oy-amarillo-canario);
+  --liquid-d: var(--oy-verde-esmeralda);
+  --liquid-opacity: 0.38;
+
+  --shadow-sm: var(--depth-1);
+  --shadow-md: var(--depth-1);
+  --shadow-lg: var(--depth-2);
+
+  --radius-card: 24px;
+  --radius-frame: 32px;
+  --radius-card-lg: 36px;
+
+  --ease-editorial: cubic-bezier(0.19, 1, 0.22, 1);
+  --dur-reveal: 900ms;
+}
+
+html.theme-dark {
+  --canvas: #0B1430;                 /* Azul Marino profundo */
+  --color-bg: var(--canvas);
+  --color-surface: rgba(255, 255, 255, 0.06);
+  --color-surface-hover: rgba(255, 255, 255, 0.11);
+  --color-surface-elevated: rgba(20, 32, 70, 0.86);
+  --color-input-bg: rgba(255, 255, 255, 0.07);
+  --color-text-main: #F8F1E6;                    /* 15.6:1 */
+  --color-text-muted: #D3C5B3;                   /* 10.4:1 */
+  --color-text-subtle: #A99A88;                  /* 6.3:1 */
+  --color-border: rgba(255, 255, 255, 0.14);
+  --color-border-subtle: rgba(255, 255, 255, 0.07);
+
+  --glass-1: rgba(255, 255, 255, 0.06);
+  --glass-2: rgba(16, 27, 62, 0.62);
+  --glass-3: rgba(18, 30, 68, 0.88);
+  --glass-bg: var(--glass-2);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-edge: rgba(255, 255, 255, 0.22);
+  --glass-line: rgba(255, 255, 255, 0.12);
+  --glass-shine: inset 0 1px 0 var(--glass-edge), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  --depth-1: 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+  --depth-2: 0 24px 60px -20px rgba(0, 0, 0, 0.7);
+  --depth-3: 0 40px 100px -24px rgba(0, 0, 0, 0.8);
+
+  --stroke-ink: var(--glass-line);
+
+  --wash-marino: rgba(30, 58, 138, 0.30);
+  --wash-esmeralda: rgba(16, 185, 129, 0.12);
+  --wash-almendra: rgba(248, 216, 168, 0.08);
+  --wash-amarillo: rgba(255, 199, 44, 0.10);
+  --wash-fuego: rgba(234, 88, 12, 0.12);
+  --wash-gris: rgba(255, 255, 255, 0.05);
+
+  --liquid-opacity: 0.45;
+
+  --shadow-sm: var(--depth-1);
+  --shadow-md: var(--depth-1);
+  --shadow-lg: var(--depth-2);
+}
+
+/* ── 2. Base ─────────────────────────────────────────────────── */
+body {
+  background-color: var(--canvas);
+  color: var(--color-text-main);
+}
+
+::selection {
+  background: var(--oy-amarillo-canario);
+  color: var(--oy-cacao-profundo);
+}
+
+h1, h2, h3 {
+  letter-spacing: -0.03em;
+}
+
+/* Tipografía display editorial: grande y ligera (DM Sans del manual) */
+.oy-display {
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 3px;
+}
+
+/* ── 3. Materiales reutilizables ─────────────────────────────── */
+.glass,
+.glass-1 {
+  background: var(--glass-1);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shine), var(--depth-1);
+}
+
+.glass-2 {
+  background: var(--glass-2);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shine), var(--depth-2);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+}
+
+.glass-3 {
+  background: var(--glass-3);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shine), var(--depth-3);
+  -webkit-backdrop-filter: blur(32px) saturate(var(--glass-sat));
+  backdrop-filter: blur(32px) saturate(var(--glass-sat));
+}
+
+/* ── 4. Botones: píldora de vidrio ───────────────────────────── */
+.btn {
+  min-height: 48px;
+  padding-inline: 22px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  transition: background-color 240ms ease, color 240ms ease, border-color 240ms ease,
+    box-shadow 400ms var(--ease-editorial), transform 160ms var(--ease-out);
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--role-primary);
+  color: var(--role-on-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 10px 24px -12px var(--role-primary);
+}
+
+.btn-secondary {
+  background: var(--glass-2);
+  border-color: var(--glass-border);
+  color: var(--color-text-main);
+  box-shadow: var(--glass-shine), var(--depth-1);
+  -webkit-backdrop-filter: blur(16px) saturate(var(--glass-sat));
+  backdrop-filter: blur(16px) saturate(var(--glass-sat));
+}
+
+.btn-accent {
+  background: var(--oy-amarillo-canario);
+  color: var(--oy-cacao-profundo);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 10px 24px -12px rgba(245, 158, 11, 0.8);
+}
+
+.btn-danger {
+  border-color: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover {
+    background: var(--role-primary-hover);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 16px 32px -12px var(--role-primary);
+  }
+  .btn-secondary:hover {
+    background: var(--color-surface-hover);
+    box-shadow: var(--glass-shine), var(--depth-2);
+  }
+  .btn-accent:hover {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 16px 32px -12px rgba(245, 158, 11, 0.9);
+  }
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── 5. Tarjetas ─────────────────────────────────────────────── */
+.card {
+  background: var(--glass-1);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--glass-shine), var(--depth-1);
+  transition: transform 600ms var(--ease-editorial), box-shadow 600ms var(--ease-editorial),
+    background-color 300ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    transform: translateY(-3px);
+    background: var(--color-surface-hover);
+    box-shadow: var(--glass-shine), var(--depth-2);
+  }
+}
+
+html.theme-dark .card { box-shadow: var(--glass-shine), var(--depth-1); }
+@media (hover: hover) and (pointer: fine) {
+  html.theme-dark .card:hover { box-shadow: var(--glass-shine), var(--depth-2); }
+}
+
+.card:active { transform: scale(0.995); }
+
+/* ── 6. Inputs ───────────────────────────────────────────────── */
+.input-base {
+  min-height: 48px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background-color: var(--color-input-bg);
+  color: var(--color-text-main);
+  box-shadow: inset 0 1px 2px rgba(62, 31, 20, 0.04);
+  transition: border-color 200ms ease, box-shadow 300ms var(--ease-editorial), background-color 200ms ease;
+}
+
+.input-base::placeholder { color: var(--color-text-subtle); }
+
+.input-base:focus {
+  border-color: var(--role-primary);
+  background-color: var(--color-surface-elevated);
+  box-shadow: 0 0 0 4px var(--role-primary-ring);
+  outline: none;
+}
+
+.input-base[aria-invalid='true'] {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.16);
+}
+
+/* ── 7. Paneles flotantes ────────────────────────────────────── */
+.inbox-panel,
+.app-menu {
+  background: var(--glass-2);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shine), var(--depth-3);
+  -webkit-backdrop-filter: blur(28px) saturate(var(--glass-sat));
+  backdrop-filter: blur(28px) saturate(var(--glass-sat));
+}
+
+.inbox-card {
+  background: var(--glass-1);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shine);
+}
+
+/* ── 8. Banda de página: panel líquido Azul Marino ───────────── */
+.oy-hero {
+  isolation: isolate;
+  margin: var(--space-4) 0 var(--space-8);
+  padding: clamp(32px, 6vw, 72px) clamp(22px, 5vw, 56px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-card-lg);
+  background:
+    radial-gradient(120% 90% at 85% 10%, rgba(245, 158, 11, 0.55) 0%, rgba(245, 158, 11, 0) 55%),
+    radial-gradient(90% 80% at 10% 100%, rgba(16, 185, 129, 0.35) 0%, rgba(16, 185, 129, 0) 60%),
+    radial-gradient(70% 60% at 60% 120%, rgba(255, 199, 44, 0.35) 0%, rgba(255, 199, 44, 0) 60%),
+    linear-gradient(160deg, #22409A 0%, var(--oy-azul-marino) 45%, #142A66 100%);
+  background-size: 140% 140%;
+  color: #FFFFFF;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), var(--depth-2);
+  animation: oy-liquid-pan 18s var(--ease-in-out) infinite alternate;
+}
+
+html.role-provider .oy-hero {
+  background:
+    radial-gradient(120% 90% at 85% 10%, rgba(255, 199, 44, 0.55) 0%, rgba(255, 199, 44, 0) 55%),
+    radial-gradient(90% 80% at 10% 100%, rgba(201, 98, 42, 0.55) 0%, rgba(201, 98, 42, 0) 60%),
+    radial-gradient(70% 60% at 60% 120%, rgba(245, 158, 11, 0.4) 0%, rgba(245, 158, 11, 0) 60%),
+    linear-gradient(160deg, #5A2C18 0%, var(--oy-cacao-profundo) 55%, #2A140C 100%);
+  background-size: 140% 140%;
+}
+
+.oy-hero::after {
+  /* Canto facetado: reflejo diagonal de luz sobre el vidrio */
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 28%,
+    rgba(255, 255, 255, 0) 72%, rgba(255, 255, 255, 0.08) 100%);
+  pointer-events: none;
+}
+
+.oy-hero,
+html.role-provider .oy-hero,
+html.theme-dark .oy-hero { --oy-hero-ink: #FFFFFF; }
+
+.oy-hero__title {
+  font-size: clamp(2.6rem, 1.6rem + 5vw, 5.75rem);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  color: #FFFFFF;
+}
+
+.oy-hero__subtitle {
+  color: rgba(255, 255, 255, 0.86);
+  font-weight: 400;
+}
+
+.oy-hero .btn-secondary {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #FFFFFF;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .oy-hero .btn-secondary:hover { background: rgba(255, 255, 255, 0.24); }
+}
+
+.oy-hero .btn-primary {
+  background: #FFFFFF;
+  color: var(--oy-azul-marino);
+  box-shadow: inset 0 -1px 0 rgba(30, 58, 138, 0.1), 0 14px 30px -14px rgba(0, 0, 0, 0.5);
+}
+
+html.role-provider .oy-hero .btn-primary { color: var(--oy-naranja-fuego-aa); }
+
+@media (hover: hover) and (pointer: fine) {
+  .oy-hero .btn-primary:hover { background: var(--oy-almendra-claro); }
+}
+
+.oy-hero :focus-visible { outline-color: var(--oy-amarillo-canario); }
+
+@keyframes oy-liquid-pan {
+  from { background-position: 0% 0%; }
+  to { background-position: 100% 100%; }
+}
+
+/* Stickers y eyebrow → píldoras de vidrio */
+.oy-sticker {
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 18px 40px -18px rgba(0, 0, 0, 0.55);
+}
+
+.oy-eyebrow {
+  padding: 6px 14px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-2);
+  color: var(--color-text-main);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  box-shadow: var(--glass-shine);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.oy-eyebrow::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oy-amarillo-canario);
+  box-shadow: 0 0 0 3px rgba(255, 199, 44, 0.3);
+}
+
+.oy-hero .oy-eyebrow {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* ── 9. Secciones, paneles, chips, stats ─────────────────────── */
+.oy-section-title {
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  font-size: clamp(1.75rem, 1.2rem + 2vw, 3rem);
+}
+
+.oy-panel {
+  border: 1px solid var(--glass-border);
+  background: var(--oy-panel-bg, var(--glass-1));
+  box-shadow: var(--glass-shine), var(--depth-1);
+}
+
+.oy-panel--gris { --oy-panel-bg: var(--glass-1); }
+
+.oy-chip {
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-1);
+  font-weight: 600;
+  box-shadow: var(--glass-shine);
+}
+
+.oy-chip[aria-pressed='true'],
+.oy-chip[data-active] {
+  border-color: transparent;
+  background: var(--role-primary);
+  color: var(--role-on-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 8px 18px -10px var(--role-primary);
+}
+
+.oy-stat {
+  border: 1px solid var(--glass-border);
+  background: var(--oy-stat-bg, var(--glass-1));
+  box-shadow: var(--glass-shine), var(--depth-1);
+}
+
+.oy-stat__value {
+  font-weight: 300;
+  letter-spacing: -0.05em;
+  font-size: clamp(2.2rem, 1.6rem + 2vw, 3.4rem);
+}
+
+.oy-stat__label {
+  font-weight: 600;
+}
+
+.oy-icon-btn {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-2);
+  box-shadow: var(--glass-shine);
+}
+
+/* ── 10. Modales: vidrio elevado ─────────────────────────────── */
+.oy-modal-backdrop {
+  background: rgba(11, 20, 48, 0.38);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  animation: oy-fade-in 300ms ease;
+}
+
+.oy-modal {
+  border: 1px solid var(--glass-border);
+  background: var(--glass-3);
+  box-shadow: var(--glass-shine), var(--depth-3);
+  -webkit-backdrop-filter: blur(32px) saturate(var(--glass-sat));
+  backdrop-filter: blur(32px) saturate(var(--glass-sat));
+  animation: oy-modal-in 500ms var(--ease-editorial);
+}
+
+.oy-modal__head {
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: transparent;
+}
+
+.oy-modal__title {
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+
+@keyframes oy-modal-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+@keyframes oy-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 600px) {
+  .oy-modal { animation-name: oy-sheet-in; }
+  @keyframes oy-sheet-in {
+    from { transform: translateY(100%); }
+    to { transform: none; }
+  }
+}
+
+/* ── 11. Estado vacío ────────────────────────────────────────── */
+.oy-empty {
+  border: 1px dashed var(--color-border);
+  background: var(--glass-1);
+  box-shadow: var(--glass-shine);
+}
+
+.oy-empty__title {
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+/* ── 12. Esqueletos de carga ─────────────────────────────────── */
+.oy-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--color-border-subtle);
+}
+
+.oy-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: oy-shimmer 1.4s linear infinite;
+}
+
+html.theme-dark .oy-skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+}
+
+@keyframes oy-shimmer {
+  to { transform: translateX(100%); }
+}
+
+/* ── 13. Revelado al hacer scroll (data-reveal) ──────────────── */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  filter: blur(6px);
+  transition: opacity var(--dur-reveal) var(--ease-editorial),
+    transform var(--dur-reveal) var(--ease-editorial), filter var(--dur-reveal) var(--ease-editorial);
+  transition-delay: calc(var(--reveal-i, 0) * 80ms);
+}
+
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+/* ── 14. Accesibilidad y fallbacks ───────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .oy-hero { animation: none; }
+  .oy-skeleton::after { animation: none; }
+  [data-reveal] { opacity: 1; transform: none; filter: none; transition: none; }
+  .oy-modal, .oy-modal-backdrop { animation: none; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root, html.theme-light {
+    --glass-1: #FFFFFF;
+    --glass-2: #FFFFFF;
+    --glass-3: #FFFFFF;
+    --color-surface: #FFFFFF;
+    --color-input-bg: #FFFFFF;
+  }
+  html.theme-dark {
+    --glass-1: #14204A;
+    --glass-2: #14204A;
+    --glass-3: #182656;
+    --color-surface: #14204A;
+    --color-input-bg: #14204A;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root, html.theme-light {
+    --glass-2: rgba(255, 255, 255, 0.94);
+    --glass-3: #FFFFFF;
+  }
+  html.theme-dark {
+    --glass-2: rgba(16, 27, 62, 0.96);
+    --glass-3: #14204A;
+  }
+}

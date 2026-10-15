@@ -1,0 +1,80 @@
+.liquid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: var(--canvas);
+  pointer-events: none;
+}
+
+#root { isolation: isolate; }
+
+.liquid-bg__blob {
+  position: absolute;
+  width: 58vmax;
+  height: 58vmax;
+  border-radius: 50%;
+  opacity: var(--liquid-opacity);
+  filter: blur(90px);
+  will-change: transform;
+  animation: liquid-drift 32s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+}
+
+.liquid-bg__blob--a {
+  top: -22vmax;
+  left: -14vmax;
+  background: var(--liquid-a);
+  opacity: calc(var(--liquid-opacity) * 0.55);
+}
+
+.liquid-bg__blob--b {
+  top: -10vmax;
+  right: -20vmax;
+  background: var(--liquid-b);
+  animation-duration: 38s;
+  animation-delay: -12s;
+}
+
+.liquid-bg__blob--c {
+  bottom: -26vmax;
+  left: 18vmax;
+  background: var(--liquid-c);
+  animation-duration: 44s;
+  animation-delay: -20s;
+}
+
+.liquid-bg__blob--d {
+  bottom: -18vmax;
+  right: -10vmax;
+  width: 40vmax;
+  height: 40vmax;
+  background: var(--liquid-d);
+  opacity: calc(var(--liquid-opacity) * 0.6);
+  animation-duration: 36s;
+  animation-delay: -6s;
+}
+
+/* Grano fino: evita bandas en los degradados y da textura de vidrio */
+.liquid-bg__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+html.theme-dark .liquid-bg__grain { mix-blend-mode: screen; opacity: 0.04; }
+
+@keyframes liquid-drift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(8vmax, 6vmax, 0) scale(1.12); }
+  100% { transform: translate3d(-6vmax, 10vmax, 0) scale(0.94); }
+}
+
+@media (max-width: 767px) {
+  .liquid-bg__blob { filter: blur(70px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-bg__blob { animation: none; }
+}

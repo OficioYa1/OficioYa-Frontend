@@ -51,12 +51,25 @@ import { AppFooter } from './components/layout/AppFooter';
 import { SeekerHomeView } from './modules/seeker/SeekerHomeView';
 import { ProviderHomeView } from './modules/provider/ProviderHomeView';
 
+import { Home } from 'lucide-react';
+import { LiquidBackground } from './components/background/LiquidBackground';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { StatusScreen } from './components/common/StatusScreen';
+
 import './App.css';
 
-/* El fondo WebGL se carga aparte para no retrasar el primer pintado */
-const BrandBackground = React.lazy(() =>
-  import('./components/background/BrandBackground').then(m => ({ default: m.BrandBackground }))
-);
+
+const KNOWN_TABS = new Set([
+  'inicio_seeker', 'buscar', 'solicitudes',
+  'inicio_pro', 'oportunidades', 'alertas', 'clientes', 'perfil',
+]);
+
+/** true si la URL no es la raíz de la app (p. ej. /oficioya-frontend/algo). */
+const isUnknownLocation = () => {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+  const path = window.location.pathname.replace(/\/$/, '');
+  return path !== base && path !== `${base}/index.html`;
+};
 
 /* ── CROSSFADE TRANSITION SYSTEM ── */
 type ViewMode = 'auth' | 'app' | 'landing';
@@ -86,6 +99,7 @@ const MainAppContent: React.FC = () => {
   const [pendingRole, setPendingRole] = useState<'seeker' | 'provider'>('seeker');
   const [currentTab, setCurrentTab] = useState<string>(role === 'seeker' ? 'inicio_seeker' : 'inicio_pro');
   const [currentTradeCategory, setCurrentTradeCategory] = useState<TradeCategory | undefined>(undefined);
+  const [isUnknownPath, setIsUnknownPath] = useState(isUnknownLocation);
 
   // Reaccionar a cambios de rol para reiniciar la pestaña principal
   useEffect(() => {
@@ -245,6 +259,29 @@ const MainAppContent: React.FC = () => {
     const timer = setInterval(expirePending, 5000);
     return () => clearInterval(timer);
   }, []);
+
+  // Ruta que no existe (GitHub Pages sirve 404.html con la misma app)
+  if (isUnknownPath) {
+    return (
+      <StatusScreen
+        code="404"
+        title="Esta página no existe"
+        message="Many buscó por todo el barrio y no la encontró. Puede que el enlace esté mal escrito o que la página ya no exista."
+        actions={
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => {
+              window.history.replaceState(null, '', import.meta.env.BASE_URL);
+              setIsUnknownPath(false);
+            }}
+          >
+            <Home size={18} aria-hidden="true" /> Volver al inicio
+          </button>
+        }
+      />
+    );
+  }
 
   // Pantalla de carga (spinner) mientras se verifica el JWT
   if (isLoading) {
@@ -711,6 +748,23 @@ const MainAppContent: React.FC = () => {
             </>
           )}
 
+          {!KNOWN_TABS.has(currentTab) && (
+            <StatusScreen
+              code="404"
+              title="Esta sección no existe"
+              message="Many no encontró lo que buscabas. Vuelve al inicio para seguir."
+              actions={
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setCurrentTab(role === 'seeker' ? 'inicio_seeker' : 'inicio_pro')}
+                >
+                  <Home size={18} aria-hidden="true" /> Ir al inicio
+                </button>
+              }
+            />
+          )}
+
           {/* Pestaña: Perfil */}
           {currentTab === 'perfil' && (
             <UserProfileView
@@ -813,10 +867,10 @@ export function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <React.Suspense fallback={null}>
-          <BrandBackground />
-        </React.Suspense>
-        <MainAppContent />
+        <LiquidBackground />
+        <ErrorBoundary>
+          <MainAppContent />
+        </ErrorBoundary>
       </ThemeProvider>
     </AuthProvider>
   );

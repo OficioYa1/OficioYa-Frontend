@@ -4,7 +4,7 @@ import { Renderer, Program, Mesh, Triangle, Color } from 'ogl';
 
 /*
   PlasmaWarp · plasma de bloques con líneas de barrido, inspirado en
-  CRTWarp pero hecho con ogl (ya está en el bundle por MicroSlats) en
+  CRTWarp pero hecho con ogl en
   vez de three.js. Pensado para paneles de marca, no para todo el fondo:
   la intensidad está limitada para que el texto encima siga en AA.
 */
