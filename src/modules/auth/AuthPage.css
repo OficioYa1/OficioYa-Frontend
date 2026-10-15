@@ -535,3 +535,11 @@ html.theme-dark .auth-role-btn--provider[aria-checked='true'] {
   .auth-mascot--work { transform: none; }
   .auth-spinner { animation-duration: 1.6s; }
 }
+
+/* Enlace de recuperación simulado (OFY-75) */
+p.auth-code-note { margin: 0; }
+.auth-demo-link svg { flex: none; margin-top: 2px; }
+.auth-demo-link .auth-link {
+  margin-top: var(--space-1);
+  color: var(--color-text-main);
+}
