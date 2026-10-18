@@ -3,16 +3,16 @@
   position: relative;
   padding: clamp(4.5rem, 9vw, 8rem) 1.5rem;
   background: #CDC6BE; /* Color papel prensa característico de Niccolò Miranda */
-  color: #1D1D1B;
+  color: var(--stroke-ink);
   transition: background-color 0.3s ease, color 0.3s ease;
   overflow: hidden;
-  border-top: 2px solid #1D1D1B;
-  border-bottom: 2px solid #1D1D1B;
+  border-top: 2px solid var(--stroke-ink);
+  border-bottom: 2px solid var(--stroke-ink);
 }
 
 html.theme-dark .niccolo-paper-section,
 [data-theme="dark"] .niccolo-paper-section {
-  background: #1D1D1B;
+  background: var(--stroke-ink);
   color: #CDC6BE;
   border-color: rgba(205, 198, 190, 0.3);
 }
@@ -106,7 +106,7 @@ html.theme-dark .niccolo-lead-col,
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: var(--color-brand-primary, #E65100);
+  color: var(--color-brand-primary, var(--color-action-strong));
   margin-bottom: 0.75rem;
 }
 
@@ -126,7 +126,7 @@ html.theme-dark .niccolo-lead-col,
   line-height: 0.85;
   padding: 0.5rem 0.65rem 0.3rem 0.5rem;
   margin: 0.2rem 0.75rem 0.25rem 0;
-  background-color: #1D1D1B;
+  background-color: var(--stroke-ink);
   color: #CDC6BE;
   font-weight: 900;
   border-radius: 4px;
@@ -135,7 +135,7 @@ html.theme-dark .niccolo-lead-col,
 html.theme-dark .niccolo-dropcap-p::first-letter,
 [data-theme="dark"] .niccolo-dropcap-p::first-letter {
   background-color: #CDC6BE;
-  color: #1D1D1B;
+  color: var(--stroke-ink);
 }
 
 /* Sello Postal Dentado Giratorio (Postage Stamp) */
@@ -162,7 +162,7 @@ html.theme-dark .niccolo-stamp-wrap,
   width: 72px;
   height: 84px;
   background: #FFF;
-  border: 2px dashed #1D1D1B;
+  border: 2px dashed var(--stroke-ink);
   border-radius: 4px;
   display: flex;
   flex-direction: column;
@@ -187,7 +187,7 @@ html.theme-dark .niccolo-stamp-wrap,
   font-family: monospace;
   font-size: 9px;
   font-weight: 900;
-  color: #1D1D1B;
+  color: var(--stroke-ink);
   margin-top: 2px;
 }
 

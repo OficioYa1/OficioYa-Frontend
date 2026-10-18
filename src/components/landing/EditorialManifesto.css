@@ -32,7 +32,7 @@ html.theme-dark .danilo-manifesto,
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: var(--color-brand-primary, #E65100);
+  color: var(--color-brand-primary, var(--color-action-strong));
   margin-bottom: 2rem;
 }
 
@@ -40,8 +40,8 @@ html.theme-dark .danilo-manifesto,
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--color-brand-primary, #E65100);
-  box-shadow: 0 0 8px rgba(230, 81, 0, 0.6);
+  background: var(--color-brand-primary, var(--color-action-strong));
+  box-shadow: 0 0 8px rgba(194, 65, 12, 0.6);
   animation: daniloPulse 2s infinite ease-in-out;
 }
 
@@ -82,7 +82,7 @@ html.theme-dark .danilo-manifesto__title,
   height: clamp(2.4rem, 4.8vw, 4.2rem);
   padding: 0.25rem 1.1rem;
   border-radius: 9999px;
-  background: rgba(230, 81, 0, 0.12);
+  background: rgba(194, 65, 12, 0.12);
   border: 1.5px solid var(--stroke-ink, #3E1F14);
   vertical-align: middle;
   cursor: pointer;
@@ -103,7 +103,7 @@ html.theme-dark .danilo-manifesto__capsule,
 .danilo-manifesto__capsule:hover {
   transform: translateY(-4px) scale(1.05) rotate(-1.5deg);
   box-shadow: 4px 6px 0 var(--stroke-ink, #3E1F14);
-  background: var(--color-brand-primary, #E65100);
+  background: var(--color-brand-primary, var(--color-action-strong));
 }
 
 html.theme-dark .danilo-manifesto__capsule:hover,
@@ -142,7 +142,7 @@ html.theme-dark .danilo-manifesto__capsule-text,
 }
 
 .danilo-manifesto__accent {
-  color: var(--color-brand-primary, #E65100);
+  color: var(--color-brand-primary, var(--color-action-strong));
   font-style: italic;
   font-family: serif;
   font-weight: 400;

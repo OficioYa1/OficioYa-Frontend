@@ -61,7 +61,7 @@ html.theme-dark .gdock {
 }
 
 .gdock-item:focus-visible {
-  outline: 2px solid var(--brand-amber, #E58F49);
+  outline: 2px solid var(--brand-amber, var(--color-action-strong));
   outline-offset: 2px;
 }
 
@@ -74,7 +74,7 @@ html.theme-dark .gdock-item:hover {
 }
 
 .gdock-item[data-active="true"] {
-  color: var(--brand-amber, #E58F49);
+  color: var(--brand-amber, var(--color-action-strong));
 }
 
 /* ── Glyph: distance-based transform and lift ── */
@@ -100,7 +100,7 @@ html.theme-dark .gdock-item:hover {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: var(--brand-amber, #E58F49);
+  background: var(--brand-amber, var(--color-action-strong));
   opacity: 0;
   pointer-events: none;
   transition:

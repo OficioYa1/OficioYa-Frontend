@@ -39,7 +39,7 @@ html.theme-dark .ollivere-train-section,
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: var(--color-brand-primary, #E65100);
+  color: var(--color-brand-primary, var(--color-action-strong));
 }
 
 .ollivere-kicker-dot {
@@ -98,7 +98,7 @@ html.theme-dark .ollivere-ctrl-btn,
 
 .ollivere-ctrl-btn:hover {
   background: rgba(255, 111, 0, 0.15);
-  color: #E65100;
+  color: var(--color-action-strong);
   transform: translateY(-1px);
 }
 
@@ -107,14 +107,14 @@ html.theme-dark .ollivere-ctrl-btn,
 }
 
 .ollivere-ctrl-btn--toggle.is-paused {
-  background: #E65100;
+  background: var(--color-action-strong);
   color: #FFFFFF !important;
-  box-shadow: 0 2px 8px rgba(230, 81, 0, 0.35);
+  box-shadow: 0 2px 8px rgba(194, 65, 12, 0.35);
 }
 
 .ollivere-ctrl-btn.is-active {
   background: rgba(255, 111, 0, 0.2);
-  color: #E65100;
+  color: var(--color-action-strong);
 }
 
 .ollivere-train-title {

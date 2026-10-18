@@ -71,7 +71,7 @@ html.theme-dark .wk-inline-flow__head,
   width: 50px;
   height: 50px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+  background: var(--role-primary);
   color: #ffffff;
   flex: none;
   box-shadow: 0 4px 16px -2px rgba(37, 99, 235, 0.35);
@@ -146,7 +146,7 @@ html.theme-dark .wk-inline-flow__mode-toggle,
 }
 
 .wk-inline-flow__mode-btn.is-active {
-  background: var(--color-trust, #3B82F6);
+  background: var(--color-trust);
   color: #ffffff;
   box-shadow: 0 2px 8px -1px rgba(59, 130, 246, 0.4);
 }
@@ -241,8 +241,8 @@ html.theme-dark .wk-inline-flow__textarea,
 .wk-inline-flow__input:focus,
 .wk-inline-flow__select:focus,
 .wk-inline-flow__textarea:focus {
-  border-color: var(--brand-amber, #E58F49);
-  box-shadow: 0 0 0 3px rgba(229, 143, 73, 0.16);
+  border-color: var(--brand-amber, var(--color-action-strong));
+  box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.16);
 }
 
 .wk-inline-flow__textarea {
@@ -324,12 +324,12 @@ html.theme-dark .wk-inline-flow__pay-chip,
 }
 
 .wk-inline-flow__pay-chip:hover {
-  border-color: var(--brand-amber, #E58F49);
+  border-color: var(--brand-amber, var(--color-action-strong));
 }
 
 .wk-inline-flow__pay-chip.is-selected {
-  background: var(--color-trust, #3B82F6);
-  border-color: var(--color-trust, #3B82F6);
+  background: var(--color-trust);
+  border-color: var(--color-trust);
   color: #ffffff;
   box-shadow: 0 4px 14px -2px rgba(59, 130, 246, 0.35);
 }
@@ -350,7 +350,7 @@ html.theme-dark .wk-inline-flow__pay-chip,
 }
 
 .wk-inline-flow__chat-hint svg {
-  color: var(--color-trust, #3B82F6);
+  color: var(--color-trust);
   flex: none;
 }
 

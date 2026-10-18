@@ -184,7 +184,7 @@ export const AppFooter: React.FC<AppFooterProps> = ({ onOpenContact }) => {
           <span className="app-footer__clockwork-pulse" aria-hidden="true" />
           <span className="app-footer__clockwork-city">BOGOTÁ D.C.</span>
           <span className="app-footer__clockwork-time">({bogotaTime})</span>
-          <span className="app-footer__clockwork-status">· GUARDIA TÉCNICA 24/7 EN VIVO</span>
+          <span className="app-footer__clockwork-status">· HORA LOCAL</span>
         </div>
 
         <div className="app-footer__bar">

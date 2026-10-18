@@ -234,13 +234,13 @@
 }
 
 .oy-pcard--clickable:focus-visible {
-  outline: 3px solid var(--brand-amber, #E58F49);
+  outline: 3px solid var(--brand-amber, var(--color-action-strong));
   outline-offset: 4px;
   border-radius: var(--radius-frame);
 }
 
 .oy-pcard--clickable:hover .oy-pcard__body {
-  border-color: var(--brand-amber, #E58F49);
+  border-color: var(--brand-amber, var(--color-action-strong));
   box-shadow:
     0 12px 32px -4px rgba(62, 31, 20, 0.16),
     0 4px 12px -2px rgba(62, 31, 20, 0.08);
@@ -248,10 +248,10 @@
 
 html.theme-dark .oy-pcard--clickable:hover .oy-pcard__body,
 [data-theme="dark"] .oy-pcard--clickable:hover .oy-pcard__body {
-  border-color: var(--brand-amber, #E58F49);
+  border-color: var(--brand-amber, var(--color-action-strong));
   box-shadow:
     0 16px 36px -4px rgba(0, 0, 0, 0.65),
-    0 0 0 1px rgba(229, 143, 73, 0.25);
+    0 0 0 1px rgba(194, 65, 12, 0.25);
 }
 
 .oy-pcard--clickable:active .oy-pcard__body {

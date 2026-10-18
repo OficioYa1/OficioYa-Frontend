@@ -170,7 +170,7 @@ export const WorkerInlineHireFlow: React.FC<WorkerInlineHireFlowProps> = ({
               style={{ cursor: 'not-allowed', opacity: 0.65, gap: '5px' }}
               title="El profesional debe aceptar la petición para hacer la reserva"
             >
-              <Lock size={13} aria-hidden="true" style={{ color: 'var(--brand-amber, #E58F49)' }} /> Reserva Bloqueada
+              <Lock size={13} aria-hidden="true" style={{ color: 'var(--brand-amber, var(--color-action-strong))' }} /> Reserva Bloqueada
             </span>
           </div>
 
