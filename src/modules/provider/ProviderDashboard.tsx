@@ -451,20 +451,23 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
         </div>
 
         <div className="pv-live__switch">
-          <span className="pv-row">
+          <span className="pv-row pv-row--status" data-on={isAvailableNow}>
             <span className="pv-dot" data-on={isAvailableNow} aria-hidden="true" />
             {isAvailableNow ? 'DISPONIBLE YA' : 'FUERA DE LÍNEA'}
           </span>
-          <SquishSwitch
-            checked={isAvailableNow}
-            onChange={setAvailable}
-            disabled={isPaused}
-            ariaLabel="Disponible Ya"
-            trackOnColor="var(--oy-cacao-profundo)"
-            width={60}
-            height={34}
-            radius={17}
-          />
+          {/* Verde Esmeralda con halo radar: el manual lo reserva para este estado */}
+          <span className="oy-halo pv-switch-halo" data-on={isAvailableNow}>
+            <SquishSwitch
+              checked={isAvailableNow}
+              onChange={setAvailable}
+              disabled={isPaused}
+              ariaLabel="Disponible Ya"
+              trackOnColor="var(--oy-verde-esmeralda)"
+              width={60}
+              height={34}
+              radius={17}
+            />
+          </span>
         </div>
       </section>
 

@@ -125,6 +125,13 @@
 
 .pv-dot[data-on='true'] { background: var(--oy-verde-esmeralda); }
 
+.pv-row--status[data-on='true'] { color: var(--color-status-text); }
+
+.pv-switch-halo {
+  display: inline-flex;
+  border-radius: 17px;
+}
+
 .pv-badges {
   display: flex;
   flex-wrap: wrap;
