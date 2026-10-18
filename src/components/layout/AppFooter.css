@@ -279,7 +279,7 @@ html.theme-dark .app-footer__sign-title { color: var(--color-text-main); }
 
 .app-footer__clockwork-time {
   font-weight: 900;
-  color: var(--stroke-ink);
+  color: var(--color-text-main);
   letter-spacing: 0.08em;
 }
 
