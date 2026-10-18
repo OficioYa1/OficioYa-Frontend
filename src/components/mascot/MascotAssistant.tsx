@@ -53,9 +53,9 @@ const CONTEXT_STATES: Record<string, ManyState> = {
 
 const INTERACTION_MESSAGES: ManyState[] = [
   { expression: 'alegre',       message: '¡Hola! Soy Many, el castor de OficioYa. Estoy aquí para ayudarte.', animate: 'wave' },
-  { expression: 'guino',        message: 'Todos los profesionales tienen antecedentes verificados. Confía en las reseñas.', animate: 'float' },
-  { expression: 'entusiasta',   message: '¡Respuesta promedio en menos de 20 minutos! Eso sí es velocidad.', animate: 'bounce' },
-  { expression: 'sorprendido',  message: 'Hay un profesional calificado a menos de 500 metros de ti ahora mismo.', animate: 'wave' },
+  { expression: 'guino',        message: 'Busca el sello de identidad: lo ganan los profesionales que muestran su cédula después de 10 trabajos.', animate: 'float' },
+  { expression: 'entusiasta',   message: 'Activa "Disponible ahora" en los filtros para ver solo a quienes pueden atenderte hoy.', animate: 'bounce' },
+  { expression: 'sorprendido',  message: 'Te muestro primero a quienes están más cerca de tu zona, con su distancia real.', animate: 'wave' },
   { expression: 'pensativo',    message: 'Analizo distancia, reputación y disponibilidad para darte la mejor opción.', animate: 'idle' },
   { expression: 'concentrado',  message: 'Las reseñas son verificadas: solo clientes con servicio completado pueden opinar.', animate: 'float' },
 ];

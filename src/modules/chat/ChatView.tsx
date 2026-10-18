@@ -523,8 +523,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
                       <ShieldCheck size={18} />
                     </div>
                     <div>
-                      <strong>Garantía de Reputación</strong>
-                      <p>Profesionales verificados con historial validado por vecinos de Bogotá.</p>
+                      <strong>Reputación real</strong>
+                      <p>Reseñas que solo dejan clientes con un servicio completado.</p>
                     </div>
                   </div>
                 </div>

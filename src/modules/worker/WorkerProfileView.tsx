@@ -501,10 +501,10 @@ export const WorkerProfileView: React.FC<WorkerProfileViewProps> = ({
                 <div className="wk-card wk-card--amarillo wk-fullpage__guarantee-card">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
                     <Sparkles size={20} color="var(--stroke-ink)" />
-                    <h4 style={{ margin: 0, fontWeight: 800 }}>Garantía y Mediación OficioYa</h4>
+                    <h4 style={{ margin: 0, fontWeight: 800 }}>Confianza OficioYa</h4>
                   </div>
                   <p style={{ margin: 0, fontSize: '13px', lineHeight: '1.5', color: 'var(--color-text-main)' }}>
-                    Todos los servicios coordinados en la plataforma cuentan con validación de identidad y mediación activa de la comunidad en caso de inconformidad.
+                    Las reseñas solo las dejan clientes con un servicio completado. Si algo sale mal, repórtalo y moderación lo revisa. Acuerda la garantía por chat para que quede por escrito.
                   </p>
                 </div>
               </aside>

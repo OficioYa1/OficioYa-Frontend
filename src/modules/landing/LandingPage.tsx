@@ -66,7 +66,7 @@ interface TradeOption {
 
 const TRADES: TradeOption[] = [
   { key: 'electricidad',    label: 'Electricidad',    icon: <Zap size={15} />,        tagline: 'Instalaciones eléctricas, cableado y circuitos seguros.' },
-  { key: 'plomeria',        label: 'Plomería',        icon: <Wrench size={15} />,      tagline: 'Destapes, fugas y redes hidráulicas con garantía de trabajo.' },
+  { key: 'plomeria',        label: 'Plomería',        icon: <Wrench size={15} />,      tagline: 'Destapes, fugas y redes hidráulicas en tu barrio.' },
   { key: 'pintura',         label: 'Pintura',         icon: <PaintBucket size={15} />, tagline: 'Acabados finos y pintura arquitectónica para tu hogar.' },
   { key: 'cerrajeria',      label: 'Cerrajería',      icon: <KeyRound size={15} />,    tagline: 'Aperturas de emergencia 24 horas, sin daño a tus cerraduras.' },
   { key: 'electrodomesticos', label: 'Electrodomésticos', icon: <Tv2 size={15} />,    tagline: 'Reparación de lavadoras, neveras y aires acondicionados.' },
@@ -75,10 +75,10 @@ const TRADES: TradeOption[] = [
 
 
 const FAQS = [
-  { q: '¿Cómo verifican a los profesionales?', a: 'Validamos antecedentes judiciales, revisamos su cédula de ciudadanía y requerimos al menos 3 reseñas de clientes reales antes de activar su perfil.' },
+  { q: '¿Cómo verifican a los profesionales?', a: 'Cada profesional verifica su teléfono o correo al registrarse. Después de 10 trabajos puede mostrar su cédula y ganar el sello de identidad verificada. Las reseñas solo las dejan clientes con un servicio completado.' },
   { q: '¿Cuánto cobra OficioYa de comisión?', a: 'Cero. El trato es 100% directo entre tú y el profesional. OficioYa no cobra comisiones ni intermediaciones.' },
   { q: '¿Puedo contratar para hoy mismo?', a: 'Sí. El filtro de disponibilidad te muestra únicamente quienes están activos en este momento y pueden atenderte hoy.' },
-  { q: '¿En qué zonas de Bogotá funciona?', a: 'Actualmente operamos en todas las localidades de Bogotá D.C. y municipios del área metropolitana como Chía, Soacha y Cota.' },
+  { q: '¿En qué zonas de Bogotá funciona?', a: 'Funcionamos en las localidades de Bogotá D.C. Te mostramos primero a quienes están más cerca de tu zona.' },
 ];
 
 // Fotos de portafolio de los trabajadores semilla (sin repetir URL).
@@ -500,7 +500,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
               Historias de clientes en Bogotá
             </h2>
             <p className="lp-testimonials-sub">
-              Vecinos reales que resolvieron sus problemas de hogar sin comisiones, con precio acordado y garantía.
+              Así se ve una experiencia con OficioYa: precio acordado por chat y pago directo, sin comisiones.
             </p>
           </div>
 
