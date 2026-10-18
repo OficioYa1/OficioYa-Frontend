@@ -885,3 +885,19 @@ html.theme-dark .oy-flow-danger__delete { color: var(--color-text-main); }
   gap: 4px;
   overflow-wrap: anywhere;
 }
+
+/* Alternativa visible al deslizable: envía con un clic o con teclado */
+.oy-flow-plain-submit {
+  min-height: var(--tap-target, 44px);
+  padding: 0 1rem;
+  border: 0;
+  background: none;
+  color: var(--stroke-ink);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.oy-flow-plain-submit:disabled { opacity: .5; cursor: not-allowed; }
+.oy-flow-plain-submit:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; border-radius: 8px; }

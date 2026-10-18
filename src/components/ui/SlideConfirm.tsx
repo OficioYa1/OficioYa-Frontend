@@ -433,6 +433,13 @@ export function SlideConfirm({
           className="sld-grip"
           onPointerEnter={() => setHot(true)}
           onPointerLeave={() => setHot(false)}
+          onClick={(e) => {
+            /* Enter y Espacio llegan como click con detail 0: así el
+               teclado y los lectores de pantalla confirman sin arrastrar */
+            if (e.detail !== 0 || done || disabled) return;
+            x.set(TRAVEL);
+            finish();
+          }}
           disabled={disabled}
           style={{
             x: seen,
@@ -449,7 +456,7 @@ export function SlideConfirm({
             borderRadius: gripR,
           }}
           transition={{ type: "spring", stiffness: 400, damping: 30, mass: 0.7 }}
-          aria-label={done ? confirmedLabel : label}
+          aria-label={done ? confirmedLabel : `${label}. Pulsa Enter para confirmar`}
         >
           <motion.span className="sld-arrow" style={{ opacity: arrow }} aria-hidden="true">
             <ArrowRight size={20} strokeWidth={2.4} />
