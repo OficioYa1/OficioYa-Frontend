@@ -15,7 +15,7 @@ const CLASSIFIEDS = [
     num: 'AVISO Nº 01',
     trade: 'Plomería & Emergencias',
     quote: '«Reparo fugas en tuberías de cobre y PVC sin romper baldosas. Atiendo 24 horas en Usaquén y Chapinero.»',
-    worker: 'Don Carlos Mendoza',
+    worker: 'Don Carlos Restrepo',
     zone: 'Cedritos · Bogotá',
     rating: '4.9 ★'
   },
