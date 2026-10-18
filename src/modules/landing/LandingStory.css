@@ -1,0 +1,381 @@
+/* =============================================================
+   Landing · secciones narrativas (lenguaje sticker de STYLE_REFERENCE:
+   contorno Cacao, píldoras, tarjetas 20–40 px sin sombra, DM Sans 800)
+   ============================================================= */
+
+.ls-sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.ls-section { padding: clamp(3.5rem, 8vw, 6.5rem) 0; }
+
+.ls-kicker {
+  display: inline-flex;
+  padding: 6px 14px;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--radius-pill);
+  background: var(--oy-amarillo-canario);
+  color: var(--color-on-energy);
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.ls-title {
+  margin: 1rem 0 0;
+  max-width: 18ch;
+  color: var(--oy-cacao-profundo);
+  font-size: clamp(2.25rem, 1.2rem + 4.2vw, 4rem);
+  line-height: 0.95;
+  text-wrap: balance;
+}
+
+.ls-lead {
+  max-width: 46ch;
+  margin: 1.25rem 0 0;
+  color: var(--color-text-main);
+  font-size: 1.0625rem;
+  line-height: var(--leading-body);
+}
+
+.ls-link-btn {
+  min-height: var(--tap-target);
+  margin-top: 1.5rem;
+  padding: 0 1.4rem;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--radius-pill);
+  background: var(--oy-blanco);
+  color: var(--oy-cacao-profundo);
+  font: 700 15px var(--font-text);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.ls-link-btn:hover { transform: translateY(-2px); }
+.ls-link-btn:active { transform: scale(.97); }
+
+/* ── Hero: video del trailer ── */
+.ls-hero-video {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--radius-frame);
+  background: var(--color-warm-soft);
+}
+.ls-hero-video video,
+.ls-hero-video img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ls-play {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap-target);
+  padding: 4px 18px 4px 4px;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--radius-pill);
+  background: var(--oy-blanco);
+  color: var(--oy-cacao-profundo);
+  font: 700 14px var(--font-text);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.ls-play:hover { transform: translateY(-2px); }
+.ls-play:active { transform: scale(.97); }
+.ls-play__icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--oy-azul-marino);
+  color: var(--oy-blanco);
+}
+
+/* ── Diálogo del trailer ── */
+.ls-dialog {
+  width: min(960px, calc(100vw - 32px));
+  max-width: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.ls-dialog::backdrop { background: rgba(62, 31, 20, .72); }
+.ls-dialog__frame {
+  position: relative;
+  overflow: hidden;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--radius-card);
+  background: #000;
+}
+.ls-dialog__frame video { display: block; width: 100%; aspect-ratio: 16 / 9; }
+.ls-dialog__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--tap-target);
+  height: var(--tap-target);
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: 50%;
+  background: var(--oy-blanco);
+  color: var(--oy-cacao-profundo);
+  cursor: pointer;
+}
+
+/* ── Cómo funciona ── */
+.ls-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin: 2.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.ls-step {
+  overflow: hidden;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--radius-card);
+  background: var(--oy-blanco);
+}
+.ls-step img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; border-bottom: var(--stroke-w) solid var(--oy-cacao-profundo); }
+.ls-step__body { padding: 1.25rem 1.25rem 1.5rem; }
+.ls-step__num {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: 50%;
+  background: var(--oy-amarillo-canario);
+  color: var(--color-on-energy);
+  font: 800 16px var(--font-display);
+}
+.ls-step h3 { margin: .75rem 0 .35rem; color: var(--oy-cacao-profundo); font: 800 1.25rem/1.2 var(--font-display); }
+.ls-step p { margin: 0; color: var(--color-text-main); line-height: var(--leading-body); }
+
+/* ── Reputación por oficio ── */
+.ls-rep { background: var(--wash-marino); border-block: var(--stroke-w) solid var(--oy-cacao-profundo); }
+.ls-rep__grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 2.5rem; align-items: center; }
+.ls-rep__card {
+  padding: 1.5rem;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--radius-card-lg);
+  background: var(--oy-blanco);
+  transform: rotate(-1.5deg);
+}
+.ls-rep__card header { display: flex; align-items: center; gap: .9rem; }
+.ls-rep__card header div { display: grid; gap: 2px; }
+.ls-rep__card header strong { color: var(--oy-cacao-profundo); font: 800 1.2rem var(--font-display); }
+.ls-rep__card header span { color: var(--color-text-main); font-size: 14px; }
+.ls-rep__avatar {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: 50%;
+  background: var(--oy-amarillo-canario);
+  color: var(--color-on-energy);
+  font: 800 18px var(--font-display);
+}
+.ls-rep__card ul { display: grid; gap: .6rem; margin: 1.25rem 0 0; padding: 0; list-style: none; }
+.ls-rep__card li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: .75rem 1rem;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--radius-pill);
+  background: var(--color-warm-soft);
+  color: var(--oy-cacao-profundo);
+  font-weight: 700;
+}
+.ls-rep__score { display: inline-flex; align-items: center; gap: 6px; font: 800 1.1rem var(--font-display); }
+.ls-rep__score small { color: var(--color-text-main); font: 500 12px var(--font-text); }
+
+/* ── Comparador ── */
+.ls-compare__switch { display: none; }
+.ls-compare__table {
+  width: 100%;
+  margin-top: 2.25rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--radius-card);
+  background: var(--oy-blanco);
+  color: var(--oy-cacao-profundo);
+}
+.ls-compare__table th,
+.ls-compare__table td { padding: 1rem 1.25rem; text-align: left; vertical-align: top; border-bottom: 1px solid rgba(62, 31, 20, .18); }
+.ls-compare__table tbody tr:last-child > * { border-bottom: 0; }
+.ls-compare__table thead th { font: 800 1.05rem var(--font-display); background: var(--color-warm-soft); }
+.ls-compare__table tbody th { font-weight: 700; width: 30%; }
+.ls-compare__table td svg { vertical-align: -3px; margin-right: 4px; }
+.ls-col-wa { color: var(--color-text-main); }
+.ls-compare__table thead .ls-col-oy { background: var(--oy-azul-marino); color: var(--oy-blanco); }
+.ls-compare__table td.ls-col-oy { font-weight: 600; }
+.ls-compare__table td.ls-col-oy svg { color: var(--oy-azul-marino); }
+
+/* ── Profesionales: imagen y calculadora ── */
+.ls-pro-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--radius-card);
+}
+.ls-calc {
+  margin-top: 1.25rem;
+  padding: 1rem 1.25rem;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--radius-card);
+  background: var(--oy-blanco);
+  color: var(--oy-cacao-profundo);
+}
+.ls-calc label { font-weight: 700; font-size: 14px; }
+.ls-calc__row { display: flex; align-items: center; gap: 6px; margin-top: 6px; font: 800 1.5rem var(--font-display); }
+.ls-calc__row input {
+  width: 100%;
+  min-height: var(--tap-target);
+  padding: 0 .75rem;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--radius-control);
+  background: var(--color-warm-soft);
+  color: var(--oy-cacao-profundo);
+  font: 800 1.5rem var(--font-display);
+}
+.ls-calc p { margin: .75rem 0 0; color: var(--color-text-main); }
+.ls-calc strong { color: var(--oy-cacao-profundo); font-family: var(--font-display); font-size: 1.2rem; }
+
+@media (max-width: 860px) {
+  .ls-steps { grid-template-columns: 1fr; }
+  .ls-rep__grid { grid-template-columns: 1fr; }
+  .ls-rep__card { transform: none; }
+
+  /* En el celular se ve una columna a la vez, con interruptor */
+  .ls-compare__switch {
+    display: inline-flex;
+    gap: 4px;
+    margin-top: 1.5rem;
+    padding: 4px;
+    border: var(--stroke-w) solid var(--oy-cacao-profundo);
+    border-radius: var(--radius-pill);
+    background: var(--oy-blanco);
+  }
+  .ls-compare__switch button {
+    min-height: 40px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--oy-cacao-profundo);
+    font: 700 14px var(--font-text);
+    cursor: pointer;
+  }
+  .ls-compare__switch button[aria-pressed="true"] { background: var(--oy-azul-marino); color: var(--oy-blanco); }
+  .ls-compare__table { margin-top: 1rem; }
+  .ls-compare__table[data-side="oficioya"] .ls-col-wa,
+  .ls-compare__table[data-side="whatsapp"] .ls-col-oy { display: none; }
+  .ls-compare__table th, .ls-compare__table td { padding: .85rem 1rem; }
+}
+
+html.theme-dark .ls-title,
+html.theme-dark .ls-step h3 { color: var(--color-text-main); }
+
+/* ── Hero dividido: titular de beneficio + video ── */
+.lp-hero-band { min-height: auto; padding-top: clamp(2.5rem, 6vw, 4.5rem); padding-bottom: clamp(3rem, 7vw, 5rem); }
+.lp-hero-city-dot { background: var(--oy-cacao-profundo); animation: none; }
+.lp-hero-split {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: clamp(1.75rem, 4vw, 3.5rem);
+  align-items: center;
+  width: min(1180px, 100%);
+  text-align: left;
+}
+.lp-hero-title {
+  margin: 0;
+  color: var(--oy-cacao-profundo);
+  font-size: clamp(2.6rem, 1.3rem + 5vw, 5rem);
+  line-height: .92;
+  text-wrap: balance;
+}
+.lp-hero-title-mark {
+  display: inline-block;
+  padding: 0 .14em .06em;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: .2em;
+  background: var(--oy-amarillo-canario);
+  color: var(--color-on-energy);
+  transform: rotate(-2deg);
+}
+.lp-hero-split .lp-hero-copy {
+  max-width: 44ch;
+  margin: 1.25rem 0 1.75rem;
+  color: var(--color-text-main);
+  font-size: 1.0625rem;
+  line-height: var(--leading-body);
+}
+.lp-hero-split .lp-hero-ctas { justify-content: flex-start; margin-bottom: .9rem; }
+.lp-hero-split .lp-hero-btn-primary {
+  min-height: var(--tap-target);
+  background: var(--oy-azul-marino);
+  color: var(--oy-blanco);
+}
+.lp-hero-split .lp-hero-btn-ghost {
+  min-height: var(--tap-target);
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  background: var(--oy-blanco);
+  color: var(--oy-cacao-profundo);
+}
+.lp-hero-micro { margin: 0; color: var(--color-text-main); font-size: 14px; font-weight: 600; }
+
+/* ── ¿Qué se dañó? ── */
+.lp-trades-pick { padding: clamp(3.5rem, 8vw, 6rem) 0; background: var(--color-warm-soft); border-block: var(--stroke-w) solid var(--oy-cacao-profundo); }
+.lp-trades-pick__grid { display: grid; grid-template-columns: .8fr 1.2fr; gap: 2.5rem; align-items: center; }
+.lp-trades-pick .lp-trade-row { justify-content: flex-start; margin-top: 1.5rem; }
+.lp-trades-pick .lp-hero-tagline { margin-top: 1rem; max-width: 46ch; text-align: left; color: var(--color-text-main); font-size: 15px; }
+
+/* Historias: iniciales en lugar de fotos de stock */
+.lp-testi-card__initials {
+  display: grid;
+  place-items: center;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  background: var(--oy-azul-marino);
+  color: var(--oy-blanco);
+  font: 800 16px var(--font-display);
+}
+
+/* Profesionales: escena del trailer bajo el texto */
+.lp-cta-pro-img { margin-top: 1.5rem; }
+
+@media (max-width: 860px) {
+  .lp-hero-split { grid-template-columns: 1fr; }
+  .lp-trades-pick__grid { grid-template-columns: 1fr; }
+  .lp-trades-pick .lp-hero-many { max-width: 260px; margin: 0 auto; }
+  .lp-hero-split .lp-hero-ctas > * { flex: 1 1 100%; }
+  .lp-hero-split .lp-hero-ctas button { width: 100%; }
+}

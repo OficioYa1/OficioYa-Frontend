@@ -5,12 +5,10 @@ import {
   Bell,
   Moon,
   LogOut,
-  ShieldAlert,
-  Globe
+  ShieldAlert
 } from 'lucide-react';
 import type { UserRole } from '../../types';
 import { BranchedMenu, SquishSwitch, type BranchedMenuItem } from '../ui';
-import { useLanguage } from '../../context/LanguageContext';
 import './AppMenu.css';
 
 interface AppMenuProps {
@@ -48,7 +46,6 @@ export const AppMenu: React.FC<AppMenuProps> = ({
   onToggleTheme,
   onLogout
 }) => {
-  const { lang, setLang } = useLanguage();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -126,30 +123,6 @@ export const AppMenu: React.FC<AppMenuProps> = ({
               height={26}
               radius={13}
             />
-          </div>
-
-          <div className="app-menu-switch">
-            <span className="app-menu-switch-label">
-              <Globe size={15} aria-hidden="true" />
-              Idioma
-            </span>
-            <div className="app-menu-lang-row">
-              <button
-                type="button"
-                className={`app-menu-lang-btn ${lang === 'es' ? 'app-menu-lang-btn--active' : ''}`}
-                onClick={() => setLang('es')}
-              >
-                ES
-              </button>
-              <span className="app-menu-lang-sep">/</span>
-              <button
-                type="button"
-                className={`app-menu-lang-btn ${lang === 'en' ? 'app-menu-lang-btn--active' : ''}`}
-                onClick={() => setLang('en')}
-              >
-                EN
-              </button>
-            </div>
           </div>
 
           <button type="button" className="app-menu-action app-menu-action--danger" onClick={onLogout}>

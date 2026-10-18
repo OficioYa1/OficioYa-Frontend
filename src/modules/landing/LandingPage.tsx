@@ -2,31 +2,26 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { TradeCategory } from '../../types';
 import {
   Wrench, Zap, PaintBucket, KeyRound,
-  ArrowRight, Award, Tv2, BookOpen,
-  Plus, Minus, Quote, ShieldCheck,
+  ArrowRight, Tv2, BookOpen,
+  Plus, Minus, Quote,
   LogIn, Search, HelpCircle, Briefcase, ChevronDown, Menu, X,
-  UserCheck, Star, CheckCircle2
+  Star, CheckCircle2
 } from 'lucide-react';
 import './LandingPage.css';
 import './LandingSticker.css';
 import './LandingLiquidNav.css';
 import { AppFooter } from '../../components/layout/AppFooter';
-import { TrueFocus } from '../../components/ui/TrueFocus';
 import { BRAND_ASSETS } from '../../utils/assets';
 import { PixelSwap } from '../../components/ui/PixelSwap';
-import { StrokeText, BorderGlow, DriftWall, RollingText, RotaryDial } from '../../components/ui';
+import { StrokeText, BorderGlow, DriftWall, RollingText } from '../../components/ui';
 import type { DriftWallItem } from '../../components/ui';
-import { EditorialManifesto } from '../../components/landing/EditorialManifesto';
-import { AsymmetricShowcase } from '../../components/landing/AsymmetricShowcase';
-import { SkillsTrain } from '../../components/landing/SkillsTrain';
-import { StickyProcess } from '../../components/landing/StickyProcess';
-import { RetroInspector } from '../../components/landing/RetroInspector';
-import { PaperBroadsheet } from '../../components/landing/PaperBroadsheet';
+import { HeroVideo, TrailerDialog, HowItWorks, TradeReputation, Comparison, EarningsCalculator, ProImage } from './LandingStory';
 import { INITIAL_WORKERS } from '../../services/mockData';
 import { ScrollToTop } from '../../components/common/ScrollToTop';
 
 const PlasmaWarp = React.lazy(() => import('../../components/background/PlasmaWarp'));
 
+// Historias de ejemplo de la demo: sin fotos de stock que se hagan pasar por clientes
 const TESTIMONIALS = [
   {
     name: 'Camila Restrepo',
@@ -34,7 +29,6 @@ const TESTIMONIALS = [
     trade: 'Plomería de emergencia',
     rating: 5,
     comment: 'Tenía una fuga urgente bajo el lavaplatos un domingo a las 8 p.m. Don Carlos llegó en 18 minutos y dejó todo impecable. El trato directo y transparente me dio total tranquilidad.',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
   },
   {
     name: 'Andrés Felipe Morales',
@@ -42,7 +36,6 @@ const TESTIMONIALS = [
     trade: 'Electricidad e iluminación',
     rating: 5,
     comment: 'Instalaron todo el cableado y luminarias de mi apartamento. Poder revisar las fotos de sus trabajos anteriores antes de contratar fue el factor decisivo. Recomendadísimo.',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
   },
   {
     name: 'Valentina Gómez',
@@ -50,7 +43,6 @@ const TESTIMONIALS = [
     trade: 'Aseo profundo y desinfección',
     rating: 5,
     comment: 'Doña Claudia hizo el aseo de entrega de mudanza. Dejó los tapetes y muebles a vapor como nuevos. Pagué directo por Nequi sin enredos de comisiones ni intermediarios.',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80'
   }
 ];
 
@@ -191,6 +183,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
   const [heroVisible, setHeroVisible] = useState(false);
   const [showSearchMenu, setShowSearchMenu] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [trailerOpen, setTrailerOpen] = useState(false);
 
   const [faqRef, faqVisible]     = useReveal();
   const [ctaRef, ctaVisible]     = useReveal();
@@ -356,128 +349,84 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
 
       {/* ── HERO ── */}
       <section className={`lp-hero lp-hero-band ${heroVisible ? 'lp-hero--in' : ''}`}>
-        {/* Stickers decorativos con la paleta del manual (estáticos, rotados) */}
-        <div className="lp-stickers" aria-hidden="true">
-          <span className="lp-sticker lp-sticker--amarillo lp-sticker--a"><Wrench size={28} /></span>
-          <span className="lp-sticker lp-sticker--esmeralda lp-sticker--b"><UserCheck size={26} /></span>
-          <span className="lp-sticker lp-sticker--fuego lp-sticker--c"><Zap size={26} /></span>
-          <span className="lp-sticker lp-sticker--marino lp-sticker--d"><Award size={26} /></span>
-          <span className="lp-sticker lp-sticker--almendra lp-sticker--pill lp-sticker--e">Verificado</span>
-        </div>
+        <div className="lp-hero-split">
+          <div className="lp-hero-text">
+            <div className="lp-hero-city">
+              <span className="lp-hero-city-dot" />
+              Bogotá D.C.
+            </div>
+            <h1 className="oy-display lp-hero-title">
+              El talento de tu zona <span className="lp-hero-title-mark">a un clic</span> de distancia.
+            </h1>
 
-        {/* Badge ciudad — texto suelto, sin recuadro opaco */}
-        <div className="lp-hero-city">
-          <span className="lp-hero-city-dot" />
-          Bogotá D.C.
-        </div>
+            <p className="lp-hero-copy">
+              Plomeros, electricistas, cerrajeros y más, con{' '}
+              <span className="lp-hero-copy-strong"><HoverText>reseñas de vecinos</HoverText></span>
+              {' '}y la distancia real desde tu barrio.
+            </p>
 
-        {/* Wordmark */}
-        <h1 className="oy-display lp-wordmark" aria-label="OficioYa">
-          <span className="lp-wordmark-oficio">Oficio</span>
-          <span className="lp-wordmark-ya">Ya</span>
-        </h1>
-
-        {/* Eslogan */}
-        <div className="lp-hero-slogan">
-          <TrueFocus
-            sentence="El talento de tu zona a un click de distancia"
-            blurAmount={3}
-            borderColor="var(--stroke-ink)"
-            animationDuration={0.4}
-          />
-        </div>
-
-        {/* Texto descriptivo — sin recuadro, flotante */}
-        <p className="lp-hero-copy">
-          Plomeros, electricistas, pintores y más — con{' '}
-          <span className="lp-hero-copy-strong"><HoverText>reputación verificada</HoverText></span>
-          {' '}y geolocalización en tiempo real.
-        </p>
-
-        {/* CTAs */}
-        <div className="lp-hero-ctas">
-          <BorderGlow animated>
-            <button
-              onClick={handleStartAsSeeker}
-              className="lp-hero-btn-primary"
-            >
-              Buscar expertos
-            </button>
-          </BorderGlow>
-          <button
-            onClick={handleStartAsProvider}
-            className="lp-hero-btn-ghost"
-          >
-            Soy trabajador independiente
-          </button>
-        </div>
-
-        {/* Many mascot */}
-        <div className="lp-hero-many">
-
-          <ManySwap
-            src={selectedTrade === 'plomeria' ? BRAND_ASSETS.manyPlomero : selectedTrade === 'electricidad' ? BRAND_ASSETS.manyElectricista : BRAND_ASSETS.manyWave}
-            alt={selectedTrade === 'plomeria' ? 'Many plomero' : selectedTrade === 'electricidad' ? 'Many electricista' : 'Many saludando'}
-            imgClassName={`lp-many-hero-img ${manyAnimate === 'wave' ? 'lp-many-waving' : ''}`}
-            onClick={triggerWave}
-          />
-
-          {/* Tagline del oficio — texto suelto */}
-          <p className="lp-hero-tagline">
-            {currentTrade.tagline}
-          </p>
-
-          {/* Selector oficios */}
-          <div className="lp-trade-row">
-            {TRADES.map(t => (
-              <button
-                key={t.key}
-                onClick={() => handleTradeSelect(t.key)}
-                className="lp-trade-chip"
-                aria-pressed={selectedTrade === t.key}
-              >
-                {t.icon} {t.label}
+            <div className="lp-hero-ctas">
+              <BorderGlow animated>
+                <button onClick={handleStartAsSeeker} className="lp-hero-btn-primary">
+                  Encontrar técnico en mi barrio
+                </button>
+              </BorderGlow>
+              <button onClick={handleStartAsProvider} className="lp-hero-btn-ghost">
+                Publicar mi oficio gratis
               </button>
-            ))}
+            </div>
+            <p className="lp-hero-micro">0 % comisiones · pagas directo por Nequi, Daviplata o efectivo</p>
+          </div>
+
+          <HeroVideo onOpenTrailer={() => setTrailerOpen(true)} />
+        </div>
+      </section>
+
+      <HowItWorks />
+
+      {/* ── ¿QUÉ SE DAÑÓ? Many cambia de traje según el oficio ── */}
+      <section className="lp-trades-pick" aria-labelledby="lp-trades-title">
+        <div className="lp-wrap lp-trades-pick__grid">
+          <div className="lp-hero-many">
+            <ManySwap
+              src={selectedTrade === 'plomeria' ? BRAND_ASSETS.manyPlomero : selectedTrade === 'electricidad' ? BRAND_ASSETS.manyElectricista : BRAND_ASSETS.manyWave}
+              alt={selectedTrade === 'plomeria' ? 'Many plomero' : selectedTrade === 'electricidad' ? 'Many electricista' : 'Many saludando'}
+              imgClassName={`lp-many-hero-img ${manyAnimate === 'wave' ? 'lp-many-waving' : ''}`}
+              onClick={triggerWave}
+            />
+          </div>
+          <div>
+            <span className="ls-kicker">¿Qué se dañó?</span>
+            <h2 id="lp-trades-title" className="oy-display ls-title">Elige el oficio y Many te muestra quién está cerca.</h2>
+            <div className="lp-trade-row">
+              {TRADES.map(t => (
+                <button
+                  key={t.key}
+                  onClick={() => handleTradeSelect(t.key)}
+                  className="lp-trade-chip oy-chip-pop"
+                  aria-pressed={selectedTrade === t.key}
+                >
+                  {t.icon} {t.label}
+                </button>
+              ))}
+            </div>
+            <p className="lp-hero-tagline" aria-live="polite">{currentTrade.tagline}</p>
+            <button type="button" className="ls-link-btn" onClick={handleStartAsSeeker}>
+              Ver profesionales de {currentTrade.label.toLowerCase()}
+            </button>
           </div>
         </div>
       </section>
 
-      {/* ── MANIFIESTO EDITORIAL (Inspirado en danilodemarco.com) ── */}
-      <EditorialManifesto onExplore={handleStartAsSeeker} />
-
-      {/* ── CARAVANA / TREN DE OFICIOS (Inspirado en ollivere.webflow.io) ── */}
-      <SkillsTrain onSelectTrade={(trade) => handleTradeSelect(trade as any)} />
-
-      {/* ── METODOLOGÍA SIN VUELTAS: PROCESO STICKY (Inspirado en ollivere.webflow.io) ── */}
-      <StickyProcess onStart={handleStartAsSeeker} />
-
-      {/* ── INSPECTOR DE HERRAMIENTAS Y FICHA TÉCNICA 3D (Inspirado en thibaut.cool) ── */}
-      <RetroInspector onSelectTrade={(trade) => handleTradeSelect(trade as any)} />
-
-      {/* ── EDICIÓN EDITORIAL IMPRESA / BROADSHEET & CLASIFICADOS (Inspirado en niccolomiranda.com) ── */}
-      <PaperBroadsheet onExplore={handleStartAsSeeker} />
-
-      {/* ── SELECTOR MECÁNICO / DISCO TELEFÓNICO (Inspirado en bleibtgleich.dev) ── */}
-      <RotaryDial
-        onSelectTrade={(category) => {
-          if (category !== 'urgencias') {
-            handleTradeSelect(category as any);
-          }
-          handleStartAsSeeker();
-        }}
-      />
-
-      {/* ── SELECCIÓN EDITORIAL ASIMÉTRICA (Inspirado en danilodemarco.com) ── */}
-      <AsymmetricShowcase onSelectWorker={() => handleStartAsSeeker()} />
+      <TradeReputation onExplore={handleStartAsSeeker} />
 
       {/* ── TRABAJOS REALES: muro de portafolio ── */}
       <section className="lp-work" aria-labelledby="lp-work-title">
         <div className="lp-wrap lp-work-head">
-          <span className="lp-sticker lp-sticker--esmeralda lp-sticker--pill">Portafolio verificado</span>
-          <h2 id="lp-work-title" className="oy-display lp-work-title">Trabajos reales en Bogotá</h2>
+          <span className="ls-kicker">Portafolios</span>
+          <h2 id="lp-work-title" className="oy-display ls-title">Mira su trabajo antes de llamar.</h2>
           <p className="lp-work-sub">
-            Fotos de obras terminadas por los profesionales de OficioYa. Pasa el puntero para detener el muro o elige una para buscar expertos.
+            Cada profesional sube fotos de sus trabajos a su perfil. Pasa el puntero para detener el muro o elige una foto para buscar expertos.
           </p>
         </div>
         <div className="lp-wrap">
@@ -491,13 +440,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
         </div>
       </section>
 
-      {/* ── TESTIMONIOS VERIFICADOS (Item 18) ── */}
+      <Comparison />
+
+      {/* ── HISTORIAS DE EJEMPLO ── */}
       <section className="lp-testimonials" aria-labelledby="lp-testimonials-title">
         <div className="lp-wrap">
           <div className="lp-testimonials-head">
-            <span className="lp-sticker lp-sticker--esmeralda lp-sticker--pill">Opiniones reales</span>
+            <span className="ls-kicker">Historias</span>
             <h2 id="lp-testimonials-title" className="oy-display lp-testimonials-title">
-              Historias de clientes en Bogotá
+              Así se resuelve con OficioYa
             </h2>
             <p className="lp-testimonials-sub">
               Así se ve una experiencia con OficioYa: precio acordado por chat y pago directo, sin comisiones.
@@ -511,16 +462,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
                   {Array.from({ length: t.rating }).map((_, i) => (
                     <Star key={i} size={16} fill="var(--color-star)" color="var(--stroke-ink)" />
                   ))}
-                  <span className="lp-testi-card__badge">
-                    <ShieldCheck size={13} aria-hidden="true" /> Verificado
-                  </span>
                 </div>
                 <p className="lp-testi-card__comment">
                   <Quote size={16} className="lp-testi-card__quote-icon" aria-hidden="true" />
                   "{t.comment}"
                 </p>
                 <div className="lp-testi-card__author">
-                  <img src={t.avatar} alt={t.name} className="lp-testi-card__avatar" loading="lazy" />
+                  <span className="lp-testi-card__avatar lp-testi-card__initials" aria-hidden="true">{t.name.split(' ').map(n => n[0]).slice(0, 2).join('')}</span>
                   <div className="lp-testi-card__meta">
                     <strong className="lp-testi-card__name">{t.name}</strong>
                     <span className="lp-testi-card__trade">{t.trade}</span>
@@ -599,20 +547,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
                 ))}
               </div>
 
+              <EarningsCalculator />
+
               <div className="lp-cta-actions-row">
                 <BorderGlow>
                   <button onClick={handleStartAsProvider} className="lp-cta-primary lp-cta-amber">
-                    Empezar gratis <ArrowRight size={16} />
+                    Publicar mi oficio gratis <ArrowRight size={16} />
                   </button>
                 </BorderGlow>
                 <span className="lp-cta-note">
                   Sin tarjeta de crédito
                 </span>
               </div>
+              <div className="lp-cta-pro-img">
+                <ProImage />
+              </div>
             </div>
           </div>
         </div>
       </section>
+
+      <TrailerDialog open={trailerOpen} onClose={() => setTrailerOpen(false)} />
 
       {/* ── FOOTER ── */}
       <AppFooter onOpenContact={onOpenContact} />

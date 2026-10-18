@@ -1,8 +1,6 @@
 import React from 'react';
 import { MascotAvatar } from '../mascot/MascotAvatar';
 import { Logo } from '../ui';
-import { Globe } from 'lucide-react';
-import { useLanguage } from '../../context/LanguageContext';
 import './AppFooter.css';
 
 const LINK_GROUPS: { title: string; links: string[] }[] = [
@@ -81,7 +79,6 @@ export interface AppFooterProps {
 }
 
 export const AppFooter: React.FC<AppFooterProps> = ({ onOpenContact }) => {
-  const { lang, setLang } = useLanguage();
   const [bogotaTime, setBogotaTime] = React.useState<string>('00:00:00');
 
   React.useEffect(() => {
@@ -158,25 +155,6 @@ export const AppFooter: React.FC<AppFooterProps> = ({ onOpenContact }) => {
             <span className="app-footer__sign-sub">Encuentra un profesional cerca de ti.</span>
           </div>
 
-          {/* Item 16: Selector de Idioma */}
-          <div className="app-footer__lang-picker">
-            <Globe size={15} aria-hidden="true" />
-            <button
-              type="button"
-              className={`app-footer__lang-btn ${lang === 'es' ? 'app-footer__lang-btn--active' : ''}`}
-              onClick={() => setLang('es')}
-            >
-              ES
-            </button>
-            <span className="app-footer__lang-sep">/</span>
-            <button
-              type="button"
-              className={`app-footer__lang-btn ${lang === 'en' ? 'app-footer__lang-btn--active' : ''}`}
-              onClick={() => setLang('en')}
-            >
-              EN
-            </button>
-          </div>
         </div>
 
         {/* Reloj de guardia y pulso de ciudad en vivo (Inspirado en bleibtgleich.dev) */}

@@ -252,41 +252,10 @@ html.theme-dark .app-menu-switch-label {
 }
 
 /* Idioma en Menú */
-.app-menu-lang-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
 
-.app-menu-lang-btn {
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
-  color: #475569;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all var(--dur-fast) ease;
-}
 
-html.theme-dark .app-menu-lang-btn {
-  border-color: #334155;
-  background: #1e293b;
-  color: #94a3b8;
-}
 
-.app-menu-lang-btn--active {
-  background: var(--role-primary, #2563eb);
-  color: #ffffff !important;
-  border-color: var(--role-primary, #2563eb);
-}
 
-.app-menu-lang-sep {
-  opacity: 0.4;
-  font-size: 11px;
-}
 
 .app-menu-role:focus-visible,
 .app-menu-action:focus-visible {
