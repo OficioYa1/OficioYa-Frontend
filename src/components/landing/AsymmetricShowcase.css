@@ -39,13 +39,13 @@ html.theme-dark .danilo-showcase,
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.03em;
-  color: var(--stroke-ink, #3E1F14);
+  color: var(--color-text-main, #1E293B);
   margin: 0;
 }
 
 html.theme-dark .danilo-showcase__title,
 [data-theme="dark"] .danilo-showcase__title {
-  color: #FBF4EA;
+  color: #F8FAFC;
 }
 
 .danilo-showcase__desc {

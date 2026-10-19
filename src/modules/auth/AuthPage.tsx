@@ -23,6 +23,8 @@ const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const makeCode = () => String(Math.floor(100000 + Math.random() * 900000));
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialRole = 'seeker' }) => {
+  // [OFY-49]: Registrar cuenta de usuario (Trabajador, Contratante)
+  // [OFY-50]: Autenticar usuario con credenciales (JWT simulado)
   const { login, register, findAccount, resetPassword } = useAuth();
 
   const [mode, setMode] = useState<AuthMode>('login');
@@ -36,13 +38,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialRole =
   const [error, setError] = useState('');
   const [mascotPose, setMascotPose] = useState<'wave' | 'float' | 'work'>('float');
 
-  // OFY-40 · verificación por código (correo o SMS)
+  // [OFY-40] · verificación por código (correo o SMS)
   const [channel, setChannel] = useState<VerifyChannel>('email');
   const [sentCode, setSentCode] = useState('');
   const [code, setCode] = useState('');
   const [notice, setNotice] = useState('');
 
-  // OFY-75 · recuperación de cuenta
+  // [OFY-75] · recuperación de cuenta
   const [recoverTarget, setRecoverTarget] = useState('');
   const [recoverAccount, setRecoverAccount] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState('');

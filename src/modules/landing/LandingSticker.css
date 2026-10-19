@@ -221,7 +221,6 @@
 .lp-sticker--b { top: 22%; right: 13%; rotate: 9deg; }
 .lp-sticker--c { top: 48%; left: 7%; rotate: 8deg; }
 .lp-sticker--d { top: 55%; right: 8%; rotate: -10deg; }
-.lp-sticker--e { top: 8%; right: 30%; rotate: -6deg; }
 
 @media (max-width: 760px) {
   .lp-sticker { width: 46px; height: 46px; border-radius: 16px; }
@@ -426,7 +425,6 @@ html.theme-dark .lp-cta-card {
 
 /* En móvil los stickers se van a las esquinas para no tapar el titular */
 @media (max-width: 600px) {
-  .lp-sticker--e { display: none; }
   .lp-sticker--a { top: 3%; left: 5%; }
   .lp-sticker--b { top: 3%; right: 5%; }
 }
@@ -473,7 +471,8 @@ html.theme-dark .lp-cta-card {
   background: var(--wash-almendra);
 }
 
-.lp-work .lp-sticker {
+.lp-work .lp-sticker,
+.lp-testimonials .lp-sticker {
   position: static;
   display: inline-flex;
   font-size: 13px;

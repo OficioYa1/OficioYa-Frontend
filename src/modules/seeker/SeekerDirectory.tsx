@@ -892,6 +892,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
                         <strong>${worker.hourlyRate.toLocaleString()}/h</strong>
                       </span>
                     }
+                    /* [OFY-52]: Consultar perfil de trabajador */
                     onClick={() => onSelectWorker(worker)}
                     headingLevel={3}
                     frame="almendra"

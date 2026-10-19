@@ -37,7 +37,7 @@ html.theme-light {
   --depth-2: 0 2px 6px rgba(62, 31, 20, 0.05), 0 24px 60px -20px rgba(30, 58, 138, 0.28);
   --depth-3: 0 4px 12px rgba(62, 31, 20, 0.06), 0 40px 100px -24px rgba(30, 58, 138, 0.38);
 
-  --stroke-ink: var(--glass-line);
+  --stroke-ink: var(--oy-cacao-profundo, #3E1F14);
   --stroke-w: 1px;
 
   --wash-marino: rgba(30, 58, 138, 0.08);
@@ -90,7 +90,7 @@ html.theme-dark {
   --depth-2: 0 24px 60px -20px rgba(0, 0, 0, 0.7);
   --depth-3: 0 40px 100px -24px rgba(0, 0, 0, 0.8);
 
-  --stroke-ink: var(--glass-line);
+  --stroke-ink: var(--oy-blanco, #FFFFFF);
 
   --wash-marino: rgba(30, 58, 138, 0.30);
   --wash-esmeralda: rgba(16, 185, 129, 0.12);

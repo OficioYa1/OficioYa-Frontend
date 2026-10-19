@@ -1,20 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { TradeCategory } from '../../types';
 import {
-  Wrench, Zap, PaintBucket, KeyRound,
-  ArrowRight, Award, Tv2, BookOpen,
-  Plus, Minus, Quote, ShieldCheck,
-  LogIn, Search, HelpCircle, Briefcase, ChevronDown, Menu, X,
-  UserCheck, Star, CheckCircle2
+  Wrench, Zap, PaintBucket, KeyRound, Tv2, BookOpen,
+  ArrowRight, Award, Plus, Minus, LogIn, Search, HelpCircle, Briefcase, ChevronDown, Menu, X,
+  UserCheck, Star, ShieldCheck, Quote, CheckCircle2
 } from 'lucide-react';
 import './LandingPage.css';
 import './LandingSticker.css';
 import './LandingLiquidNav.css';
 import { AppFooter } from '../../components/layout/AppFooter';
-import { TrueFocus } from '../../components/ui/TrueFocus';
 import { BRAND_ASSETS } from '../../utils/assets';
-import { PixelSwap } from '../../components/ui/PixelSwap';
-import { StrokeText, BorderGlow, DriftWall, RollingText, RotaryDial } from '../../components/ui';
+import { StrokeText, BorderGlow, DriftWall, RollingText } from '../../components/ui';
 import type { DriftWallItem } from '../../components/ui';
 import { EditorialManifesto } from '../../components/landing/EditorialManifesto';
 import { AsymmetricShowcase } from '../../components/landing/AsymmetricShowcase';
@@ -22,6 +18,8 @@ import { SkillsTrain } from '../../components/landing/SkillsTrain';
 import { StickyProcess } from '../../components/landing/StickyProcess';
 import { RetroInspector } from '../../components/landing/RetroInspector';
 import { PaperBroadsheet } from '../../components/landing/PaperBroadsheet';
+import { LightBreakIntro } from '../../components/landing/LightBreakIntro';
+import { ToolboxOrbit } from '../../components/landing/ToolboxOrbit';
 import { INITIAL_WORKERS } from '../../services/mockData';
 import { ScrollToTop } from '../../components/common/ScrollToTop';
 
@@ -125,48 +123,6 @@ function HoverText({ children, tone = 'action' }: { children: React.ReactNode; t
 }
 
 // Item desplegable FAQ
-// Many cambia de pose por píxeles al elegir un oficio: dos caras que se
-// alternan, la entrante recibe la pose nueva y PixelSwap la revela.
-function ManySwap({ src, alt, imgClassName, onClick }: { src: string; alt: string; imgClassName: string; onClick: () => void }) {
-  const [faces, setFaces] = useState<[{ src: string; alt: string }, { src: string; alt: string }]>([{ src, alt }, { src, alt }]);
-  const [front, setFront] = useState(false);
-  const prevSrcRef = useRef(src);
-
-  useEffect(() => {
-    if (prevSrcRef.current === src) return;
-    prevSrcRef.current = src;
-    const next = !front;
-    setFaces(prev => {
-      const copy: typeof prev = [prev[0], prev[1]];
-      copy[next ? 1 : 0] = { src, alt };
-      return copy;
-    });
-    setFront(next);
-  }, [src, alt, front]);
-
-  const face = (f: { src: string; alt: string }) => (
-    <img src={f.src} alt={f.alt} className={imgClassName} onClick={onClick} draggable={false} />
-  );
-
-  return (
-    <PixelSwap
-      className="lp-many-swap"
-      firstContent={face(faces[0])}
-      secondContent={face(faces[1])}
-      active={front}
-      trigger="manual"
-      aspectRatio="1 / 1"
-      pattern="bottom-to-top"
-      randomness={0.35}
-      pixelSize={22}
-      pixelRadius={0}
-      pixelScale={0.2}
-      duration={760}
-      pixelDuration={320}
-      fadeOutgoing
-    />
-  );
-}
 
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
@@ -186,8 +142,15 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenContact }) => {
+  const [showLightIntro, setShowLightIntro] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('oy_intro_seen') !== 'true';
+    } catch {
+      return true;
+    }
+  });
+
   const [selectedTrade, setSelectedTrade] = useState<TradeCategory>('electricidad');
-  const [manyAnimate, setManyAnimate] = useState<'float' | 'wave'>('float');
   const [heroVisible, setHeroVisible] = useState(false);
   const [showSearchMenu, setShowSearchMenu] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -205,14 +168,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
 
   const handleTradeSelect = (trade: TradeCategory) => {
     setSelectedTrade(trade);
-    setManyAnimate('wave');
-    setTimeout(() => setManyAnimate('float'), 800);
   };
-  const triggerWave = () => { setManyAnimate('wave'); setTimeout(() => setManyAnimate('float'), 800); };
-  const currentTrade = TRADES.find(t => t.key === selectedTrade)!;
 
   return (
     <div className="lp-root">
+      {/* ── INTRO INTERACTIVA: BLACKOUT → SWITCH ROJO "DESCUBRE" → BOMBILLO QUE SE ROMPE ── */}
+      {showLightIntro && (
+        <LightBreakIntro
+          onComplete={() => setShowLightIntro(false)}
+        />
+      )}
 
       {/* ── MARQUESINA (único movimiento continuo, estilo sticker) ── */}
       <div className="lp-marquee" aria-hidden="true">
@@ -332,6 +297,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
               <RollingText text="Para trabajadores" alternateText="Ofrecer oficio" />
             </button>
 
+            {/* Botón para revivir el efecto del bombillo */}
+            <button
+              type="button"
+              className="lp-nav-link lp-nav-link--liquid"
+              onClick={() => setShowLightIntro(true)}
+              data-cursor-text="Bombillo"
+              title="Revivir animación del bombillo e interruptor"
+            >
+              <Zap size={14} className="lp-nav-link__icon" style={{ color: 'var(--brand-yellow, #FFC72C)' }} aria-hidden="true" />
+              <span>Intro Luz</span>
+            </button>
+
             {/* Iniciar sesión Liquid 3D Button */}
             <button
               type="button"
@@ -362,7 +339,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
           <span className="lp-sticker lp-sticker--esmeralda lp-sticker--b"><UserCheck size={26} /></span>
           <span className="lp-sticker lp-sticker--fuego lp-sticker--c"><Zap size={26} /></span>
           <span className="lp-sticker lp-sticker--marino lp-sticker--d"><Award size={26} /></span>
-          <span className="lp-sticker lp-sticker--almendra lp-sticker--pill lp-sticker--e">Verificado</span>
         </div>
 
         {/* Badge ciudad — texto suelto, sin recuadro opaco */}
@@ -378,14 +354,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
         </h1>
 
         {/* Eslogan */}
-        <div className="lp-hero-slogan">
-          <TrueFocus
-            sentence="El talento de tu zona a un click de distancia"
-            blurAmount={3}
-            borderColor="var(--stroke-ink)"
-            animationDuration={0.4}
-          />
-        </div>
+        <p className="lp-hero-slogan">
+          El talento de tu zona a un click de distancia
+        </p>
 
         {/* Texto descriptivo — sin recuadro, flotante */}
         <p className="lp-hero-copy">
@@ -412,35 +383,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
           </button>
         </div>
 
-        {/* Many mascot */}
-        <div className="lp-hero-many">
-
-          <ManySwap
-            src={selectedTrade === 'plomeria' ? BRAND_ASSETS.manyPlomero : selectedTrade === 'electricidad' ? BRAND_ASSETS.manyElectricista : BRAND_ASSETS.manyWave}
-            alt={selectedTrade === 'plomeria' ? 'Many plomero' : selectedTrade === 'electricidad' ? 'Many electricista' : 'Many saludando'}
-            imgClassName={`lp-many-hero-img ${manyAnimate === 'wave' ? 'lp-many-waving' : ''}`}
-            onClick={triggerWave}
-          />
-
-          {/* Tagline del oficio — texto suelto */}
-          <p className="lp-hero-tagline">
-            {currentTrade.tagline}
-          </p>
-
-          {/* Selector oficios */}
-          <div className="lp-trade-row">
-            {TRADES.map(t => (
-              <button
-                key={t.key}
-                onClick={() => handleTradeSelect(t.key)}
-                className="lp-trade-chip"
-                aria-pressed={selectedTrade === t.key}
-              >
-                {t.icon} {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Caja de herramientas interactiva con órbita espacial 3D */}
+        <ToolboxOrbit
+          currentTrade={selectedTrade}
+          onSelectTrade={handleTradeSelect}
+        />
       </section>
 
       {/* ── MANIFIESTO EDITORIAL (Inspirado en danilodemarco.com) ── */}
@@ -453,20 +400,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
       <StickyProcess onStart={handleStartAsSeeker} />
 
       {/* ── INSPECTOR DE HERRAMIENTAS Y FICHA TÉCNICA 3D (Inspirado en thibaut.cool) ── */}
-      <RetroInspector onSelectTrade={(trade) => handleTradeSelect(trade as any)} />
+      <RetroInspector 
+        selectedTrade={selectedTrade}
+        onSelectTrade={(trade) => handleTradeSelect(trade as any)}
+        onExploreExperts={() => handleStartAsSeeker()}
+      />
 
       {/* ── EDICIÓN EDITORIAL IMPRESA / BROADSHEET & CLASIFICADOS (Inspirado en niccolomiranda.com) ── */}
       <PaperBroadsheet onExplore={handleStartAsSeeker} />
 
-      {/* ── SELECTOR MECÁNICO / DISCO TELEFÓNICO (Inspirado en bleibtgleich.dev) ── */}
-      <RotaryDial
-        onSelectTrade={(category) => {
-          if (category !== 'urgencias') {
-            handleTradeSelect(category as any);
-          }
-          handleStartAsSeeker();
-        }}
-      />
 
       {/* ── SELECCIÓN EDITORIAL ASIMÉTRICA (Inspirado en danilodemarco.com) ── */}
       <AsymmetricShowcase onSelectWorker={() => handleStartAsSeeker()} />
@@ -495,7 +437,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
       <section className="lp-testimonials" aria-labelledby="lp-testimonials-title">
         <div className="lp-wrap">
           <div className="lp-testimonials-head">
-            <span className="lp-sticker lp-sticker--esmeralda lp-sticker--pill">Opiniones reales</span>
+            <span className="lp-sticker lp-sticker--esmeralda lp-sticker--pill">Opiniones demo</span>
             <h2 id="lp-testimonials-title" className="oy-display lp-testimonials-title">
               Historias de clientes en Bogotá
             </h2>

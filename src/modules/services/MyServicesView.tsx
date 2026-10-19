@@ -39,6 +39,8 @@ interface MyServicesViewProps {
   onRateClient?: (serviceId: string, rating: number, comment: string) => void;
 }
 
+// [OFY-72]: Consultar estado y respuestas de solicitudes enviadas
+// [OFY-44]: Consultar trabajos completados e historial histórico
 const STATUS_META: Record<ServiceStatus, { label: string; tone: string }> = {
   pendiente: { label: 'Pendiente', tone: 'amarillo' },
   en_curso: { label: 'En progreso', tone: 'marino' },

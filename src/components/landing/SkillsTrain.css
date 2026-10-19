@@ -123,13 +123,13 @@ html.theme-dark .ollivere-ctrl-btn,
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.025em;
-  color: var(--stroke-ink, #3E1F14);
+  color: var(--color-text-main, #1E293B);
   margin: 0 0 0.75rem 0;
 }
 
 html.theme-dark .ollivere-train-title,
 [data-theme="dark"] .ollivere-train-title {
-  color: #FBF4EA;
+  color: #F8FAFC;
 }
 
 .ollivere-train-sub {

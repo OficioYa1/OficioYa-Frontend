@@ -907,12 +907,23 @@ html.theme-dark .lp-cta-card {
   text-align: center;
   max-width: 680px;
   margin: 0 auto 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lp-testimonials .lp-sticker {
+  position: static !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
 }
 
 .lp-testimonials-title {
   font-size: clamp(2rem, 1.6rem + 1.8vw, 3rem);
   font-weight: 800;
-  margin: 16px 0 12px;
+  margin: 8px 0 12px;
   color: var(--color-text-main);
   line-height: 1.15;
 }

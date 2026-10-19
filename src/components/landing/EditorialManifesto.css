@@ -2,8 +2,8 @@
 .danilo-manifesto {
   position: relative;
   padding: clamp(4rem, 10vw, 8rem) 1.5rem;
-  background: var(--bg-paper, #FBF4EA);
-  color: var(--stroke-ink, #3E1F14);
+  background: var(--canvas, #FBF4EA);
+  color: var(--color-text-main, #1E293B);
   overflow: hidden;
   border-top: 1.5px solid rgba(62, 31, 20, 0.12);
   border-bottom: 1.5px solid rgba(62, 31, 20, 0.12);
@@ -12,9 +12,9 @@
 
 html.theme-dark .danilo-manifesto,
 [data-theme="dark"] .danilo-manifesto {
-  background: #0d172e;
-  color: #FBF4EA;
-  border-color: rgba(255, 138, 80, 0.15);
+  background: #090D16;
+  color: #F8FAFC;
+  border-color: rgba(255, 138, 80, 0.2);
 }
 
 .danilo-manifesto__wrap {
@@ -29,20 +29,31 @@ html.theme-dark .danilo-manifesto,
   gap: 0.5rem;
   font-family: var(--font-text, 'Inter', sans-serif);
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: var(--color-brand-primary, #E65100);
+  color: #C2410C; /* Naranja Fuego AA: ratio > 5.1:1 sobre fondo claro */
   margin-bottom: 2rem;
+}
+
+html.theme-dark .danilo-manifesto__kicker,
+[data-theme="dark"] .danilo-manifesto__kicker {
+  color: #FB923C;
 }
 
 .danilo-manifesto__kicker-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--color-brand-primary, #E65100);
-  box-shadow: 0 0 8px rgba(230, 81, 0, 0.6);
+  background: #C2410C;
+  box-shadow: 0 0 8px rgba(194, 65, 12, 0.6);
   animation: daniloPulse 2s infinite ease-in-out;
+}
+
+html.theme-dark .danilo-manifesto__kicker-dot,
+[data-theme="dark"] .danilo-manifesto__kicker-dot {
+  background: #FB923C;
+  box-shadow: 0 0 8px rgba(251, 146, 60, 0.6);
 }
 
 @keyframes daniloPulse {
@@ -56,13 +67,13 @@ html.theme-dark .danilo-manifesto,
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.035em;
-  color: inherit;
+  color: #1E293B; /* Carbón profundo de alto contraste sobre fondo claro */
   margin: 0;
 }
 
 html.theme-dark .danilo-manifesto__title,
 [data-theme="dark"] .danilo-manifesto__title {
-  color: #FBF4EA;
+  color: #F8FAFC;
 }
 
 .danilo-manifesto__row {
@@ -71,6 +82,15 @@ html.theme-dark .danilo-manifesto__title,
   flex-wrap: wrap;
   gap: 0.35em 0.5em;
   margin-bottom: 0.25em;
+}
+
+.danilo-manifesto__row > span {
+  color: #1E293B;
+}
+
+html.theme-dark .danilo-manifesto__row > span,
+[data-theme="dark"] .danilo-manifesto__row > span {
+  color: #F8FAFC;
 }
 
 /* Cápsulas de imagen inline estilo Danilo De Marco (span.small / span.imgHide) */
@@ -82,12 +102,12 @@ html.theme-dark .danilo-manifesto__title,
   height: clamp(2.4rem, 4.8vw, 4.2rem);
   padding: 0.25rem 1.1rem;
   border-radius: 9999px;
-  background: rgba(230, 81, 0, 0.12);
-  border: 1.5px solid var(--stroke-ink, #3E1F14);
+  background: #FDF0E0; /* Fondo almendra cálido nítido */
+  border: 2px solid #C2410C; /* Borde naranja de alto contraste */
   vertical-align: middle;
   cursor: pointer;
   overflow: hidden;
-  box-shadow: 2px 3px 0 var(--stroke-ink, #3E1F14);
+  box-shadow: 2px 3px 0 #1E293B;
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
               background-color 0.25s ease;
@@ -95,24 +115,25 @@ html.theme-dark .danilo-manifesto__title,
 
 html.theme-dark .danilo-manifesto__capsule,
 [data-theme="dark"] .danilo-manifesto__capsule {
-  border-color: rgba(255, 138, 80, 0.6);
-  box-shadow: 2px 3px 0 rgba(255, 138, 80, 0.4);
-  background: rgba(255, 138, 80, 0.15);
+  border-color: #FB923C;
+  box-shadow: 2px 3px 0 rgba(251, 146, 60, 0.6);
+  background: rgba(251, 146, 60, 0.18);
 }
 
 .danilo-manifesto__capsule:hover {
   transform: translateY(-4px) scale(1.05) rotate(-1.5deg);
-  box-shadow: 4px 6px 0 var(--stroke-ink, #3E1F14);
-  background: var(--color-brand-primary, #E65100);
+  box-shadow: 4px 6px 0 #1E293B;
+  background: #C2410C;
 }
 
 html.theme-dark .danilo-manifesto__capsule:hover,
 [data-theme="dark"] .danilo-manifesto__capsule:hover {
-  box-shadow: 4px 6px 0 rgba(255, 138, 80, 0.8);
+  box-shadow: 4px 6px 0 rgba(251, 146, 60, 0.8);
+  background: #FB923C;
 }
 
 .danilo-manifesto__capsule:hover .danilo-manifesto__capsule-text {
-  color: #FFFFFF;
+  color: #FFFFFF !important;
 }
 
 .danilo-manifesto__capsule-img {
@@ -130,23 +151,28 @@ html.theme-dark .danilo-manifesto__capsule:hover,
 .danilo-manifesto__capsule-text {
   font-family: var(--font-text, 'Inter', sans-serif);
   font-size: clamp(0.85rem, 1.4vw, 1.25rem);
-  font-weight: 700;
-  color: var(--stroke-ink, #3E1F14);
+  font-weight: 800;
+  color: #1E293B;
   letter-spacing: -0.01em;
   transition: color 0.25s ease;
 }
 
 html.theme-dark .danilo-manifesto__capsule-text,
 [data-theme="dark"] .danilo-manifesto__capsule-text {
-  color: #FBF4EA;
+  color: #FFFFFF;
 }
 
 .danilo-manifesto__accent {
-  color: var(--color-brand-primary, #E65100);
+  color: #C2410C !important; /* Contraste certificado 5.18:1 sobre fondo claro */
   font-style: italic;
-  font-family: serif;
-  font-weight: 400;
+  font-family: 'DM Sans', serif;
+  font-weight: 700;
   letter-spacing: -0.01em;
+}
+
+html.theme-dark .danilo-manifesto__accent,
+[data-theme="dark"] .danilo-manifesto__accent {
+  color: #FB923C !important;
 }
 
 /* Pie de manifiesto con etiquetas de metadatos estilo editorial suizo */
