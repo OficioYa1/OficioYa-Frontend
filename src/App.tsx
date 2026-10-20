@@ -993,12 +993,12 @@ const MainAppContent: React.FC = () => {
       {currentTab !== 'mensajes' && (
         <FloatingSupport
           onStartSeeker={(trade) => {
-            if (trade) setSelectedTradeCategory(trade as TradeCategory);
+            if (trade) setCurrentTradeCategory(trade as TradeCategory);
             setCurrentTab('buscar');
             setSelectedWorkerForProfile(null);
           }}
           onSelectTrade={(trade) => {
-            setSelectedTradeCategory(trade as TradeCategory);
+            setCurrentTradeCategory(trade as TradeCategory);
             setCurrentTab('buscar');
             setSelectedWorkerForProfile(null);
           }}

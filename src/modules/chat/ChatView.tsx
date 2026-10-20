@@ -19,8 +19,7 @@ import {
   CheckCircle2,
   Zap,
   PhoneCall,
-  Lock,
-  AlertCircle
+  Lock
 } from 'lucide-react';
 import './Chat.css';
 
@@ -56,7 +55,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
   onNavigateToDirectory
 }) => {
   const { user, role } = useAuth();
-  const isSeeker = role === 'seeker';
 
   const [activeConvId, setActiveConvId] = useState<string | null>(
     initialConversationId || (conversations.length > 0 ? conversations[0].id : null)

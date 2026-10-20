@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, ShieldCheck, Zap, Star } from 'lucide-react';
+import { MapPin, Star } from 'lucide-react';
 import './LivePulseTicker.css';
 
 export interface LivePulseTickerProps {
