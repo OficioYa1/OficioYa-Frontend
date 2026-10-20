@@ -4,7 +4,7 @@ import { defineConfig } from 'vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/oficioya-frontend/',
+  base: process.env.VITE_BASE_URL || (process.env.GITHUB_ACTIONS ? '/oficioya-frontend/' : '/'),
   server: {
     watch: {
       ignored: ['**/sprint_*/**', '**/docs/**', '**/*.pdf']
