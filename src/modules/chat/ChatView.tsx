@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { Conversation, ChatMessage, Worker } from '../../types';
 import { useAuth } from '../../context/AuthContext';
-import { PageHero } from '../../components/layout/PageHero';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 import {
   Send,
@@ -12,14 +11,16 @@ import {
   ShieldCheck,
   Sparkles,
   MessageCircle,
-  MessageSquare,
   Search,
   User,
   Clock,
   X,
   Compass,
   CheckCircle2,
-  Zap
+  Zap,
+  PhoneCall,
+  Lock,
+  AlertCircle
 } from 'lucide-react';
 import './Chat.css';
 
@@ -64,6 +65,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [filterMode, setFilterMode] = useState<'all' | 'unread'>('all');
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const replyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -113,18 +115,25 @@ export const ChatView: React.FC<ChatViewProps> = ({
     onSendMessage(activeConvId, text.trim());
     setInputText('');
 
+    const isDeal = text.includes('[ACUERDO');
+
     // Simular respuesta automática con retardo de escritura (···)
     setIsTyping(true);
     if (replyTimerRef.current) clearTimeout(replyTimerRef.current);
     const convId = activeConvId;
     replyTimerRef.current = setTimeout(() => {
       setIsTyping(false);
-      const simulatedReplies = [
-        '¡Perfecto! Ya tengo la dirección registrada en el mapa, voy saliendo.',
-        'Con gusto. Cuento con todas las herramientas y repuestos necesarios.',
-        'Entendido, en unos 15 minutos estoy tocando la puerta.',
-        'Listo, cualquier duda me puedes marcar directamente.'
-      ];
+      const simulatedReplies = isDeal
+        ? [
+            '¡Acuerdo confirmado! Acepto y respeto el valor de la visita diagnóstica acordada. Llevo herramienta para evaluar el trabajo.',
+            'Entendido y pactado. Queda registrado el valor de la visita técnica. Nos vemos a la hora acordada.'
+          ]
+        : [
+            '¡Perfecto! Ya tengo la dirección registrada en el mapa, voy saliendo.',
+            'Con gusto. Cuento con todas las herramientas y repuestos necesarios.',
+            'Entendido, en unos 15 minutos estoy tocando la puerta.',
+            'Listo, cualquier duda me puedes marcar directamente.'
+          ];
       const randomReply = simulatedReplies[Math.floor(Math.random() * simulatedReplies.length)];
       if (onReceiveMessage) onReceiveMessage(convId, randomReply);
     }, 1800);
@@ -139,47 +148,35 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   return (
     <div className="chat-fullpage container">
-      {/* ── CABECERA PRINCIPAL (PageHero estándar de la aplicación) ── */}
-      <PageHero
-        tone={isSeeker ? 'marino' : 'fuego'}
-        eyebrow={
-          <>
-            <MessageCircle size={14} aria-hidden="true" /> Centro de Mensajes & Coordinación
-          </>
-        }
-        title="Mensajes & Acuerdos Directos"
-        subtitle="Chatea en tiempo real con profesionales y clientes verificados en Bogotá D.C. para afinar tarifas, horarios y llegada."
-        stickers={[
-          {
-            icon: <MessageSquare size={24} />,
-            tone: 'amarillo',
-            style: { top: '16%', right: '7%', rotate: '-8deg' }
-          },
-          {
-            icon: <Sparkles size={22} />,
-            tone: 'esmeralda',
-            style: { top: '48%', right: '18%', rotate: '12deg' }
-          }
-        ]}
-      />
+      {/* ── CABECERA COMPACTA DE MENSAJERÍA ── */}
+      <div className="chat-topbar">
+        <div className="chat-topbar__info">
+          <div className="chat-topbar__eyebrow">
+            <span className="oy-eyebrow">
+              <MessageCircle size={13} aria-hidden="true" /> Centro de Mensajes &amp; Coordinación
+            </span>
+          </div>
+          <h1 className="chat-topbar__title">Mensajes &amp; Acuerdos Directos</h1>
+        </div>
 
-      {/* ── BARRA DE MÉTRICAS RÁPIDAS ── */}
-      <div className="chat-stats" aria-label="Resumen de mensajería">
-        <div className="oy-stat chat-stat chat-stat--marino">
-          <span className="oy-stat__value">{conversations.length}</span>
-          <span className="oy-stat__label">Conversaciones</span>
-        </div>
-        <div className="oy-stat chat-stat chat-stat--amarillo">
-          <span className="oy-stat__value">{totalUnread}</span>
-          <span className="oy-stat__label">Sin leer</span>
-        </div>
-        <div className="oy-stat chat-stat chat-stat--esmeralda">
-          <span className="oy-stat__value">{workers.length}</span>
-          <span className="oy-stat__label">Especialistas activos</span>
-        </div>
-        <div className="oy-stat chat-stat chat-stat--gris">
-          <span className="oy-stat__value">&lt; 15m</span>
-          <span className="oy-stat__label">Tiempo de respuesta</span>
+        {/* ── BARRA DE MÉTRICAS RÁPIDAS ── */}
+        <div className="chat-stats" aria-label="Resumen de mensajería">
+          <div className="oy-stat chat-stat chat-stat--marino">
+            <span className="oy-stat__value">{conversations.length}</span>
+            <span className="oy-stat__label">Conversaciones</span>
+          </div>
+          <div className="oy-stat chat-stat chat-stat--amarillo">
+            <span className="oy-stat__value">{totalUnread}</span>
+            <span className="oy-stat__label">Sin leer</span>
+          </div>
+          <div className="oy-stat chat-stat chat-stat--esmeralda">
+            <span className="oy-stat__value">{workers.length}</span>
+            <span className="oy-stat__label">Especialistas activos</span>
+          </div>
+          <div className="oy-stat chat-stat chat-stat--gris">
+            <span className="oy-stat__value">&lt; 15m</span>
+            <span className="oy-stat__label">Tiempo de respuesta</span>
+          </div>
         </div>
       </div>
 
@@ -367,15 +364,16 @@ export const ChatView: React.FC<ChatViewProps> = ({
                   )}
 
                   {workerDetail && (
-                    <a
-                      href={`tel:${workerDetail.phone}`}
+                    <button
+                      type="button"
+                      onClick={() => setIsCallModalOpen(true)}
                       className="btn btn-secondary btn-sm chat-action-btn chat-action-btn--phone"
-                      title="Llamar directamente al profesional"
-                      aria-label="Llamar directamente al profesional"
+                      title="Llamar directamente al profesional con protocolo seguro"
+                      aria-label="Llamar directamente al profesional con protocolo seguro"
                     >
                       <Phone size={14} aria-hidden="true" />
                       <span className="hide-on-mobile">Llamar</span>
-                    </a>
+                    </button>
                   )}
                 </div>
               </header>
@@ -403,13 +401,33 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
                 {currentMessages.map(msg => {
                   const isMe = msg.senderRole === role || msg.senderId === user?.id;
+                  const isDeal = msg.text.includes('[ACUERDO');
 
                   return (
                     <div
                       key={msg.id}
-                      className={`chat-msg ${isMe ? 'chat-msg--me' : 'chat-msg--them'}`}
+                      className={`chat-msg ${isMe ? 'chat-msg--me' : 'chat-msg--them'} ${isDeal ? 'chat-msg--deal' : ''}`}
                     >
-                      <div className="chat-bubble">{msg.text}</div>
+                      {isDeal ? (
+                        <div className="chat-bubble chat-bubble--deal">
+                          <div className="chat-deal-badge">
+                            <ShieldCheck size={13} aria-hidden="true" />
+                            <span>Pacto de Transparencia OficioYa</span>
+                          </div>
+                          <div className="chat-deal-body">
+                            <p className="chat-deal-text">
+                              {msg.text.replace(/\[ACUERDO OFICIAL\]|\[ACUERDO PACTADO\]/g, '').trim()}
+                            </p>
+                            <div className="chat-deal-footer">
+                              <span className="chat-deal-status">
+                                <CheckCircle2 size={12} aria-hidden="true" /> Registrado para ambas partes
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="chat-bubble">{msg.text}</div>
+                      )}
 
                       <div className="chat-msg__meta">
                         <Clock size={11} aria-hidden="true" />
@@ -444,10 +462,10 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 )}
               </div>
 
-              {/* Chips de Respuestas Rápidas */}
+              {/* Chips de Respuestas Rápidas & Pacto Smart */}
               <div className="chat-quick" role="group" aria-label="Respuestas rápidas frecuentes">
                 <span className="chat-quick__label">
-                  <Zap size={12} aria-hidden="true" /> Rápidas:
+                  <Zap size={12} aria-hidden="true" /> Opciones:
                 </span>
                 {QUICK_REPLIES.map((reply, i) => (
                   <button
@@ -543,6 +561,96 @@ export const ChatView: React.FC<ChatViewProps> = ({
           )}
         </main>
       </div>
+
+      {/* ── MODAL DE PROTOCOLO DE LLAMADA DIRECTA & SEGURIDAD ── */}
+      {isCallModalOpen && workerDetail && (
+        <div className="oy-modal-backdrop chat-precall-backdrop">
+          <div
+            className="oy-modal chat-precall-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="precall-modal-title"
+          >
+            <header className="chat-precall-head">
+              <div className="chat-precall-head__info">
+                <div className="chat-precall-badge">
+                  <Lock size={12} aria-hidden="true" /> Contacto Directo Seguro
+                </div>
+                <h3 id="precall-modal-title" className="chat-precall-title">
+                  Llamada con {workerDetail.name}
+                </h3>
+                <span className="chat-precall-sub">
+                  {workerDetail.trade} • {workerDetail.phone}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="oy-icon-btn"
+                onClick={() => setIsCallModalOpen(false)}
+                aria-label="Cerrar modal de llamada"
+              >
+                <X size={18} aria-hidden="true" />
+              </button>
+            </header>
+
+            <div className="chat-precall-body">
+              <div className="chat-precall-mascot-row">
+                <MascotAvatar expression="concentrado" size="sm" animate="none" />
+                <div className="chat-precall-mascot-tip">
+                  <strong>Recomendación de Many para tu tranquilidad:</strong>
+                  <p>
+                    Revisa estos 3 puntos clave con el profesional antes de confirmar su desplazamiento:
+                  </p>
+                </div>
+              </div>
+
+              <div className="chat-precall-tips">
+                <div className="chat-precall-tip">
+                  <div className="chat-precall-tip__num">1</div>
+                  <div className="chat-precall-tip__content">
+                    <strong>Tarifa de diagnóstico previa</strong>
+                    <p>Confirma si la visita técnica tiene costo base o si se abona al valor final de la reparación.</p>
+                  </div>
+                </div>
+
+                <div className="chat-precall-tip">
+                  <div className="chat-precall-tip__num">2</div>
+                  <div className="chat-precall-tip__content">
+                    <strong>Cero sobrecostos de intermediación</strong>
+                    <p>El valor de los servicios se cancela directamente al especialista sin comisiones sorpresa.</p>
+                  </div>
+                </div>
+
+                <div className="chat-precall-tip">
+                  <div className="chat-precall-tip__num">3</div>
+                  <div className="chat-precall-tip__content">
+                    <strong>Pacto documentado en la plataforma</strong>
+                    <p>Puedes usar la opción "Pactar visita" en el chat para registrar el acuerdo con valor formal.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <footer className="chat-precall-actions">
+              <a
+                href={`tel:${workerDetail.phone}`}
+                className="btn btn-primary chat-precall-callbtn"
+                onClick={() => setIsCallModalOpen(false)}
+              >
+                <PhoneCall size={16} aria-hidden="true" />
+                <span>Marcar a {workerDetail.phone}</span>
+              </a>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setIsCallModalOpen(false)}
+              >
+                Permanecer en el chat
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
