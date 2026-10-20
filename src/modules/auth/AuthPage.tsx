@@ -87,6 +87,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialRole =
       return;
     }
 
+    // OFY-49 (RF-49): Registrar cuenta de usuario
     if (mode === 'register') {
       if (!EMAIL_RE.test(email.trim())) {
         setError('Ingresa un correo válido.');

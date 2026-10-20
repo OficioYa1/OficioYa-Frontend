@@ -18,6 +18,8 @@ interface AuthContextType {
   findAccount: (emailOrPhone: string) => User | null;
   /** OFY-75: reemplaza la contraseña de la cuenta con ese correo. */
   resetPassword: (email: string, newPass: string) => Promise<boolean>;
+  /** OFY-DEMO: Selector rápido para la feria de proyectos DOSW (Don Carlos, Seeker, Invitado). */
+  loginAsDemo: (target: 'carlos' | 'seeker' | 'guest') => Promise<void>;
 }
 
 /** Registro persistido de cuentas (mock del backend). */
@@ -37,6 +39,18 @@ const DEFAULT_USER: User = {
   phone: '+57 300 123 4567',
   city: 'Bogotá',
   avatarColor: 'var(--oy-azul-marino)'
+};
+
+export const CARLOS_DEMO_USER: User = {
+  id: 'usr-carlos-demo',
+  name: 'Don Carlos Mendoza',
+  email: 'carlos.mendoza@oficioya.com',
+  role: 'provider',
+  phone: '+57 301 776 5432',
+  city: 'Bogotá',
+  avatarColor: 'var(--oy-naranja-many)',
+  phoneVerified: true,
+  emailVerified: true
 };
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
@@ -71,20 +85,18 @@ function writeAccounts(accounts: StoredAccount[]) {
   }
 }
 
-/** Garantiza que la cuenta demo exista (contraseña `demo123`). */
+/** Garantiza que las cuentas demo existan (contraseña `demo123`). */
 async function ensureDemoAccount(): Promise<StoredAccount[]> {
   const accounts = readAccounts();
-  if (accounts.some(a => normalizeEmail(a.user.email) === DEFAULT_USER.email)) return accounts;
-  let demoUser = DEFAULT_USER;
-  try {
-    const session: User | null = JSON.parse(localStorage.getItem('oy-user-data') || 'null');
-    if (session && normalizeEmail(session.email) === DEFAULT_USER.email) demoUser = session;
-  } catch {
-    /* sesión previa ilegible: se usa el perfil demo base */
+  let updated = accounts;
+  if (!updated.some(a => normalizeEmail(a.user.email) === DEFAULT_USER.email)) {
+    updated = [...updated, { user: DEFAULT_USER, passwordHash: await hashPassword(DEFAULT_USER.email, DEMO_PASSWORD) }];
   }
-  const next = [...accounts, { user: demoUser, passwordHash: await hashPassword(DEFAULT_USER.email, DEMO_PASSWORD) }];
-  writeAccounts(next);
-  return next;
+  if (!updated.some(a => normalizeEmail(a.user.email) === CARLOS_DEMO_USER.email)) {
+    updated = [...updated, { user: CARLOS_DEMO_USER, passwordHash: await hashPassword(CARLOS_DEMO_USER.email, DEMO_PASSWORD) }];
+  }
+  writeAccounts(updated);
+  return updated;
 }
 
 /** Copia los cambios del usuario en sesión a su registro en `oy-users`. */
@@ -239,6 +251,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   };
 
+  const loginAsDemo = async (target: 'carlos' | 'seeker' | 'guest') => {
+    if (target === 'guest') {
+      logout();
+      return;
+    }
+    const targetUser = target === 'carlos' ? CARLOS_DEMO_USER : DEFAULT_USER;
+    setIsLoading(true);
+    await startSession(targetUser);
+    setTimeout(() => setIsLoading(false), 300);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -252,7 +275,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         switchRole,
         updateUserProfile,
         findAccount,
-        resetPassword
+        resetPassword,
+        loginAsDemo
       }}
     >
       {children}

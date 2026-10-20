@@ -14,7 +14,8 @@ import {
   Bell,
   ChevronDown,
   Briefcase,
-  Inbox
+  Inbox,
+  Sparkles
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Logo, StaggeredMenu } from '../ui';
@@ -35,6 +36,7 @@ interface AppHeaderProps {
   onToggleChat?: () => void;
   notificationCount?: number;
   onOpenNotifications?: () => void;
+  onLogout?: () => void;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -49,11 +51,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   isChatOpen: _isChatOpen,
   onToggleChat,
   notificationCount = 0,
-  onOpenNotifications
+  onOpenNotifications,
+  onLogout
 }) => {
-  const { role, switchRole, logout } = useAuth();
+  const { user, role, switchRole, logout, loginAsDemo } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [showRoleDropdown, setShowRoleDropdown] = React.useState(false);
+  const [showDemoMenu, setShowDemoMenu] = React.useState(false);
 
   const handleRoleChange = (newRole: UserRole) => {
     switchRole(newRole);
@@ -144,21 +148,100 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             />
           )}
 
-          {/* Menú de cuenta: rol, ajustes y sesión */}
+          {/* OFY-DEMO: Selector rápido para la feria de evaluación DOSW */}
+          <div className="app-header__demo-wrap">
+            <button
+              type="button"
+              className="app-header__demo-btn"
+              onClick={() => setShowDemoMenu(!showDemoMenu)}
+              title="Selector de demostración para jurados DOSW"
+              aria-label="Abrir selector de modo demo"
+              aria-expanded={showDemoMenu}
+            >
+              <Sparkles size={14} aria-hidden="true" />
+              <span>Modo Demo</span>
+            </button>
+            {showDemoMenu && (
+              <div className="app-header__demo-dropdown" role="menu">
+                <div className="app-header__demo-header">
+                  <strong>Demostración Rápida DOSW</strong>
+                  <span>Alterna roles en 1 clic</span>
+                </div>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="app-header__demo-item app-header__demo-item--carlos"
+                  onClick={async () => {
+                    setShowDemoMenu(false);
+                    await loginAsDemo('carlos');
+                    onSelectTab('inicio_pro');
+                  }}
+                >
+                  <span className="app-header__demo-badge app-header__demo-badge--orange">Don Carlos</span>
+                  <div className="app-header__demo-item-text">
+                    <strong>Don Carlos Mendoza</strong>
+                    <small>Plomero · Verificado · Disponible ya</small>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="app-header__demo-item"
+                  onClick={async () => {
+                    setShowDemoMenu(false);
+                    await loginAsDemo('seeker');
+                    onSelectTab('inicio_seeker');
+                  }}
+                >
+                  <span className="app-header__demo-badge app-header__demo-badge--blue">Cliente</span>
+                  <div className="app-header__demo-item-text">
+                    <strong>Juan Pérez</strong>
+                    <small>Contratante con solicitudes activas</small>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="app-header__demo-item"
+                  onClick={async () => {
+                    setShowDemoMenu(false);
+                    await loginAsDemo('guest');
+                    onSelectTab('buscar');
+                  }}
+                >
+                  <span className="app-header__demo-badge">Invitado</span>
+                  <div className="app-header__demo-item-text">
+                    <strong>Modo Explorador</strong>
+                    <small>Navega el directorio sin cuenta</small>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Menú de cuenta: rol, ajustes y sesión (o acceso a login si es invitado) */}
           <div className="app-header__account-wrap">
             <button
               type="button"
-              onClick={() => setShowRoleDropdown(!showRoleDropdown)}
+              onClick={() => {
+                if (!user) {
+                  onSelectTab('login');
+                } else {
+                  setShowRoleDropdown(!showRoleDropdown);
+                }
+              }}
               className="app-header__account"
-              title="Menú de cuenta"
-              aria-label={`Menú de cuenta, rol ${role === 'seeker' ? 'Contratante' : 'Profesional'}`}
-              aria-haspopup="true"
-              aria-expanded={showRoleDropdown}
-              aria-controls="app-menu"
+              title={user ? "Menú de cuenta" : "Iniciar sesión"}
+              aria-label={user ? `Menú de cuenta, rol ${role === 'seeker' ? 'Contratante' : 'Profesional'}` : "Iniciar sesión o registrarse"}
+              aria-haspopup={user ? "true" : undefined}
+              aria-expanded={user ? showRoleDropdown : undefined}
+              aria-controls={user ? "app-menu" : undefined}
             >
               <User size={16} aria-hidden="true" />
-              <span className="app-header__account-text">{role === 'seeker' ? 'Contratante' : 'Profesional'}</span>
-              <ChevronDown size={14} className="app-header__chevron" aria-hidden="true" />
+              <span className="app-header__account-text">
+                {user ? (role === 'seeker' ? 'Contratante' : 'Profesional') : 'Ingresar'}
+              </span>
+              {user && <ChevronDown size={14} className="app-header__chevron" aria-hidden="true" />}
             </button>
 
             {showRoleDropdown && (
@@ -176,7 +259,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 onOpenAdminModeration={onOpenAdminModeration}
                 onOpenNotifications={onOpenNotifications}
                 onToggleTheme={toggleTheme}
-                onLogout={logout}
+                onLogout={() => {
+                  logout();
+                  if (onLogout) onLogout();
+                  else if (onOpenLanding) onOpenLanding();
+                }}
               />
             )}
           </div>

@@ -30,7 +30,7 @@ import {
 import { AppHeader } from './components/layout/AppHeader';
 import { BottomNav } from './components/layout/BottomNav';
 
-import { MascotAssistant } from './components/mascot/MascotAssistant';
+import { FloatingSupport } from './components/common/FloatingSupport';
 import { MascotAvatar } from './components/mascot/MascotAvatar';
 import { PushNotificationToast } from './components/common/PushNotificationToast';
 import { NotificationInbox } from './components/common/NotificationInbox';
@@ -101,11 +101,9 @@ const MainAppContent: React.FC = () => {
   const { view, visible, navigateTo } = useCrossfade('landing');
   const [pendingRole, setPendingRole] = useState<'seeker' | 'provider'>('seeker');
   const [currentTab, setCurrentTab] = useState<string>(role === 'seeker' ? 'inicio_seeker' : 'inicio_pro');
-  const [prevRole, setPrevRole] = useState(role);
-  if (role !== prevRole) {
-    setPrevRole(role);
+  useEffect(() => {
     setCurrentTab(role === 'seeker' ? 'inicio_seeker' : 'inicio_pro');
-  }
+  }, [role]);
   const [currentTradeCategory, setCurrentTradeCategory] = useState<TradeCategory | undefined>(undefined);
   const [isUnknownPath, setIsUnknownPath] = useState(isUnknownLocation);
 
@@ -267,84 +265,23 @@ const MainAppContent: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Ruta que no existe (GitHub Pages sirve 404.html con la misma app)
-  if (isUnknownPath) {
-    return (
-      <StatusScreen
-        code="404"
-        title="Esta página no existe"
-        message="Many buscó por todo el barrio y no la encontró. Puede que el enlace esté mal escrito o que la página ya no exista."
-        actions={
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => {
-              window.history.replaceState(null, '', import.meta.env.BASE_URL);
-              setIsUnknownPath(false);
-            }}
-          >
-            <Home size={18} aria-hidden="true" /> Volver al inicio
-          </button>
-        }
-      />
-    );
-  }
-
-  // Pantalla de carga (spinner) mientras se verifica el JWT
-  if (isLoading) {
-    return (
-      <div className="jwt-loading-overlay">
-        <MascotAvatar size="md" />
-        <div className="spinner" />
-        <span style={{ marginTop: '16px', fontWeight: 700, fontSize: '15px' }}>
-          Verificando sesión...
-        </span>
-      </div>
-    );
-  }
-
-  // Pantalla de Login / Registro
-  if (view === 'auth') {
-    return (
-      <div className={`crossfade-wrapper ${visible ? '' : 'crossfade-wrapper--hidden'}`}>
-        <AuthPage
-          onAuthSuccess={() => {
-            navigateTo('app');
-          }}
-          initialRole={pendingRole}
-        />
-      </div>
-    );
-  }
-
-  // Landing page
-  if (view === 'landing') {
-    return (
-      <div className={`crossfade-wrapper ${visible ? '' : 'crossfade-wrapper--hidden'}`}>
-        <LandingPage
-          onEnterApp={(role) => {
-            setPendingRole(role ?? 'seeker');
-            navigateTo('auth');
-          }}
-          onOpenContact={() => setIsContactModalOpen(true)}
-        />
-        <ContactModal
-          isOpen={isContactModalOpen}
-          onClose={() => setIsContactModalOpen(false)}
-        />
-      </div>
-    );
-  }
-
-  // Auth Gate: si intenta ver 'app' pero no hay usuario en sesión, va al login.
-  if (view === 'app' && !user && !isLoading) {
-    navigateTo('auth');
-    return null;
-  }
-
   // Handlers para Flujos
   const handleOpenBooking = (worker: Worker) => {
     setSelectedWorkerForProfile(null);
+    if (!user) {
+      sessionStorage.setItem('oy_pending_intent', JSON.stringify({
+        action: 'booking',
+        workerId: worker.id
+      }));
+      triggerPushNotification(
+        'Inicia sesión para continuar',
+        `Crea una cuenta o ingresa para agendar a ${worker.name}.`,
+        'system'
+      );
+      setPendingRole('seeker');
+      navigateTo('auth');
+      return;
+    }
     setSelectedWorkerForBooking(worker);
   };
 
@@ -360,6 +297,21 @@ const MainAppContent: React.FC = () => {
 
   const handleOpenChat = (worker: Worker, initialMessage?: string) => {
     setSelectedWorkerForProfile(null);
+    if (!user) {
+      sessionStorage.setItem('oy_pending_intent', JSON.stringify({
+        action: 'chat',
+        workerId: worker.id,
+        initialMessage
+      }));
+      triggerPushNotification(
+        'Inicia sesión para chatear',
+        `Ingresa para iniciar la conversación con ${worker.name}.`,
+        'system'
+      );
+      setPendingRole('seeker');
+      navigateTo('auth');
+      return;
+    }
     let conv = conversations.find(c => c.workerId === worker.id);
     const convId = conv ? conv.id : `conv-${Date.now()}`;
 
@@ -503,9 +455,68 @@ const MainAppContent: React.FC = () => {
   const handleOpenSendRequest = (worker?: Worker | Worker[]) => {
     setSelectedWorkerForProfile(null);
     const target = Array.isArray(worker) ? worker[0] : worker;
+    if (!user) {
+      sessionStorage.setItem('oy_pending_intent', JSON.stringify({
+        action: 'request',
+        workerId: target?.id
+      }));
+      triggerPushNotification(
+        'Inicia sesión para continuar',
+        'Crea una cuenta o ingresa para enviar tu solicitud de servicio.',
+        'system'
+      );
+      setPendingRole('seeker');
+      navigateTo('auth');
+      return;
+    }
     setSendRequestWorker(target);
     setIsSendRequestOpen(true);
   };
+
+  // OFY-GUEST: Reanudar intención de contratación tras autenticación
+  useEffect(() => {
+    if (!user) return;
+    const rawIntent = sessionStorage.getItem('oy_pending_intent');
+    if (!rawIntent) return;
+    try {
+      const intent = JSON.parse(rawIntent);
+      sessionStorage.removeItem('oy_pending_intent');
+      if (intent.action === 'booking' && intent.workerId) {
+        const target = workers.find(w => w.id === intent.workerId);
+        if (target) {
+          setSelectedWorkerForBooking(target);
+          triggerPushNotification(
+            'Sesión iniciada',
+            `Reanudamos tu solicitud de agenda con ${target.name}.`,
+            'system'
+          );
+        }
+      } else if (intent.action === 'request') {
+        const target = intent.workerId ? workers.find(w => w.id === intent.workerId) : undefined;
+        setSendRequestWorker(target);
+        setIsSendRequestOpen(true);
+        triggerPushNotification(
+          'Sesión iniciada',
+          'Reanudamos el envío de tu solicitud.',
+          'system'
+        );
+      } else if (intent.action === 'chat' && intent.workerId) {
+        const target = workers.find(w => w.id === intent.workerId);
+        if (target) {
+          handleOpenChat(target, intent.initialMessage);
+        }
+      }
+    } catch {
+      sessionStorage.removeItem('oy_pending_intent');
+    }
+  }, [user, workers]);
+
+  // Auth Gate seguro: redirigir a landing si se pierde la sesión mientras se navega una sección privada
+  useEffect(() => {
+    if (view === 'app' && !user && !isLoading && currentTab !== 'buscar') {
+      navigateTo('landing');
+    }
+  }, [view, user, isLoading, currentTab, navigateTo]);
 
   const handleSubmitRequests = (newRequests: ServiceRequest[]) => {
     setServices(prev => [...newRequests, ...prev]);
@@ -695,6 +706,113 @@ const MainAppContent: React.FC = () => {
     ? workers.find(w => w.id === selectedWorkerForProfile.id) ?? selectedWorkerForProfile
     : null;
 
+  // Garantizar que al cambiar de pestaña o abrir perfil la ventana siempre inicie en el tope (scroll 0)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [currentTab, liveProfileWorker]);
+
+  const handleNavSelectTab = (tab: string) => {
+    setSelectedWorkerForProfile(null);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    if (tab === 'login') {
+      setPendingRole('seeker');
+      navigateTo('auth');
+      return;
+    }
+    if (!user && tab !== 'buscar') {
+      setPendingRole(role === 'provider' ? 'provider' : 'seeker');
+      navigateTo('auth');
+      return;
+    }
+    setCurrentTab(tab);
+  };
+
+  // ── Renderizado Condicional después de registrar todos los Hooks ──
+
+  // Ruta que no existe (GitHub Pages sirve 404.html con la misma app)
+  if (isUnknownPath) {
+    return (
+      <StatusScreen
+        code="404"
+        title="Esta página no existe"
+        message="Many buscó por todo el barrio y no la encontró. Puede que el enlace esté mal escrito o que la página ya no exista."
+        actions={
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => {
+              window.history.replaceState(null, '', import.meta.env.BASE_URL);
+              setIsUnknownPath(false);
+            }}
+          >
+            <Home size={18} aria-hidden="true" /> Volver al inicio
+          </button>
+        }
+      />
+    );
+  }
+
+  // Pantalla de carga (spinner) mientras se verifica el JWT
+  if (isLoading) {
+    return (
+      <div className="jwt-loading-overlay">
+        <MascotAvatar size="md" />
+        <div className="spinner" />
+        <span style={{ marginTop: '16px', fontWeight: 700, fontSize: '15px' }}>
+          Verificando sesión...
+        </span>
+      </div>
+    );
+  }
+
+  // Pantalla de Login / Registro
+  if (view === 'auth') {
+    return (
+      <div className={`crossfade-wrapper ${visible ? '' : 'crossfade-wrapper--hidden'}`}>
+        <AuthPage
+          onAuthSuccess={() => {
+            navigateTo('app');
+          }}
+          initialRole={pendingRole}
+        />
+      </div>
+    );
+  }
+
+  // Landing page
+  if (view === 'landing') {
+    return (
+      <div className={`crossfade-wrapper ${visible ? '' : 'crossfade-wrapper--hidden'}`}>
+        <LandingPage
+          onEnterApp={(incomingRole, category) => {
+            setCurrentTradeCategory(category);
+            setPendingRole(incomingRole ?? 'seeker');
+            if (incomingRole === 'seeker') {
+              setCurrentTab('buscar');
+              navigateTo('app');
+            } else {
+              navigateTo('auth');
+            }
+          }}
+          onLogin={() => {
+            setPendingRole('seeker');
+            navigateTo('auth');
+          }}
+          onOpenContact={() => setIsContactModalOpen(true)}
+        />
+        <ContactModal
+          isOpen={isContactModalOpen}
+          onClose={() => setIsContactModalOpen(false)}
+        />
+      </div>
+    );
+  }
+
+  // Auth Gate: mientras se redirige a landing por pérdida de sesión, no renderizar la app privada
+  if (view === 'app' && !user && !isLoading && currentTab !== 'buscar') {
+    return null;
+  }
+
   return (
     <div className={`app-root-layout role-${role} crossfade-wrapper ${visible ? '' : 'crossfade-wrapper--hidden'}`}>
       <PushNotificationToast
@@ -705,15 +823,13 @@ const MainAppContent: React.FC = () => {
       {/* Barra de Navegación Superior */}
       <AppHeader
         onOpenLanding={() => navigateTo('landing')}
+        onLogout={() => navigateTo('landing')}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenAdminModeration={() => setIsAdminModalOpen(true)}
         onRefreshGps={handleRefreshGps}
         hasGps={hasGps}
         currentTab={currentTab}
-        onSelectTab={(tab) => {
-          setSelectedWorkerForProfile(null);
-          setCurrentTab(tab);
-        }}
+        onSelectTab={handleNavSelectTab}
         unreadCount={totalUnreadCount}
         isChatOpen={currentTab === 'mensajes'}
         onToggleChat={() => {
@@ -734,7 +850,7 @@ const MainAppContent: React.FC = () => {
 
       <div className="app-main-body">
         {/* Área Central de Contenido */}
-        <main className="app-content-area">
+        <main className={`app-content-area ${currentTab === 'mensajes' ? 'app-content-area--chat' : ''}`}>
           {liveProfileWorker ? (
             <WorkerProfileView
               worker={liveProfileWorker}
@@ -757,6 +873,7 @@ const MainAppContent: React.FC = () => {
               onSelectWorker={setSelectedWorkerForProfile}
               onOpenSendRequest={handleOpenSendRequest}
               onChangeTradeCategory={setCurrentTradeCategory}
+              initialCategory={currentTradeCategory}
             />
           )}
 
@@ -767,6 +884,7 @@ const MainAppContent: React.FC = () => {
               onSelectWorker={setSelectedWorkerForProfile}
               onOpenSendRequest={handleOpenSendRequest}
               onChangeTradeCategory={setCurrentTradeCategory}
+              initialCategory={currentTradeCategory}
             />
           )}
 
@@ -856,16 +974,13 @@ const MainAppContent: React.FC = () => {
         </main>
       </div>
 
-      {/* Footer Universal de la App */}
-      <AppFooter onOpenContact={() => setIsContactModalOpen(true)} />
+      {/* Footer Universal de la App (oculto en mensajería para permitir vista a pantalla completa) */}
+      {currentTab !== 'mensajes' && <AppFooter onOpenContact={() => setIsContactModalOpen(true)} />}
 
       {/* Barra de Navegación Inferior para Móvil */}
       <BottomNav
         currentTab={currentTab}
-        onSelectTab={(tab) => {
-          setSelectedWorkerForProfile(null);
-          setCurrentTab(tab);
-        }}
+        onSelectTab={handleNavSelectTab}
         unreadCount={totalUnreadCount}
         isChatOpen={currentTab === 'mensajes'}
         onToggleChat={() => {
@@ -874,11 +989,22 @@ const MainAppContent: React.FC = () => {
         }}
       />
 
-      {/* Widget Interactivo de la Mascota Many */}
-      <MascotAssistant
-        currentTrade={currentTradeCategory}
-        activeView={currentTab}
-      />
+      {/* Asistente Flotante de Soporte Técnico Universal ("¿Necesitas una mano?") */}
+      {currentTab !== 'mensajes' && (
+        <FloatingSupport
+          onStartSeeker={(trade) => {
+            if (trade) setSelectedTradeCategory(trade as TradeCategory);
+            setCurrentTab('buscar');
+            setSelectedWorkerForProfile(null);
+          }}
+          onSelectTrade={(trade) => {
+            setSelectedTradeCategory(trade as TradeCategory);
+            setCurrentTab('buscar');
+            setSelectedWorkerForProfile(null);
+          }}
+          onOpenContact={() => setIsContactModalOpen(true)}
+        />
+      )}
 
       {/* Modales del Sistema */}
       {selectedWorkerForBooking && (
@@ -941,8 +1067,8 @@ const MainAppContent: React.FC = () => {
         onClose={() => setIsContactModalOpen(false)}
       />
 
-      {/* Botón Flotante para Volver Arriba (Item 7) */}
-      <ScrollToTop />
+      {/* Botón Flotante para Volver Arriba (oculto en chat) */}
+      {currentTab !== 'mensajes' && <ScrollToTop />}
     </div>
   );
 };
