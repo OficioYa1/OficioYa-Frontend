@@ -1,0 +1,180 @@
+/* ============================================================
+   BranchedMenu · menú con ramas que se dibujan
+   CSS plano con tokens: la rama activa usa el color del rol
+   (Azul Marino o Naranja Fuego) y el texto atenuado es AA.
+   ============================================================ */
+
+.bm {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: min(var(--bm-w), 100%);
+  padding-left: 14px;
+  line-height: 1.2;
+  color: var(--bm-ink);
+  font-family: inherit;
+  font-size: var(--bm-font);
+}
+
+/* Tronco principal que se desvanece hacia abajo */
+.bm::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  border-radius: 1px;
+  background: linear-gradient(to bottom, var(--bm-line) 0%, var(--bm-line) 55%, transparent 100%);
+}
+
+.bm-marker {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  z-index: 1;
+  width: 2px;
+  height: 16px;
+  border-radius: 1px;
+  background: var(--bm-accent);
+  opacity: 0;
+  transition: top 220ms var(--ease-out), opacity 150ms ease;
+}
+
+.bm-marker[data-on] { opacity: 1; }
+
+.bm-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.bm-head,
+.bm-leaf {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: var(--bm-muted);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 200ms ease;
+}
+
+.bm-head {
+  display: block;
+  padding: 9px 0;
+  font-family: var(--font-display);
+  font-size: calc(var(--bm-font) + 1px);
+  font-weight: 600;
+}
+
+.bm-section[data-open] > .bm-head,
+.bm-head[data-active] {
+  color: var(--bm-ink);
+}
+
+.bm-head:focus-visible,
+.bm-leaf:focus-visible {
+  border-radius: var(--radius-sm, 8px);
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+.bm-fold {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--bm-fold) var(--ease-out);
+}
+
+.bm-section[data-open] > .bm-fold { grid-template-rows: 1fr; }
+
+.bm-fold-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.bm-body {
+  position: relative;
+  box-sizing: border-box;
+  padding: 6px 0;
+}
+
+.bm-tree {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.bm-section[data-open] .bm-tree {
+  opacity: 1;
+  transition: opacity 250ms ease 100ms;
+}
+
+.bm-line {
+  fill: none;
+  stroke: var(--bm-line);
+  stroke-width: var(--bm-line-w);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.bm-line--reach {
+  stroke: var(--bm-accent);
+  transition: stroke-dashoffset var(--bm-draw) var(--ease-out);
+}
+
+.bm-leaf {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--bm-row);
+  padding: 0 4px 0 var(--bm-indent);
+}
+
+.bm-leaf[data-active] {
+  color: var(--bm-accent);
+  font-weight: 600;
+}
+
+.bm-leaf:active { transform: scale(0.98); }
+
+.bm-icon {
+  display: inline-flex;
+  flex: none;
+}
+
+.bm-label {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.bm-badge {
+  min-width: 18px;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-danger, #DC2626);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bm-head:hover,
+  .bm-leaf:hover { color: var(--bm-ink); }
+  .bm-leaf[data-active]:hover { color: var(--bm-accent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bm-marker { transition: opacity 150ms ease; }
+  .bm-fold,
+  .bm-line--reach { transition: none; }
+}

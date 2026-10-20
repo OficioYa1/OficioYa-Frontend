@@ -1,0 +1,332 @@
+/* Upload.css — Dropzone interactiva con succión inercial y bandeja elástica */
+
+.upl {
+  --upl-bg: rgba(22, 17, 14, 0.7);
+  --upl-border: rgba(255, 255, 255, 0.08);
+  --upl-over-bg: rgba(229, 143, 73, 0.12);
+  --upl-over-border: rgba(229, 143, 73, 0.55);
+  --upl-refuse-bg: rgba(240, 68, 56, 0.14);
+  --upl-refuse-border: #F04438;
+  --upl-text-main: var(--oy-cream, #FBF6EE);
+  --upl-text-muted: rgba(251, 246, 238, 0.6);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  user-select: none;
+  font-family: var(--font-body, 'Inter', sans-serif);
+}
+
+/* ── ZONA DE SUCCIÓN / DROPZONE ── */
+.upl-zone-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 120px;
+  position: relative;
+}
+
+.upl-zone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px 32px;
+  background: var(--upl-bg);
+  border: 1px solid var(--upl-border);
+  border-radius: var(--upl-r, 16px);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: width 340ms var(--upl-spring, ease),
+              height 340ms var(--upl-spring, ease),
+              transform 240ms var(--upl-spring, ease),
+              background-color 220ms ease,
+              border-color 220ms ease,
+              box-shadow 220ms ease;
+  will-change: transform, width, height;
+  cursor: default;
+}
+
+/* Cuando se sostiene un archivo encima de la caja (Inhala y crece con rebote) */
+.upl-zone[data-over="true"] {
+  background: var(--upl-over-bg);
+  border-color: var(--upl-over-border);
+  transform: scale(1.05);
+  box-shadow: 0 16px 36px -6px rgba(229, 143, 73, 0.3), inset 0 1px 0 rgba(229, 143, 73, 0.3);
+}
+
+.upl-zone[data-over="true"] .upl-icon {
+  transform: translateY(-4px);
+  color: var(--oy-gold, #E58F49);
+}
+
+/* Cuando el archivo sobrepasa el límite de 5 MB (Rechazo y sacudida) */
+.upl-zone[data-refuse="true"] {
+  background: var(--upl-refuse-bg);
+  border-color: var(--upl-refuse-border);
+  box-shadow: 0 0 24px rgba(240, 68, 56, 0.35);
+}
+
+.upl-zone[data-refuse="true"] .upl-say b {
+  color: #F04438;
+}
+
+/* Cuando se traga el archivo (Gulp) */
+.upl-zone[data-gulp="true"] {
+  transform: scale(0.93);
+  transition: transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Cuando abraza el estado de subida activo */
+.upl-zone[data-busy="true"] {
+  padding: 12px 18px;
+  background: rgba(18, 14, 12, 0.95);
+  border-color: rgba(229, 143, 73, 0.3);
+}
+
+.upl-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  color: var(--upl-text-muted);
+  flex-shrink: 0;
+  transition: transform 220ms ease, color 220ms ease, background 220ms ease;
+}
+
+.upl-say {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.upl-say b {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--upl-text-main);
+  transition: color 200ms ease;
+}
+
+.upl-say span {
+  font-size: 0.75rem;
+  color: var(--upl-text-muted);
+}
+
+/* ── FILA ACTIVA DE SUBIDA (UPL-NOW) ── */
+.upl-now {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.upl-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+}
+
+.upl-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--upl-text-main);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upl-meta {
+  font-size: 0.72rem;
+  color: var(--upl-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.upl-track {
+  width: 130px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 3px;
+}
+
+.upl-bar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #55BA95 0%, #E58F49 100%);
+  border-radius: 99px;
+  transform-origin: left;
+  transition: transform 120ms linear;
+}
+
+.upl-end {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.upl-tick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: #079455;
+  color: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(7, 148, 85, 0.6);
+  animation: uplTickPop 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes uplTickPop {
+  0% { transform: scale(0.3); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── PORCENTAJE EN RUEDA DE CASINO (ROLL) ── */
+.upl-roll {
+  display: inline-flex;
+  align-items: center;
+  height: 1em;
+  line-height: 1em;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--oy-gold, #E58F49);
+}
+
+.upl-roll-col {
+  display: inline-block;
+  height: 1em;
+  line-height: 1em;
+  overflow: hidden;
+}
+
+.upl-roll-strip {
+  display: flex;
+  flex-direction: column;
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.upl-roll-strip span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1em;
+  line-height: 1em;
+}
+
+/* ── BANDEJA DE ARCHIVOS (UPL-TRAY) ── */
+.upl-tray {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+}
+
+.upl-slot {
+  width: 72px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: opacity 220ms ease;
+}
+
+.upl-slot[data-empty="true"] {
+  opacity: 0.25;
+}
+
+.upl-file {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+  border: none;
+  background: transparent;
+  padding: 4px;
+  border-radius: 10px;
+  will-change: transform, opacity;
+  transition: filter 180ms ease;
+}
+
+.upl-file:hover {
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.45));
+}
+
+.upl-file[data-held="true"] {
+  cursor: grabbing;
+  z-index: 100;
+  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.65));
+}
+
+.upl-file[data-gone="true"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.upl-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--upl-text-muted);
+  max-width: 68px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── SVG PAGE ICON STYLES ── */
+.upl-page {
+  display: block;
+  flex-shrink: 0;
+}
+
+.upl-page-line {
+  stroke: rgba(255, 255, 255, 0.4);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.upl-page-ext {
+  font-family: var(--font-mono, monospace);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  fill: #ffffff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upl-zone,
+  .upl-file,
+  .upl-roll-strip,
+  .upl-bar {
+    transition: none !important;
+  }
+}

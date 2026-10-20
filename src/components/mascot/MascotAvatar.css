@@ -1,0 +1,47 @@
+/* Many, el Castor de OficioYa: sticker plano Amarillo Canario con
+   contorno Cacao. Nunca se rota ni lleva sombras (manual de identidad). */
+
+.many-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.many-avatar {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  background: var(--oy-amarillo-canario);
+}
+
+.many-avatar-wrap--lg .many-avatar,
+.many-avatar-wrap--hero .many-avatar { border-width: 2px; }
+
+.many-avatar--button {
+  cursor: pointer;
+  font: inherit;
+}
+
+.many-avatar--button:active { scale: 0.97; }
+
+.many-avatar--button:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 3px;
+}
+
+.many-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .many-avatar { animation: none !important; }
+}

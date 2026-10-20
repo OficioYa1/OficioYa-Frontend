@@ -7,16 +7,45 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies and build output
 node_modules
 dist
 dist-ssr
 *.local
+*.tsbuildinfo
+
+# AI Agents, Skills & Tooling (Antigravity / Gemini / Copilot)
+.agents/
+.gemini/
+skills-lock.json
+design-system/
+.github/agents/
+.github/hooks/
+.github/skills/
+
+# Context, heavy assets & raw reference documents
+contexto/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+
+# Cache
+.eslintcache
+.cache/
+.parcel-cache/
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj

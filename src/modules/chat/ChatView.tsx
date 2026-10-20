@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { Conversation, ChatMessage, Worker } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { PageHero } from '../../components/layout/PageHero';
+import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 import {
   Send,
   CheckCheck,
@@ -8,15 +10,29 @@ import {
   ArrowLeft,
   Phone,
   ShieldCheck,
-  Sparkles
+  Sparkles,
+  MessageCircle,
+  MessageSquare,
+  Search,
+  User,
+  Clock,
+  X,
+  Compass,
+  CheckCircle2,
+  Zap
 } from 'lucide-react';
+import './Chat.css';
 
-interface ChatViewProps {
+export interface ChatViewProps {
   conversations: Conversation[];
   messages: Record<string, ChatMessage[]>;
   initialConversationId?: string;
   onSendMessage: (conversationId: string, text: string) => void;
+  /** OFY-51: mensaje entrante de la otra parte (respuesta simulada en el mock). */
+  onReceiveMessage?: (conversationId: string, text: string) => void;
   workers: Worker[];
+  onSelectWorker?: (worker: Worker) => void;
+  onNavigateToDirectory?: () => void;
   onClose?: () => void;
 }
 
@@ -33,25 +49,62 @@ export const ChatView: React.FC<ChatViewProps> = ({
   messages,
   initialConversationId,
   onSendMessage,
+  onReceiveMessage,
   workers,
-  onClose
+  onSelectWorker,
+  onNavigateToDirectory
 }) => {
   const { user, role } = useAuth();
+  const isSeeker = role === 'seeker';
+
   const [activeConvId, setActiveConvId] = useState<string | null>(
     initialConversationId || (conversations.length > 0 ? conversations[0].id : null)
   );
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterMode, setFilterMode] = useState<'all' | 'unread'>('all');
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const replyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [prevInitialId, setPrevInitialId] = useState(initialConversationId);
+  if (initialConversationId && initialConversationId !== prevInitialId) {
+    setPrevInitialId(initialConversationId);
+    setActiveConvId(initialConversationId);
+  }
 
   const activeConv = conversations.find(c => c.id === activeConvId);
   const currentMessages = activeConvId && messages[activeConvId] ? messages[activeConvId] : [];
   const workerDetail = workers.find(w => w.id === activeConv?.workerId);
 
-  // Auto-scroll al final del chat
+  // Auto-scroll del contenedor INTERNO de mensajes sin alterar la posición ni el scroll de la página principal
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [currentMessages, isTyping]);
+    if (activeConvId && messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      requestAnimationFrame(() => {
+        container.scrollTop = container.scrollHeight;
+      });
+    }
+  }, [activeConvId, currentMessages.length, isTyping]);
+
+  // Filtrado de conversaciones
+  const filteredConversations = useMemo(() => {
+    return conversations.filter(c => {
+      const matchesSearch =
+        c.workerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.workerTrade.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesFilter = filterMode === 'all' || (filterMode === 'unread' && c.unreadCount > 0);
+
+      return matchesSearch && matchesFilter;
+    });
+  }, [conversations, searchQuery, filterMode]);
+
+  // Métricas rápidas
+  const totalUnread = useMemo(() => {
+    return conversations.reduce((acc, c) => acc + c.unreadCount, 0);
+  }, [conversations]);
 
   const handleSend = (textToSend?: string) => {
     const text = textToSend || inputText;
@@ -62,7 +115,9 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
     // Simular respuesta automática con retardo de escritura (···)
     setIsTyping(true);
-    setTimeout(() => {
+    if (replyTimerRef.current) clearTimeout(replyTimerRef.current);
+    const convId = activeConvId;
+    replyTimerRef.current = setTimeout(() => {
       setIsTyping(false);
       const simulatedReplies = [
         '¡Perfecto! Ya tengo la dirección registrada en el mapa, voy saliendo.',
@@ -71,7 +126,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
         'Listo, cualquier duda me puedes marcar directamente.'
       ];
       const randomReply = simulatedReplies[Math.floor(Math.random() * simulatedReplies.length)];
-      onSendMessage(activeConvId, randomReply);
+      if (onReceiveMessage) onReceiveMessage(convId, randomReply);
     }, 1800);
   };
 
@@ -83,247 +138,291 @@ export const ChatView: React.FC<ChatViewProps> = ({
   };
 
   return (
-    <div 
-      className="chat-drawer" 
-      style={{ 
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        bottom: 0,
-        width: '100%',
-        maxWidth: '380px',
-        background: 'var(--color-bg)',
-        boxShadow: '-4px 0 24px rgba(0,0,0,0.1)',
-        zIndex: 1000,
-        display: 'flex',
-        flexDirection: 'column',
-        animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-      }}
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {/* VISTA 1: Lista de Mensajes (Solo se muestra si no hay un chat activo) */}
-        {!activeConv && (
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--color-surface)' }}>
-            <div style={{ padding: '20px', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h3 style={{ fontSize: '1.2rem', marginBottom: '4px' }}>Mensajes</h3>
-                <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
-                  {conversations.length} conversaciones activas
-                </span>
-              </div>
-              {onClose && (
-                <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', color: 'var(--color-text-muted)' }}>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold' }}>×</span>
+    <div className="chat-fullpage container">
+      {/* ── CABECERA PRINCIPAL (PageHero estándar de la aplicación) ── */}
+      <PageHero
+        tone={isSeeker ? 'marino' : 'fuego'}
+        eyebrow={
+          <>
+            <MessageCircle size={14} aria-hidden="true" /> Centro de Mensajes & Coordinación
+          </>
+        }
+        title="Mensajes & Acuerdos Directos"
+        subtitle="Chatea en tiempo real con profesionales y clientes verificados en Bogotá D.C. para afinar tarifas, horarios y llegada."
+        stickers={[
+          {
+            icon: <MessageSquare size={24} />,
+            tone: 'amarillo',
+            style: { top: '16%', right: '7%', rotate: '-8deg' }
+          },
+          {
+            icon: <Sparkles size={22} />,
+            tone: 'esmeralda',
+            style: { top: '48%', right: '18%', rotate: '12deg' }
+          }
+        ]}
+      />
+
+      {/* ── BARRA DE MÉTRICAS RÁPIDAS ── */}
+      <div className="chat-stats" aria-label="Resumen de mensajería">
+        <div className="oy-stat chat-stat chat-stat--marino">
+          <span className="oy-stat__value">{conversations.length}</span>
+          <span className="oy-stat__label">Conversaciones</span>
+        </div>
+        <div className="oy-stat chat-stat chat-stat--amarillo">
+          <span className="oy-stat__value">{totalUnread}</span>
+          <span className="oy-stat__label">Sin leer</span>
+        </div>
+        <div className="oy-stat chat-stat chat-stat--esmeralda">
+          <span className="oy-stat__value">{workers.length}</span>
+          <span className="oy-stat__label">Especialistas activos</span>
+        </div>
+        <div className="oy-stat chat-stat chat-stat--gris">
+          <span className="oy-stat__value">&lt; 15m</span>
+          <span className="oy-stat__label">Tiempo de respuesta</span>
+        </div>
+      </div>
+
+      {/* ── CARD CONTENEDOR SPLIT: SIDEBAR DE CHATS + CONVERSACIÓN ACTIVA ── */}
+      <div className={`chat-fullpage__card ${activeConv ? 'has-active-chat' : 'no-active-chat'}`}>
+        
+        {/* ── COLUMNA IZQUIERDA: LISTA DE CONVERSACIONES ── */}
+        <aside className="chat-sidebar" aria-label="Lista de conversaciones">
+          {/* Cabecera del sidebar con buscador */}
+          <div className="chat-sidebar__header">
+            <div className="chat-sidebar__title-row">
+              <h2 className="chat-sidebar__title">
+                Conversaciones
+                <span className="chat-sidebar__count-badge">{conversations.length}</span>
+              </h2>
+            </div>
+
+            {/* Buscador de chats */}
+            <div className="chat-search">
+              <Search size={15} className="chat-search__icon" aria-hidden="true" />
+              <input
+                type="text"
+                className="chat-search__input"
+                placeholder="Buscar por nombre u oficio..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                aria-label="Buscar en conversaciones"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="chat-search__clear"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Limpiar búsqueda"
+                >
+                  <X size={14} />
                 </button>
               )}
             </div>
 
-          <div style={{ overflowY: 'auto', flex: 1 }}>
-            {conversations.length === 0 ? (
-              <div style={{ padding: '30px 16px', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '13px' }}>
-                No tienes conversaciones activas. Inicia un chat desde el perfil de un profesional.
-              </div>
-            ) : (
-              conversations.map(conv => {
-                const isSelected = conv.id === activeConvId;
-                return (
-                  <div
-                    key={conv.id}
-                    onClick={() => setActiveConvId(conv.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '14px 16px',
-                      cursor: 'pointer',
-                      background: isSelected ? 'var(--color-surface-hover)' : 'transparent',
-                      borderLeft: isSelected ? '4px solid var(--role-primary)' : '4px solid transparent',
-                      borderBottom: '1px solid var(--color-border-subtle)',
-                      transition: 'background 0.2s'
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: '44px',
-                        height: '44px',
-                        borderRadius: '50%',
-                        background: conv.workerAvatarColor,
-                        color: '#FFF',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 800,
-                        fontSize: '14px',
-                        flexShrink: 0
-                      }}
-                    >
-                      {conv.workerInitials}
-                    </div>
-
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2px' }}>
-                        <span style={{ fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {conv.workerName}
-                        </span>
-                        <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
-                          {conv.lastMessageTime}
-                        </span>
-                      </div>
-                      <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '2px' }}>
-                        {conv.workerTrade}
-                      </span>
-                      <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {conv.lastMessage}
-                      </p>
-                    </div>
-
-                    {conv.unreadCount > 0 && (
-                      <span
-                        style={{
-                          background: 'var(--color-danger)',
-                          color: '#FFFFFF',
-                          fontSize: '10px',
-                          fontWeight: 800,
-                          borderRadius: '999px',
-                          padding: '2px 6px'
-                        }}
-                      >
-                        {conv.unreadCount}
-                      </span>
-                    )}
-                  </div>
-                );
-              })
-            )}
+            {/* Filtros rápidos: Todos / No leídos */}
+            <div className="chat-sidebar__filters" role="tablist" aria-label="Filtro de chats">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={filterMode === 'all'}
+                className={`chat-filter-chip ${filterMode === 'all' ? 'chat-filter-chip--active' : ''}`}
+                onClick={() => setFilterMode('all')}
+              >
+                Todos ({conversations.length})
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={filterMode === 'unread'}
+                className={`chat-filter-chip ${filterMode === 'unread' ? 'chat-filter-chip--active' : ''}`}
+                onClick={() => setFilterMode('unread')}
+              >
+                Sin leer {totalUnread > 0 && <span className="chat-filter-chip__unread-dot" />}
+              </button>
             </div>
           </div>
-        )}
 
-        {/* VISTA 2: Chat Activo (Solo se muestra si hay un chat activo) */}
-        {activeConv && (
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--color-bg)' }}>
-            {/* Header del Chat Activo */}
-            <div
-              style={{
-                padding: '16px',
-                background: 'var(--color-surface)',
-                borderBottom: '1px solid var(--color-border)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-            >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Lista scrolleable de chats */}
+          <div className="chat-sidebar__list">
+            {filteredConversations.length === 0 ? (
+              <div className="chat-empty-list">
+                <MascotAvatar expression="guino" size="sm" animate="none" />
+                <p className="chat-empty-list__text">
+                  {conversations.length === 0
+                    ? 'Aún no tienes conversaciones. Inicia una enviando una petición desde el directorio de profesionales.'
+                    : 'No encontramos conversaciones que coincidan con tu búsqueda.'}
+                </p>
+                {conversations.length === 0 && onNavigateToDirectory && (
                   <button
-                    onClick={() => setActiveConvId(null)}
-                    style={{ padding: '4px', color: 'var(--color-text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                    type="button"
+                    className="btn btn-primary btn-sm chat-empty-list__btn"
+                    onClick={onNavigateToDirectory}
                   >
-                    <ArrowLeft size={20} />
+                    <Compass size={15} aria-hidden="true" /> Explorar profesionales
+                  </button>
+                )}
+              </div>
+            ) : (
+              <ul className="chat-list__items" role="list">
+                {filteredConversations.map(conv => {
+                  const isSelected = conv.id === activeConvId;
+                  return (
+                    <li key={conv.id}>
+                      <button
+                        type="button"
+                        className={`chat-conv ${isSelected ? 'chat-conv--active' : ''}`}
+                        aria-pressed={isSelected}
+                        onClick={() => setActiveConvId(conv.id)}
+                      >
+                        <div className="chat-avatar-wrap">
+                          <span
+                            className="chat-avatar"
+                            style={{ background: conv.workerAvatarColor || 'var(--role-primary)' }}
+                            aria-hidden="true"
+                          >
+                            {conv.workerInitials}
+                          </span>
+                          <span className="chat-avatar__online-dot" aria-hidden="true" />
+                        </div>
+
+                        <div className="chat-conv__text">
+                          <div className="chat-conv__row">
+                            <span className="chat-conv__name">{conv.workerName}</span>
+                            <span className="chat-conv__time">{conv.lastMessageTime}</span>
+                          </div>
+                          <span className="chat-conv__trade">{conv.workerTrade}</span>
+                          <span className="chat-conv__last">{conv.lastMessage}</span>
+                        </div>
+
+                        {conv.unreadCount > 0 && (
+                          <span className="chat-unread" aria-label={`${conv.unreadCount} sin leer`}>
+                            {conv.unreadCount}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </aside>
+
+        {/* ── COLUMNA DERECHA: CONVERSACIÓN ACTIVA O ESTADO VACÍO ── */}
+        <main className="chat-main" aria-label="Ventana de conversación">
+          {activeConv ? (
+            <div className="chat-pane chat-pane--active">
+              {/* Header del Chat Activo */}
+              <header className="chat-head">
+                <div className="chat-head__left">
+                  {/* Botón Volver para pantallas móviles */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveConvId(null)}
+                    className="btn btn-secondary btn-sm chat-head__back"
+                    aria-label="Volver a la lista de mensajes"
+                  >
+                    <ArrowLeft size={16} aria-hidden="true" />
+                    <span>Volver</span>
                   </button>
 
-                  <div
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '50%',
-                      background: activeConv.workerAvatarColor,
-                      color: '#FFF',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 800,
-                      fontSize: '14px'
-                    }}
-                  >
-                    {activeConv.workerInitials}
+                  <div className="chat-avatar-wrap">
+                    <span
+                      className="chat-avatar chat-avatar--sm"
+                      style={{ background: activeConv.workerAvatarColor || 'var(--role-primary)' }}
+                      aria-hidden="true"
+                    >
+                      {activeConv.workerInitials}
+                    </span>
+                    <span className="chat-avatar__online-dot" aria-hidden="true" />
                   </div>
 
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontWeight: 800, fontSize: '15px' }}>{activeConv.workerName}</span>
-                      <span className="badge badge-verified" style={{ padding: '2px 6px', fontSize: '10px' }}>
-                        <ShieldCheck size={11} /> Verificado
+                  <div className="chat-head__who">
+                    <div className="chat-head__name-row">
+                      <span className="chat-head__name">{activeConv.workerName}</span>
+                      <span className="badge badge-verified chat-verified">
+                        <ShieldCheck size={11} aria-hidden="true" /> Verificado
                       </span>
                     </div>
-                    <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                      {activeConv.workerTrade} • En línea
+                    <span className="chat-head__status">
+                      <span className="chat-online-dot" aria-hidden="true" />
+                      {activeConv.workerTrade} • En línea • Bogotá D.C.
                     </span>
                   </div>
                 </div>
 
-                {workerDetail && (
-                  <a
-                    href={`tel:${workerDetail.phone}`}
-                    className="btn btn-secondary"
-                    style={{ padding: '6px 12px', fontSize: '12px' }}
-                    title="Llamar directamente al profesional"
-                  >
-                    <Phone size={14} /> <span className="hide-on-mobile">Llamar</span>
-                  </a>
-                )}
+                {/* Acciones del chat activo: Ver Perfil y Llamar */}
+                <div className="chat-head__actions">
+                  {workerDetail && onSelectWorker && (
+                    <button
+                      type="button"
+                      onClick={() => onSelectWorker(workerDetail)}
+                      className="btn btn-secondary btn-sm chat-action-btn"
+                      title="Ver perfil completo y reputación del profesional"
+                    >
+                      <User size={14} aria-hidden="true" />
+                      <span className="hide-on-mobile">Ver Perfil</span>
+                    </button>
+                  )}
+
+                  {workerDetail && (
+                    <a
+                      href={`tel:${workerDetail.phone}`}
+                      className="btn btn-secondary btn-sm chat-action-btn chat-action-btn--phone"
+                      title="Llamar directamente al profesional"
+                      aria-label="Llamar directamente al profesional"
+                    >
+                      <Phone size={14} aria-hidden="true" />
+                      <span className="hide-on-mobile">Llamar</span>
+                    </a>
+                  )}
+                </div>
+              </header>
+
+              {/* Banner informativo de seguridad y confianza */}
+              <div className="chat-trust-banner">
+                <ShieldCheck size={15} className="chat-trust-banner__icon" aria-hidden="true" />
+                <span className="chat-trust-banner__text">
+                  <strong>Trato directo y transparente:</strong> Coordina siempre el valor de la visita y los repuestos antes de iniciar los trabajos.
+                </span>
               </div>
 
-              {/* Mensajes del Chat */}
+              {/* Contenedor scrolleable de mensajes */}
               <div
-                style={{
-                  flex: 1,
-                  padding: '16px',
-                  overflowY: 'auto',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px'
-                }}
+                ref={messagesContainerRef}
+                className="chat-messages"
+                role="log"
+                aria-live="polite"
+                aria-label={`Conversación con ${activeConv.workerName}`}
               >
+                {/* Separador de fecha de inicio */}
+                <div className="chat-date-separator">
+                  <span>Hoy</span>
+                </div>
+
                 {currentMessages.map(msg => {
                   const isMe = msg.senderRole === role || msg.senderId === user?.id;
-
-                  // Color de burbuja adaptado al rol (Azul navy para contratante, Naranja para trabajador)
-                  const myBubbleBg = role === 'seeker' ? '#1E3A8A' : '#EA580C';
 
                   return (
                     <div
                       key={msg.id}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: isMe ? 'flex-end' : 'flex-start',
-                        maxWidth: '80%',
-                        alignSelf: isMe ? 'flex-end' : 'flex-start'
-                      }}
+                      className={`chat-msg ${isMe ? 'chat-msg--me' : 'chat-msg--them'}`}
                     >
-                      <div
-                        style={{
-                          padding: '10px 14px',
-                          borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                          background: isMe ? myBubbleBg : 'var(--color-surface)',
-                          color: isMe ? '#FFFFFF' : 'var(--color-text-main)',
-                          boxShadow: 'var(--shadow-sm)',
-                          fontSize: '14px',
-                          lineHeight: 1.4,
-                          border: isMe ? 'none' : '1px solid var(--color-border)'
-                        }}
-                      >
-                        {msg.text}
-                      </div>
+                      <div className="chat-bubble">{msg.text}</div>
 
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          fontSize: '10px',
-                          color: 'var(--color-text-muted)',
-                          marginTop: '3px',
-                          padding: '0 4px'
-                        }}
-                      >
+                      <div className="chat-msg__meta">
+                        <Clock size={11} aria-hidden="true" />
                         <span>{msg.timestamp}</span>
                         {isMe && (
-                          <span title={msg.status === 'read' ? 'Leído' : 'Enviado'}>
+                          <span
+                            title={msg.status === 'read' ? 'Leído' : 'Enviado'}
+                            className="chat-msg__tick"
+                          >
                             {msg.status === 'read' ? (
-                              <CheckCheck size={13} color="#3B82F6" />
+                              <CheckCheck size={13} aria-label="Leído" />
                             ) : (
-                              <Check size={13} />
+                              <Check size={13} aria-label="Enviado" />
                             )}
                           </span>
                         )}
@@ -332,99 +431,117 @@ export const ChatView: React.FC<ChatViewProps> = ({
                   );
                 })}
 
-                {/* Delay de escritura animado (···) */}
+                {/* Indicador de escritura animado (···) */}
                 {isTyping && (
-                  <div
-                    style={{
-                      alignSelf: 'flex-start',
-                      background: 'var(--color-surface)',
-                      border: '1px solid var(--color-border)',
-                      padding: '8px 14px',
-                      borderRadius: '16px',
-                      fontSize: '12px',
-                      color: 'var(--color-text-muted)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    <Sparkles size={12} color="var(--brand-amber)" /> {activeConv.workerName} está escribiendo...
+                  <div className="chat-typing" role="status">
+                    <Sparkles size={13} aria-hidden="true" /> {activeConv.workerName} está escribiendo
+                    <span className="chat-typing__dots" aria-hidden="true">
+                      <i />
+                      <i />
+                      <i />
+                    </span>
                   </div>
                 )}
-                <div ref={messagesEndRef} />
               </div>
 
               {/* Chips de Respuestas Rápidas */}
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '6px',
-                  padding: '6px 16px',
-                  overflowX: 'auto',
-                  borderTop: '1px solid var(--color-border-subtle)',
-                  background: 'var(--color-surface)',
-                  scrollbarWidth: 'none'
-                }}
-              >
+              <div className="chat-quick" role="group" aria-label="Respuestas rápidas frecuentes">
+                <span className="chat-quick__label">
+                  <Zap size={12} aria-hidden="true" /> Rápidas:
+                </span>
                 {QUICK_REPLIES.map((reply, i) => (
                   <button
                     key={i}
+                    type="button"
+                    className="oy-chip chat-quick__chip"
                     onClick={() => handleSend(reply)}
-                    style={{
-                      padding: '4px 10px',
-                      borderRadius: '999px',
-                      fontSize: '11px',
-                      whiteSpace: 'nowrap',
-                      background: 'var(--color-surface-hover)',
-                      color: 'var(--color-text-muted)',
-                      border: '1px solid var(--color-border)',
-                      fontWeight: 600
-                    }}
                   >
                     {reply}
                   </button>
                 ))}
               </div>
 
-              {/* Input y Envío */}
-              <div
-                style={{
-                  padding: '12px 16px',
-                  background: 'var(--color-surface)',
-                  borderTop: '1px solid var(--color-border)',
-                  display: 'flex',
-                  gap: '10px',
-                  alignItems: 'center'
-                }}
-              >
-                <input
-                  type="text"
-                  className="input-base"
-                  placeholder="Escribe un mensaje aquí... (Presiona Enter para enviar)"
-                  value={inputText}
-                  onChange={e => setInputText(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  style={{ borderRadius: '999px', padding: '10px 18px' }}
-                />
+              {/* Caja de Redacción y Envío */}
+              <div className="chat-compose">
+                <div className="chat-compose__pill">
+                  <input
+                    type="text"
+                    className="chat-compose__input"
+                    aria-label="Escribe un mensaje"
+                    placeholder="Escribe un mensaje aquí... (Presiona Enter para enviar)"
+                    value={inputText}
+                    onChange={e => setInputText(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                  />
 
-                <button
-                  onClick={() => handleSend()}
-                  disabled={!inputText.trim()}
-                  className="btn btn-primary"
-                  style={{
-                    borderRadius: '50%',
-                    width: '42px',
-                    height: '42px',
-                    padding: 0,
-                    flexShrink: 0
-                  }}
-                  title="Enviar mensaje"
-                >
-                  <Send size={18} />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSend()}
+                    disabled={!inputText.trim()}
+                    className="btn btn-primary chat-send"
+                    title="Enviar mensaje"
+                    aria-label="Enviar mensaje"
+                  >
+                    <Send size={18} aria-hidden="true" />
+                  </button>
+                </div>
               </div>
-          </div>
-        )}
+            </div>
+          ) : (
+            /* Estado Vacío de Selección en Pantalla Completa (Desktop) */
+            <div className="chat-empty-selection">
+              <div className="chat-empty-selection__content">
+                <MascotAvatar expression="entusiasta" forceImage="wave" size="lg" animate="bounce" />
+                <h3 className="chat-empty-selection__title">Tus conversaciones y acuerdos en vivo</h3>
+                <p className="chat-empty-selection__subtitle">
+                  Selecciona una conversación del listado lateral para coordinar detalles de tus servicios, acordar presupuestos o consultar tiempos de llegada.
+                </p>
+
+                <div className="chat-empty-selection__grid">
+                  <div className="chat-empty-feature">
+                    <div className="chat-empty-feature__icon chat-empty-feature__icon--blue">
+                      <Zap size={18} />
+                    </div>
+                    <div>
+                      <strong>Respuestas en tiempo real</strong>
+                      <p>Coordina al instante sin intermediarios engorrosos ni esperas.</p>
+                    </div>
+                  </div>
+
+                  <div className="chat-empty-feature">
+                    <div className="chat-empty-feature__icon chat-empty-feature__icon--green">
+                      <CheckCircle2 size={18} />
+                    </div>
+                    <div>
+                      <strong>Trato directo y confiable</strong>
+                      <p>Todo el acuerdo queda registrado en la plataforma para tu tranquilidad.</p>
+                    </div>
+                  </div>
+
+                  <div className="chat-empty-feature">
+                    <div className="chat-empty-feature__icon chat-empty-feature__icon--orange">
+                      <ShieldCheck size={18} />
+                    </div>
+                    <div>
+                      <strong>Garantía de Reputación</strong>
+                      <p>Profesionales verificados con historial validado por vecinos de Bogotá.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {conversations.length === 0 && onNavigateToDirectory && (
+                  <button
+                    type="button"
+                    className="btn btn-primary chat-empty-selection__cta"
+                    onClick={onNavigateToDirectory}
+                  >
+                    <Compass size={18} aria-hidden="true" /> Explorar directorio de profesionales
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );

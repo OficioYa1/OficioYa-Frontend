@@ -1,0 +1,223 @@
+/* ============================================================
+   Header de la app — lenguaje sticker (DESIGN.md) con la paleta
+   del manual de identidad. Píldora de navegación en escritorio,
+   StaggeredMenu en móvil.
+   ============================================================ */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 10px 0;
+  border-bottom: var(--stroke-w) solid var(--stroke-ink);
+  background: color-mix(in srgb, var(--color-bg) 85%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.app-header__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.app-header__brand {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.app-header__logo {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.app-header__gps {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--wash-almendra);
+  color: var(--color-text-main);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 160ms var(--ease-out), background-color 160ms ease;
+}
+
+.app-header__gps-ok { color: var(--color-status-text); }
+
+.app-header__dock-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline: auto;
+}
+
+@media (max-width: 767px) {
+  .app-header__dock-wrap {
+    display: none;
+  }
+}
+
+.app-header__nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline: auto;
+  padding: 4px 10px;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+}
+
+.app-header__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  overflow: visible;
+}
+
+.app-header__tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  min-width: 40px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  cursor: pointer;
+  overflow: visible !important;
+  transition: transform 160ms var(--ease-out), background-color 160ms ease, color 160ms ease;
+}
+
+.app-header__tab--active {
+  background: var(--role-primary);
+  color: var(--role-on-primary);
+  padding: 8px 16px;
+}
+
+.app-header__tab-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+.app-header__tab-label {
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+
+.app-header__badge {
+  position: absolute;
+  top: -7px;
+  right: -9px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4.5px;
+  border: 1.5px solid var(--stroke-ink);
+  border-radius: 9999px;
+  background: var(--oy-amarillo-canario, #FFD027);
+  color: var(--oy-cacao-profundo, #3E1F14);
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+  pointer-events: none;
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+html.theme-dark .app-header__badge,
+[data-theme="dark"] .app-header__badge {
+  background: var(--oy-amarillo-canario, #FFD027);
+  color: #120D0A;
+  border-color: #0B1430;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.app-header__account-wrap { position: relative; }
+
+.app-header__account {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 6px 12px;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms var(--ease-out), background-color 160ms ease;
+}
+
+.app-header__chevron { opacity: 0.6; }
+
+.app-header__gps:active,
+.app-header__tab:active,
+.app-header__account:active { transform: scale(0.97); }
+
+.app-header__gps:focus-visible,
+.app-header__tab:focus-visible,
+.app-header__account:focus-visible,
+.app-header__logo:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-header__tab:not(.app-header__tab--active):hover,
+  .app-header__account:hover { background: var(--color-surface-hover); }
+  .app-header__gps:hover { background: var(--wash-amarillo); }
+}
+
+@media (max-width: 767px) {
+  .app-header__nav,
+  .app-header__gps-text,
+  .app-header__account-text { display: none; }
+  .app-header__bar { gap: var(--space-2); }
+  .app-header__actions { gap: 4px; }
+  .app-header__account { padding: 6px 10px; }
+  .app-header__tab { padding: 8px 10px; }
+}
+
+@media (max-width: 400px) {
+  .app-header__chevron { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-header__gps,
+  .app-header__tab,
+  .app-header__account { transition: none; }
+}

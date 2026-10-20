@@ -120,13 +120,13 @@ export function evaluatePasswordStrength(password: string): PasswordStrength {
 
   switch (points) {
     case 1:
-      return { score: 1, label: 'Muy débil', color: '#EF4444', feedback: 'Usa al menos 8 caracteres con letras y números' };
+      return { score: 1, label: 'Muy débil', color: 'var(--color-danger)', feedback: 'Usa al menos 8 caracteres con letras y números' };
     case 2:
-      return { score: 2, label: 'Débil', color: '#F97316', feedback: 'Agrega mayúsculas y números' };
+      return { score: 2, label: 'Débil', color: 'var(--color-action)', feedback: 'Agrega mayúsculas y números' };
     case 3:
-      return { score: 3, label: 'Regular', color: '#FBBF24', feedback: 'Combina caracteres especiales (#, $, !)' };
+      return { score: 3, label: 'Regular', color: 'var(--color-star)', feedback: 'Combina caracteres especiales (#, $, !)' };
     case 4:
-      return { score: 4, label: 'Fuerte', color: '#3B82F6', feedback: '¡Excelente combinación de seguridad!' };
+      return { score: 4, label: 'Fuerte', color: 'var(--color-trust)', feedback: '¡Excelente combinación de seguridad!' };
     case 5:
     default:
       return { score: 5, label: 'Muy fuerte', color: '#10B981', feedback: 'Contraseña blindada y altamente segura' };

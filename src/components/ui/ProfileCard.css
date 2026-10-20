@@ -1,0 +1,260 @@
+/* ============================================================
+   ProfileCard · tarjeta de trabajador con inclinación 3D
+   Marco Almendra (o superficie) con contorno Cacao, foto en ficha
+   redondeada, estado Disponible en Esmeralda. Sin sombras; el holo
+   es un velo sutil Canario / Ámbar / Almendra.
+   ============================================================ */
+
+.oy-pcard {
+  --pc-pointer-x: 50%;
+  --pc-pointer-y: 50%;
+  --pc-band: 50%;
+  --pc-rotate-x: 0deg;
+  --pc-rotate-y: 0deg;
+  --pc-shift-x: 0px;
+  --pc-shift-y: 0px;
+  --pc-active: 0;
+  --pc-frame: var(--oy-almendra-claro);
+  --pc-ink: var(--oy-cacao-profundo);
+  --pc-muted: var(--oy-cacao-profundo);
+  position: relative;
+  width: 320px;
+  max-width: 100%;
+  perspective: 1000px;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.oy-pcard--superficie {
+  --pc-frame: var(--color-surface);
+  --pc-ink: var(--color-text-main);
+  --pc-muted: var(--color-text-muted);
+}
+
+/* En oscuro el Almendra se mantiene (texto Cacao sigue en AA) */
+
+.oy-pcard__body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px 10px 14px;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-frame);
+  background: var(--pc-frame);
+  color: var(--pc-ink);
+  transform: rotateX(var(--pc-rotate-x)) rotateY(var(--pc-rotate-y));
+  will-change: transform;
+}
+
+.oy-pcard--almendra .oy-pcard__body { border-color: var(--oy-cacao-profundo); }
+
+.oy-pcard__tile {
+  position: relative;
+  isolation: isolate;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--radius-card);
+  background: var(--pc-avatar);
+}
+
+.oy-pcard__photo {
+  position: absolute;
+  inset: -8px;
+  width: calc(100% + 16px);
+  height: calc(100% + 16px);
+  object-fit: cover;
+  object-position: center top;
+  user-select: none;
+  pointer-events: none;
+  transform: translate3d(var(--pc-shift-x), var(--pc-shift-y), 0);
+}
+
+.oy-pcard__monogram {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-size: 5rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  transform: translate3d(var(--pc-shift-x), var(--pc-shift-y), 0);
+}
+
+.oy-pcard__holo,
+.oy-pcard__glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.oy-pcard__holo {
+  background: repeating-linear-gradient(
+    115deg,
+    var(--oy-amarillo-canario) 0%,
+    var(--oy-almendra-claro) 6%,
+    var(--oy-ambar-calido) 12%,
+    var(--oy-amarillo-canario) 18%
+  );
+  background-size: 300% 300%;
+  background-position: var(--pc-band) var(--pc-band);
+  mix-blend-mode: soft-light;
+  opacity: calc(var(--pc-holo) * (0.3 + 0.7 * var(--pc-active)));
+}
+
+.oy-pcard__glare {
+  background: radial-gradient(
+    farthest-corner circle at var(--pc-pointer-x) var(--pc-pointer-y),
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0) 55%
+  );
+  mix-blend-mode: overlay;
+  opacity: calc(var(--pc-glare) * var(--pc-active));
+}
+
+.oy-pcard__verified {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--radius-pill);
+  background: var(--oy-amarillo-canario);
+  color: var(--oy-cacao-profundo);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  rotate: -4deg;
+}
+
+.oy-pcard__info { padding: 0 8px; min-width: 0; }
+
+.oy-pcard__name {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--pc-ink);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.oy-pcard__title {
+  margin: 4px 0 0;
+  color: var(--pc-muted);
+  font-size: var(--text-small);
+  line-height: 1.4;
+}
+
+.oy-pcard__meta {
+  margin-top: 6px;
+  color: var(--pc-muted);
+  font-size: var(--text-caption);
+}
+
+.oy-pcard__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 8px;
+}
+
+.oy-pcard__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--radius-pill);
+  background: var(--oy-gris-100);
+  color: var(--oy-gris-700);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.oy-pcard__status::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--oy-gris-500);
+}
+
+/* Disponible: Esmeralda con texto Cacao (5.87:1) */
+.oy-pcard__status.is-available {
+  background: var(--oy-verde-esmeralda);
+  color: var(--color-on-status);
+}
+
+.oy-pcard__status.is-available::before { background: var(--oy-cacao-profundo); }
+
+.oy-pcard__contact {
+  gap: 6px;
+  min-height: var(--tap-target);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oy-pcard__body { transform: none; will-change: auto; }
+  .oy-pcard__photo,
+  .oy-pcard__monogram { transform: none; }
+}
+
+/* ── Modo clickeable (acceso al perfil completo al tocar foto o texto) ── */
+.oy-pcard--clickable {
+  cursor: pointer;
+}
+
+.oy-pcard--clickable .oy-pcard__body {
+  transition:
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.oy-pcard--clickable .oy-pcard__tile,
+.oy-pcard--clickable .oy-pcard__info,
+.oy-pcard--clickable .oy-pcard__name,
+.oy-pcard--clickable .oy-pcard__title,
+.oy-pcard--clickable .oy-pcard__meta {
+  cursor: pointer;
+}
+
+.oy-pcard--clickable:focus-visible {
+  outline: 3px solid var(--brand-amber, #E58F49);
+  outline-offset: 4px;
+  border-radius: var(--radius-frame);
+}
+
+.oy-pcard--clickable:hover .oy-pcard__body {
+  border-color: var(--brand-amber, #E58F49);
+  box-shadow:
+    0 12px 32px -4px rgba(62, 31, 20, 0.16),
+    0 4px 12px -2px rgba(62, 31, 20, 0.08);
+}
+
+html.theme-dark .oy-pcard--clickable:hover .oy-pcard__body,
+[data-theme="dark"] .oy-pcard--clickable:hover .oy-pcard__body {
+  border-color: var(--brand-amber, #E58F49);
+  box-shadow:
+    0 16px 36px -4px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(229, 143, 73, 0.25);
+}
+
+.oy-pcard--clickable:active .oy-pcard__body {
+  transform: rotateX(var(--pc-rotate-x)) rotateY(var(--pc-rotate-y)) scale(0.985);
+}
+

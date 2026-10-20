@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 interface TrueFocusProps {
   sentence: string;
@@ -11,9 +11,10 @@ interface TrueFocusProps {
 export const TrueFocus: React.FC<TrueFocusProps> = ({
   sentence,
   blurAmount = 3,
-  borderColor = '#2F6BFF',
+  borderColor = 'var(--color-trust)',
   animationDuration = 0.5
 }) => {
+  const reduce = useReducedMotion();
   const words = sentence.split(' ');
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [focusRect, setFocusRect] = useState({ width: 0, height: 0, x: 0, y: 0 });
@@ -68,7 +69,7 @@ export const TrueFocus: React.FC<TrueFocusProps> = ({
           y: hoveredIndex !== null ? focusRect.y - 6 : focusRect.y,
           opacity: hoveredIndex !== null ? 1 : 0
         }}
-        transition={{
+        transition={reduce ? { duration: 0 } : {
           type: 'spring',
           stiffness: 250,
           damping: 25,
@@ -99,7 +100,7 @@ export const TrueFocus: React.FC<TrueFocusProps> = ({
               filter: !isAnyHovered || isHovered ? 'blur(0px)' : `blur(${blurAmount}px)`,
               opacity: !isAnyHovered || isHovered ? 1 : 0.6
             }}
-            transition={{ duration: animationDuration }}
+            transition={{ duration: reduce ? 0 : animationDuration }}
             style={{
               display: 'inline-block',
               position: 'relative',

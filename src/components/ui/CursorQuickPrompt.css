@@ -1,0 +1,179 @@
+/* CursorQuickPrompt.css — Inspirado en el chat de cursor y atajo "/" de bleibtgleich.dev */
+
+/* Badge flotante discreto en esquina inferior */
+.oy-cursor-hint-badge {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.95rem;
+  background: rgba(22, 17, 14, 0.88);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(229, 143, 73, 0.35);
+  border-radius: 9999px;
+  color: var(--oy-cream, #FBF6EE);
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 990;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.2s ease, background 0.2s ease;
+}
+
+.oy-cursor-hint-badge:hover {
+  transform: translateY(-2px) scale(1.03);
+  border-color: var(--oy-gold, #E58F49);
+  background: rgba(35, 27, 23, 0.95);
+}
+
+.oy-hint-sparkle {
+  color: var(--oy-gold, #E58F49);
+}
+
+.oy-hint-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--oy-gold, #E58F49);
+}
+
+/* Overlay semitransparente para atrapar clics fuera */
+.oy-cursor-prompt-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(2px);
+  z-index: 10000;
+}
+
+/* Burbuja de chat anclada al cursor (forma clásica bleibtgleich: esquina superior izquierda en punta) */
+.oy-cursor-prompt-bubble {
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  padding: 0.75rem 0.95rem;
+  background: #15100D;
+  border: 1.5px solid var(--oy-gold, #E58F49);
+  border-radius: 1.15rem;
+  border-top-left-radius: 2px; /* Efecto punta hacia el cursor */
+  box-shadow: 0 18px 45px -8px rgba(0, 0, 0, 0.8), 0 0 25px rgba(229, 143, 73, 0.2);
+  color: var(--oy-cream, #FBF6EE);
+  z-index: 10001;
+  pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+  .oy-cursor-prompt-bubble {
+    position: fixed !important;
+    left: 50% !important;
+    top: 25% !important;
+    transform: translateX(-50%) !important;
+    border-top-left-radius: 1.15rem;
+  }
+}
+
+.oy-prompt-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  padding: 0.4rem 0.75rem;
+}
+
+.oy-prompt-icon {
+  color: var(--oy-gold, #E58F49);
+  flex-shrink: 0;
+}
+
+.oy-prompt-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--oy-cream, #FBF6EE);
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.oy-prompt-input::placeholder {
+  color: rgba(251, 246, 238, 0.45);
+  font-size: 0.8rem;
+}
+
+.oy-prompt-submit-btn,
+.oy-prompt-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 50%;
+  color: rgba(251, 246, 238, 0.7);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.oy-prompt-submit-btn:hover {
+  background: var(--oy-gold, #E58F49);
+  color: #120D0A;
+}
+
+.oy-prompt-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.oy-prompt-suggestions {
+  margin-top: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.oy-prompt-sug-title {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(251, 246, 238, 0.45);
+  font-weight: 600;
+}
+
+.oy-prompt-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.oy-prompt-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 0.22rem 0.55rem;
+  font-size: 0.72rem;
+  color: rgba(251, 246, 238, 0.8);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.oy-prompt-pill:hover {
+  background: rgba(229, 143, 73, 0.2);
+  border-color: var(--oy-gold, #E58F49);
+  color: var(--oy-gold, #E58F49);
+}

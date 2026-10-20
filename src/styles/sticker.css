@@ -1,0 +1,476 @@
+/* ============================================================
+   Capa "sticker" (ver docs/STYLE_REFERENCE.md)
+   Lenguaje de Slush con la paleta del manual: contorno Cacao
+   recortado, píldoras, sin sombras ni degradados en controles.
+   ============================================================ */
+
+/* ── Botones: píldora con contorno ── */
+.btn {
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  box-shadow: none;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease,
+    transform 160ms var(--ease-out);
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--role-primary);
+  box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover {
+    background: var(--role-primary-hover);
+    box-shadow: none;
+  }
+  .btn-secondary:hover {
+    background: var(--color-surface-hover);
+    transform: none;
+  }
+  .btn-accent:hover { transform: none; }
+}
+
+.btn-primary:active {
+  filter: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  border: var(--stroke-w) solid var(--stroke-ink);
+}
+
+.btn-accent {
+  background: var(--color-energy);
+  box-shadow: none;
+}
+
+.btn-danger { border-color: var(--stroke-ink); }
+
+/* ── Tarjetas: recorte con contorno, elevación sin sombra ── */
+.card {
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card);
+  box-shadow: none;
+  transition: transform 200ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: none;
+  }
+}
+
+.card:active {
+  transform: scale(0.995);
+  box-shadow: none;
+}
+
+html.theme-dark .card,
+html.theme-dark .card:hover { box-shadow: none; }
+
+/* ── Insignias: stickers ── */
+.badge-verified,
+.badge-available {
+  border: 1px solid var(--stroke-ink);
+}
+
+/* ── Inputs con contorno suave ── */
+.input-base {
+  border: var(--stroke-w) solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.input-base:focus {
+  border-color: var(--stroke-ink);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+  transform: none;
+}
+
+/* ── Paneles flotantes propios ── */
+.inbox-panel {
+  border: var(--stroke-w) solid var(--stroke-ink);
+  box-shadow: none;
+}
+
+.inbox-card {
+  border: var(--stroke-w) solid var(--stroke-ink);
+  box-shadow: none;
+}
+
+/* ── Tipografía display aplastada (DM Sans 800 del manual) ── */
+.oy-display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 0.82;
+  letter-spacing: -0.04em;
+}
+
+.oy-label {
+  font-family: var(--font-text, var(--font-ui));
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   Sistema de páginas (rediseño completo, DESIGN.md + manual)
+   ============================================================ */
+
+/* Sin sombras ni degradados: la elevación es contorno y color */
+html.theme-light,
+html.theme-dark {
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+}
+
+html.role-seeker,
+html.theme-dark.role-seeker,
+html.role-provider,
+html.theme-dark.role-provider {
+  --role-gradient: var(--role-primary);
+}
+
+/* Lavados de sección del manual (equivalen a Sky Wash / Concrete de Slush) */
+:root,
+html.theme-light {
+  --wash-almendra: #FDF3E4;
+  --wash-amarillo: #FFF4D1;
+  --wash-fuego: #FDE9DC;
+  --wash-gris: #EEF1F5;
+}
+
+html.theme-dark {
+  --wash-almendra: rgba(248, 216, 168, 0.1);
+  --wash-amarillo: rgba(255, 199, 44, 0.12);
+  --wash-fuego: rgba(234, 88, 12, 0.16);
+  --wash-gris: rgba(148, 163, 184, 0.1);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* ── Banda de página: el "póster" que abre cada vista ── */
+.oy-hero {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  margin: var(--space-6) 0 var(--space-8);
+  padding: clamp(28px, 5vw, 56px) clamp(20px, 4vw, 48px);
+  overflow: hidden;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card-lg);
+  background: var(--oy-hero-bg, var(--wash-marino));
+  color: var(--color-text-main);
+}
+
+.oy-hero--marino { --oy-hero-bg: var(--wash-marino); }
+.oy-hero--almendra { --oy-hero-bg: var(--wash-almendra); }
+.oy-hero--esmeralda { --oy-hero-bg: var(--wash-esmeralda); }
+.oy-hero--amarillo { --oy-hero-bg: var(--wash-amarillo); }
+.oy-hero--fuego { --oy-hero-bg: var(--wash-fuego); }
+.oy-hero--gris { --oy-hero-bg: var(--wash-gris); }
+
+.oy-hero__inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+.oy-hero__text { max-width: 960px; }
+
+.oy-hero__title {
+  margin: var(--space-3) 0 0;
+  color: var(--oy-hero-ink, var(--color-trust));
+  font-size: clamp(2.6rem, 7vw, 5.25rem);
+}
+
+html.role-provider .oy-hero { --oy-hero-ink: var(--oy-cacao-profundo); }
+html.theme-dark .oy-hero { --oy-hero-ink: var(--color-text-main); }
+
+.oy-hero__subtitle {
+  max-width: 560px;
+  margin: var(--space-4) 0 0;
+  color: var(--color-text-muted);
+  font-size: clamp(1rem, 0.9rem + 0.4vw, 1.25rem);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.oy-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.oy-hero__stickers {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Sticker plano con contorno (iconos de la mascota y de oficios) */
+.oy-sticker {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: 18px;
+  background: var(--oy-amarillo-canario);
+  color: var(--oy-cacao-profundo);
+}
+
+.oy-sticker--amarillo { background: var(--oy-amarillo-canario); }
+.oy-sticker--esmeralda { background: var(--oy-verde-esmeralda); }
+.oy-sticker--fuego { background: var(--oy-naranja-fuego); color: #FFFFFF; }
+.oy-sticker--marino { background: var(--oy-azul-marino); color: #FFFFFF; }
+.oy-sticker--almendra { background: var(--oy-almendra-claro); }
+.oy-sticker--blanco { background: #FFFFFF; }
+
+.oy-sticker--pill {
+  width: auto;
+  height: auto;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+/* Etiqueta en píldora (eyebrow) */
+.oy-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--radius-pill);
+  background: var(--oy-amarillo-canario);
+  color: var(--oy-cacao-profundo);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+@media (max-width: 760px) {
+  .oy-hero__stickers { display: none; }
+}
+
+/* ── Encabezado de sección dentro de una página ── */
+.oy-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-10) 0 var(--space-4);
+}
+
+.oy-section-title {
+  margin: 0;
+  color: var(--color-text-main);
+  font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.5rem);
+}
+
+.oy-section-sub {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-small);
+}
+
+/* ── Panel de color (tarjeta grande de sección) ── */
+.oy-panel {
+  padding: var(--space-6);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card-lg);
+  background: var(--oy-panel-bg, var(--color-surface));
+}
+
+.oy-panel--marino { --oy-panel-bg: var(--wash-marino); }
+.oy-panel--almendra { --oy-panel-bg: var(--wash-almendra); }
+.oy-panel--esmeralda { --oy-panel-bg: var(--wash-esmeralda); }
+.oy-panel--amarillo { --oy-panel-bg: var(--wash-amarillo); }
+.oy-panel--gris { --oy-panel-bg: var(--wash-gris); }
+
+/* ── Chips de filtro en píldora ── */
+.oy-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 14px;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms var(--ease-out);
+}
+
+.oy-chip:active { transform: scale(0.97); }
+
+.oy-chip[aria-pressed='true'],
+.oy-chip[data-active] {
+  background: var(--role-primary);
+  color: var(--role-on-primary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .oy-chip:not([aria-pressed='true']):not([data-active]):hover { background: var(--color-surface-hover); }
+}
+
+/* ── Estadística grande ── */
+.oy-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-5);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card);
+  background: var(--oy-stat-bg, var(--color-surface));
+}
+
+.oy-stat__value {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 1.4rem + 1.4vw, 2.6rem);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+
+.oy-stat__label {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+/* ── Modales: hoja recortada con contorno ── */
+.oy-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(62, 31, 20, 0.45);
+}
+
+.oy-modal {
+  position: relative;
+  width: 100%;
+  max-width: var(--oy-modal-w, 560px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card-lg);
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  animation: oy-modal-in 220ms var(--ease-out);
+}
+
+.oy-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-6) var(--space-4);
+  border-bottom: var(--stroke-w) solid var(--stroke-ink);
+  background: var(--oy-modal-head-bg, var(--wash-almendra));
+  border-radius: var(--radius-card-lg) var(--radius-card-lg) 0 0;
+}
+
+.oy-modal__title {
+  margin: 0;
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.oy-modal__body { padding: var(--space-6); }
+
+.oy-icon-btn {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms var(--ease-out);
+}
+
+.oy-icon-btn:active { transform: scale(0.95); }
+
+@media (hover: hover) and (pointer: fine) {
+  .oy-icon-btn:hover { background: var(--color-surface-hover); }
+}
+
+@keyframes oy-modal-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 600px) {
+  .oy-modal-backdrop { align-items: flex-end; padding: 0; }
+  .oy-modal {
+    max-height: 92dvh;
+    border-bottom: 0;
+    border-radius: var(--radius-card-lg) var(--radius-card-lg) 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oy-modal { animation: none; }
+}
+
+/* ── Estado vacío guiado por Many ── */
+.oy-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-10) var(--space-6);
+  border: var(--stroke-w) dashed var(--stroke-ink);
+  border-radius: var(--radius-card-lg);
+  background: var(--wash-almendra);
+  text-align: center;
+}
+
+.oy-empty__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.oy-empty__text {
+  max-width: 420px;
+  margin: 0;
+  color: var(--color-text-muted);
+}

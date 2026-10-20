@@ -23,9 +23,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   useEffect(() => {
-    // Sincronizar tema claro/oscuro
+    // Sincronizar tema claro/oscuro (tanto clases como atributos data-theme para máxima compatibilidad)
     document.documentElement.classList.remove('theme-light', 'theme-dark');
     document.documentElement.classList.add(`theme-${theme}`);
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-color-scheme', theme);
     localStorage.setItem('oy-theme', theme);
   }, [theme]);
 

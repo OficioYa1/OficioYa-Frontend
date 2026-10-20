@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import type { Worker, UrgencyLevel, ServiceRequest, PaymentMethod } from '../../types';
+import React, { useState, useMemo, useId } from 'react';
+import type { Worker, UrgencyLevel, ServiceRequest, PaymentMethod, TradeCategory } from '../../types';
+import { TRADE_LABELS, rateUnitShort } from '../../utils/workerProfile';
 import { useAuth } from '../../context/AuthContext';
 import {
   X,
@@ -7,15 +8,17 @@ import {
   Clock,
   DollarSign,
   Users,
-  Search,
   CheckCircle2,
   MapPin,
   Camera,
   Calendar,
   Sparkles,
-  AlertCircle
+  Plus,
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
+import { SlideConfirm } from '../../components/ui';
+import { useFlowModal } from './useFlowModal';
+import './Flows.css';
 
 interface SendRequestModalProps {
   workers: Worker[];
@@ -36,6 +39,11 @@ const BOGOTA_NEIGHBORHOODS = [
   'Fontibón'
 ];
 
+const URGENCY_OPTIONS: { id: UrgencyLevel; label: string }[] = [
+  { id: 'urgente', label: 'Urgente (Hoy mismo)' },
+  { id: 'normal', label: 'Normal (Esta semana)' }
+];
+
 export const SendRequestModal: React.FC<SendRequestModalProps> = ({
   workers,
   initialWorker,
@@ -43,39 +51,47 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
   onSubmitRequests
 }) => {
   const { user } = useAuth();
+  const uid = useId();
+  const dialogRef = useFlowModal(onClose);
 
   const [description, setDescription] = useState('');
-  const [expectedDate, setExpectedDate] = useState(new Date().toISOString().split('T')[0]);
+  // OFY-22: oficio requerido ('' = cualquiera)
+  const [trade, setTrade] = useState<TradeCategory | ''>(initialWorker?.trade ?? '');
+  const [expectedDate, setExpectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [selectedZone, setSelectedZone] = useState('Chapinero / Chicó');
   const [addressDetail, setAddressDetail] = useState('Carrera 15 # 85-20');
   const [urgency, setUrgency] = useState<UrgencyLevel>('urgente');
   const [budget, setBudget] = useState('80000');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('bre_b');
+  const [paymentMethod] = useState<PaymentMethod>('bre_b');
   const [attachedPhotos, setAttachedPhotos] = useState<string[]>([
     'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&auto=format&fit=crop'
   ]);
   const [newPhotoUrl, setNewPhotoUrl] = useState('');
   const [showPhotoInput, setShowPhotoInput] = useState(false);
 
-  // Lista de trabajadores seleccionados (RF-23 si es 1, RF-24 si son múltiples)
+  // Lista de trabajadores seleccionados (OFY-23 si es 1, OFY-24 si son múltiples)
   const [selectedWorkers, setSelectedWorkers] = useState<Worker[]>(() => {
     return initialWorker ? [initialWorker] : [];
   });
-  const [searchWorkerQuery, setSearchWorkerQuery] = useState('');
+  const [, setSearchWorkerQuery] = useState('');
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [createdList, setCreatedList] = useState<ServiceRequest[]>([]);
 
-  // RF-22: Identificar trabajadores cercanos compatibles con la zona seleccionada
+  // OFY-22: Identificar trabajadores cercanos compatibles con el oficio y la zona seleccionados
   const compatibleWorkers = useMemo(() => {
     const zoneKeyword = selectedZone.split('/')[0].trim().toLowerCase();
     return workers.filter(
       w =>
         w.available &&
         !w.isPaused &&
+        (!trade ||
+          w.trade === trade ||
+          w.secondaryTrades?.includes(trade) ||
+          w.services.some(s => s.trade === trade)) &&
         (w.location.zoneName.toLowerCase().includes(zoneKeyword) ||
           w.services.some(s => s.coverageZones.some(cz => cz.toLowerCase().includes(zoneKeyword))))
     );
-  }, [workers, selectedZone]);
+  }, [workers, selectedZone, trade]);
 
   const addWorker = (worker: Worker) => {
     if (!selectedWorkers.some(sw => sw.id === worker.id)) {
@@ -100,15 +116,18 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
     setAttachedPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
-  // RF-24: Enviar simultáneamente solicitud a varios trabajadores con plazo de 30 minutos (RF-28)
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // OFY-24: Enviar simultáneamente solicitud a varios trabajadores con plazo de 30 minutos (OFY-28)
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!description.trim() || selectedWorkers.length === 0) return;
 
-    const expirationDate = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 minutos (RF-28)
+    const expirationDate = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 minutos (OFY-28)
+    const broadcastId = `bc-${Date.now()}`;
 
     const newRequests: ServiceRequest[] = selectedWorkers.map(w => ({
       id: `srv-${Date.now()}-${w.id}`,
+      broadcastId,
+      tradeCategory: trade || w.trade,
       workerId: w.id,
       workerName: w.name,
       workerTrade: w.tradeLabel,
@@ -122,7 +141,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
       coverageZone: selectedZone,
       problemDescription: description,
       paymentMethod,
-      status: 'en_curso',
+      status: 'pendiente',
       urgency,
       budget: parseInt(budget) || 50000,
       amount: parseInt(budget) || 50000,
@@ -137,312 +156,340 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
     onSubmitRequests(newRequests);
   };
 
+  const titleId = `${uid}-title`;
+  const recipients = selectedWorkers.length;
+
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.65)',
-        backdropFilter: 'blur(6px)',
-        zIndex: 1050,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px'
-      }}
-    >
+    <div className="oy-modal-backdrop oy-flow-layer--base">
       <div
-        className="card"
-        style={{
-          width: '100%',
-          maxWidth: '620px',
-          maxHeight: '92vh',
-          overflowY: 'auto',
-          padding: '24px',
-          borderRadius: '24px',
-          position: 'relative'
-        }}
+        ref={dialogRef}
+        className="oy-modal oy-flow oy-flow--md"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
       >
-        <button
-          onClick={onClose}
-          style={{ position: 'absolute', top: '18px', right: '18px', color: 'var(--color-text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
-        >
-          <X size={20} />
-        </button>
-
-        {!isSuccess ? (
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--role-primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--role-primary)' }}>
-                <Send size={22} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1.25rem' }}>Crear Petición de Servicio (RF-19, RF-24)</h3>
-                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
+        <header className={`oy-modal__head oy-flow-head ${isSuccess ? 'oy-flow-head--esmeralda' : 'oy-flow-head--almendra'}`}>
+          <div className="oy-flow-head__main">
+            <span className="oy-flow-tile oy-flow-tile--fuego" aria-hidden="true">
+              <Send size={24} />
+            </span>
+            <div className="oy-flow-head__text">
+              <span className="oy-eyebrow oy-flow-kicker">Nueva solicitud</span>
+              <h2 id={titleId} className="oy-modal__title oy-display">
+                {isSuccess ? '¡Solicitud enviada!' : 'Crear Petición de Servicio'}
+              </h2>
+              {!isSuccess && (
+                <p className="oy-flow-head__sub">
                   Describe tu necesidad, adjunta evidencia fotográfica y notifica a expertos compatibles
-                </span>
-              </div>
+                </p>
+              )}
             </div>
+          </div>
+          <button type="button" className="oy-icon-btn" onClick={onClose} aria-label="Cerrar">
+            <X size={20} aria-hidden="true" />
+          </button>
+        </header>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* RF-21: Registrar zona donde se requiere el servicio */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-                    <MapPin size={13} /> Zona de Bogotá (RF-21)
-                  </label>
-                  <select
-                    className="input-base"
-                    value={selectedZone}
-                    onChange={e => setSelectedZone(e.target.value)}
-                  >
-                    {BOGOTA_NEIGHBORHOODS.map(z => (
-                      <option key={z} value={z}>{z}</option>
-                    ))}
-                  </select>
+        <div className="oy-modal__body">
+          {!isSuccess ? (
+            <form onSubmit={handleSubmit} className="oy-flow-form">
+              <ol className="oy-flow-steps" aria-label="Pasos de la solicitud">
+                <li><span className="oy-flow-num">1</span>Zona</li>
+                <li><span className="oy-flow-num">2</span>Necesidad</li>
+                <li><span className="oy-flow-num">3</span>Fotos</li>
+                <li><span className="oy-flow-num">4</span>Presupuesto</li>
+                <li><span className="oy-flow-num">5</span>Destinatarios</li>
+              </ol>
+
+              {/* OFY-21: Registrar zona donde se requiere el servicio */}
+              <section className="oy-flow-section" aria-labelledby={`${uid}-s1`}>
+                <h3 id={`${uid}-s1`} className="oy-flow-section__title">
+                  <span className="oy-flow-num">1</span> Zona y fecha
+                </h3>
+                <div className="oy-flow-grid2">
+                  <div className="oy-flow-field">
+                    <label className="oy-flow-label" htmlFor={`${uid}-zone`}>
+                      <MapPin size={14} aria-hidden="true" /> Zona de Bogotá
+                    </label>
+                    <select
+                      id={`${uid}-zone`}
+                      className="input-base"
+                      value={selectedZone}
+                      onChange={e => setSelectedZone(e.target.value)}
+                    >
+                      {BOGOTA_NEIGHBORHOODS.map(z => (
+                        <option key={z} value={z}>{z}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="oy-flow-field">
+                    <label className="oy-flow-label" htmlFor={`${uid}-date`}>
+                      <Calendar size={14} aria-hidden="true" /> Fecha esperada
+                    </label>
+                    <input
+                      id={`${uid}-date`}
+                      type="date"
+                      className="input-base"
+                      value={expectedDate}
+                      onChange={e => setExpectedDate(e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
-
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-                    <Calendar size={13} /> Fecha esperada (RF-19)
+                <div className="oy-flow-field">
+                  <label className="oy-flow-label" htmlFor={`${uid}-address`}>
+                    Dirección exacta o punto de referencia
                   </label>
                   <input
-                    type="date"
+                    id={`${uid}-address`}
+                    type="text"
                     className="input-base"
-                    value={expectedDate}
-                    onChange={e => setExpectedDate(e.target.value)}
+                    value={addressDetail}
+                    onChange={e => setAddressDetail(e.target.value)}
+                    placeholder="Ej. Calle 93 # 13-25, Apto 402"
                     required
                   />
                 </div>
-              </div>
+              </section>
 
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                  Dirección exacta o punto de referencia
-                </label>
-                <input
-                  type="text"
-                  className="input-base"
-                  value={addressDetail}
-                  onChange={e => setAddressDetail(e.target.value)}
-                  placeholder="Ej. Calle 93 # 13-25, Apto 402"
-                  required
-                />
-              </div>
-
-              {/* RF-19: Descripción del trabajo */}
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                  Descripción detallada de la necesidad (RF-19)
-                </label>
-                <textarea
-                  className="input-base"
-                  rows={3}
-                  placeholder="Describe qué ocurre, qué herramientas o repuestos crees que se requieren..."
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  required
-                />
-              </div>
-
-              {/* RF-20: Adjuntar fotografía a la solicitud */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Camera size={14} color="var(--role-primary)" /> Evidencia fotográfica del problema (RF-20)
+              {/* OFY-19: Descripción del trabajo */}
+              <section className="oy-flow-section oy-flow-section--ruled" aria-labelledby={`${uid}-s2`}>
+                <h3 id={`${uid}-s2`} className="oy-flow-section__title">
+                  <span className="oy-flow-num">2</span> ¿Qué necesitas?
+                </h3>
+                <div className="oy-flow-field">
+                  <label className="oy-flow-label" htmlFor={`${uid}-trade`}>
+                    Oficio requerido
                   </label>
+                  <select
+                    id={`${uid}-trade`}
+                    className="input-base"
+                    value={trade}
+                    onChange={e => setTrade(e.target.value as TradeCategory | '')}
+                  >
+                    <option value="">Cualquier oficio</option>
+                    {(Object.keys(TRADE_LABELS) as TradeCategory[]).map(t => (
+                      <option key={t} value={t}>{TRADE_LABELS[t]}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="oy-flow-field">
+                  <label className="oy-flow-label" htmlFor={`${uid}-desc`}>
+                    Descripción detallada de la necesidad
+                  </label>
+                  <textarea
+                    id={`${uid}-desc`}
+                    className="input-base"
+                    rows={3}
+                    placeholder="Describe qué ocurre, qué herramientas o repuestos crees que se requieren..."
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                    required
+                  />
+                </div>
+              </section>
+
+              {/* OFY-20: Adjuntar fotografía a la solicitud */}
+              <section className="oy-flow-section oy-flow-section--ruled" aria-labelledby={`${uid}-s3`}>
+                <div className="oy-flow-section__head">
+                  <h3 id={`${uid}-s3`} className="oy-flow-section__title">
+                    <span className="oy-flow-num">3</span>
+                    <Camera size={16} aria-hidden="true" /> Evidencia fotográfica del problema
+                  </h3>
+                  <p className="oy-flow-section__hint">{attachedPhotos.length} adjunta{attachedPhotos.length === 1 ? '' : 's'}</p>
+                </div>
+
+                <div className="oy-flow-photos">
+                  {attachedPhotos.map((url, idx) => (
+                    <div key={idx} className="oy-flow-photo">
+                      <img src={url} alt={`Evidencia ${idx + 1}`} />
+                      <button
+                        type="button"
+                        className="oy-flow-photo__remove"
+                        onClick={() => handleRemovePhoto(idx)}
+                        aria-label={`Quitar evidencia ${idx + 1}`}
+                      >
+                        <X size={14} aria-hidden="true" />
+                      </button>
+                    </div>
+                  ))}
                   <button
                     type="button"
+                    className="oy-flow-photo oy-flow-photo--add"
                     onClick={() => setShowPhotoInput(!showPhotoInput)}
-                    style={{ fontSize: '11px', color: 'var(--role-primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}
+                    aria-expanded={showPhotoInput}
+                    aria-controls={`${uid}-photo`}
                   >
-                    + Adjuntar otra foto
+                    <Plus size={18} aria-hidden="true" />
+                    <span>Adjuntar otra foto</span>
                   </button>
                 </div>
 
                 {showPhotoInput && (
-                  <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
+                  <div className="oy-flow-inline" id={`${uid}-photo`}>
                     <input
                       type="text"
                       className="input-base"
                       placeholder="URL de foto o imagen de evidencia"
+                      aria-label="URL de foto o imagen de evidencia"
                       value={newPhotoUrl}
                       onChange={e => setNewPhotoUrl(e.target.value)}
-                      style={{ fontSize: '12px' }}
                     />
-                    <button type="button" onClick={handleAddPhoto} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>
+                    <button type="button" onClick={handleAddPhoto} className="btn btn-secondary oy-flow-small">
                       Agregar
                     </button>
                   </div>
                 )}
-
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {attachedPhotos.map((url, idx) => (
-                    <div key={idx} style={{ width: '64px', height: '64px', borderRadius: '8px', overflow: 'hidden', position: 'relative', border: '1px solid var(--color-border)' }}>
-                      <img src={url} alt="Evidencia" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      <button
-                        type="button"
-                        onClick={() => handleRemovePhoto(idx)}
-                        style={{
-                          position: 'absolute',
-                          top: '2px',
-                          right: '2px',
-                          background: 'rgba(0,0,0,0.6)',
-                          color: '#FFF',
-                          border: 'none',
-                          borderRadius: '50%',
-                          width: '18px',
-                          height: '18px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <X size={10} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              </section>
 
               {/* Presupuesto y Urgencia */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-                    <DollarSign size={13} /> Presupuesto estimado (COP)
+              <section className="oy-flow-section oy-flow-section--ruled" aria-labelledby={`${uid}-s4`}>
+                <h3 id={`${uid}-s4`} className="oy-flow-section__title">
+                  <span className="oy-flow-num">4</span> Presupuesto y urgencia
+                </h3>
+                <div className="oy-flow-field">
+                  <label className="oy-flow-label" htmlFor={`${uid}-budget`}>
+                    <DollarSign size={14} aria-hidden="true" /> Presupuesto estimado (COP)
                   </label>
                   <input
+                    id={`${uid}-budget`}
                     type="number"
+                    inputMode="numeric"
                     className="input-base"
                     value={budget}
                     onChange={e => setBudget(e.target.value)}
                     required
                   />
                 </div>
-
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                    Nivel de urgencia
-                  </label>
-                  <select
-                    className="input-base"
-                    value={urgency}
-                    onChange={e => setUrgency(e.target.value as UrgencyLevel)}
-                  >
-                    <option value="urgente">Urgente (Hoy mismo)</option>
-                    <option value="normal">Normal (Esta semana)</option>
-                  </select>
+                <div className="oy-flow-field">
+                  <span className="oy-flow-label" id={`${uid}-urgency`}>Nivel de urgencia</span>
+                  <div className="oy-flow-choices oy-flow-choices--grid" role="group" aria-labelledby={`${uid}-urgency`}>
+                    {URGENCY_OPTIONS.map(opt => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        className="oy-chip"
+                        aria-pressed={urgency === opt.id}
+                        onClick={() => setUrgency(opt.id)}
+                      >
+                        {opt.id === 'urgente' && <Clock size={14} aria-hidden="true" />}
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </section>
 
-              {/* RF-22 & RF-24: Destinatarios y compatibilidad */}
-              <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Users size={14} /> Profesionales Destinatarios (RF-23, RF-24)
-                  </label>
-                  <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
-                    {selectedWorkers.length} {selectedWorkers.length === 1 ? 'destinatario directo' : 'candidatos simultáneos'}
-                  </span>
-                </div>
-
-                {/* Chips de seleccionados */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
-                  {selectedWorkers.map(w => (
-                    <span
-                      key={w.id}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        background: 'var(--role-primary-light)',
-                        color: 'var(--role-primary)',
-                        padding: '4px 10px',
-                        borderRadius: '999px',
-                        fontSize: '12px',
-                        fontWeight: 700,
-                        border: '1px solid var(--role-primary)'
-                      }}
-                    >
-                      {w.name} ({w.tradeLabel})
-                      <X size={12} style={{ cursor: 'pointer' }} onClick={() => removeWorker(w.id)} />
-                    </span>
-                  ))}
+              {/* OFY-22 & OFY-24: Destinatarios y compatibilidad */}
+              <section className="oy-flow-section oy-flow-section--ruled" aria-labelledby={`${uid}-s5`}>
+                <div className="oy-flow-section__head">
+                  <h3 id={`${uid}-s5`} className="oy-flow-section__title">
+                    <span className="oy-flow-num">5</span>
+                    <Users size={16} aria-hidden="true" /> Profesionales Destinatarios
+                  </h3>
+                  <p className="oy-flow-section__hint" aria-live="polite">
+                    {recipients} {recipients === 1 ? 'destinatario directo' : 'candidatos simultáneos'}
+                  </p>
                 </div>
 
-                {/* RF-22: Sugerencias compatibles en la zona */}
+                {selectedWorkers.length > 0 && (
+                  <ul className="oy-flow-choices oy-flow-plain-list" aria-label="Destinatarios seleccionados">
+                    {selectedWorkers.map(w => (
+                      <li key={w.id} className="oy-flow-token">
+                        <span className="oy-flow-token__label">{w.name} ({w.tradeLabel})</span>
+                        <button
+                          type="button"
+                          className="oy-flow-token__remove"
+                          onClick={() => removeWorker(w.id)}
+                          aria-label={`Quitar a ${w.name}`}
+                        >
+                          <X size={14} aria-hidden="true" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {/* OFY-22: Sugerencias compatibles en la zona */}
                 {compatibleWorkers.length > 0 && (
-                  <div style={{ background: 'var(--color-surface-hover)', padding: '10px', borderRadius: '10px', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--role-primary)', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                      <Sparkles size={12} /> Expertos cercanos compatibles con {selectedZone} (RF-22):
-                    </span>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  <div className="oy-panel oy-panel--marino oy-flow-panel">
+                    <p className="oy-flow-panel__title">
+                      <Sparkles size={14} aria-hidden="true" /> Expertos cercanos compatibles con {trade ? `${TRADE_LABELS[trade]} en ` : ''}{selectedZone}:
+                    </p>
+                    <div className="oy-flow-choices">
                       {compatibleWorkers.slice(0, 4).map(w => {
                         const isAdded = selectedWorkers.some(sw => sw.id === w.id);
                         return (
                           <button
                             key={w.id}
                             type="button"
+                            className="oy-chip oy-flow-chip--sm"
                             onClick={() => addWorker(w)}
                             disabled={isAdded}
-                            style={{
-                              padding: '3px 8px',
-                              borderRadius: '6px',
-                              fontSize: '11px',
-                              background: isAdded ? 'var(--color-border)' : 'var(--color-surface)',
-                              border: '1px solid var(--color-border)',
-                              cursor: isAdded ? 'default' : 'pointer'
-                            }}
+                            aria-pressed={isAdded}
                           >
-                            {isAdded ? '✓' : '+'} {w.name} (${w.hourlyRate.toLocaleString()}/h)
+                            {isAdded ? '✓' : '+'} {w.name} (${w.hourlyRate.toLocaleString()}/{rateUnitShort(w.rateUnit)})
                           </button>
                         );
                       })}
                     </div>
                   </div>
                 )}
-              </div>
+                {compatibleWorkers.length === 0 && (
+                  <div className="oy-flow-empty-line" role="status">
+                    Ningún profesional disponible coincide con {trade ? TRADE_LABELS[trade] : 'ese oficio'} en {selectedZone}. Prueba otra zona u oficio.
+                  </div>
+                )}
+              </section>
 
-              {/* Aviso de expiración a los 30 min (RF-28) */}
-              <div style={{ background: '#FEF3C7', padding: '8px 12px', borderRadius: '8px', fontSize: '11px', color: '#92400E', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Clock size={14} />
+              {/* Aviso de expiración a los 30 min (OFY-28) */}
+              <div className="oy-flow-note">
+                <Clock size={16} aria-hidden="true" />
                 <span>
-                  <strong>Plazo de respuesta (RF-28):</strong> Los trabajadores recibirán una alerta push con un plazo de 30 minutos para responder antes de que la invitación expire.
+                  <strong>Plazo de respuesta:</strong> Los trabajadores recibirán una alerta push con un plazo de 30 minutos para responder antes de que la invitación expire.
                 </span>
               </div>
 
-              <button
-                type="submit"
-                disabled={selectedWorkers.length === 0}
-                className="btn btn-primary"
-                style={{ padding: '12px', fontSize: '14px', fontWeight: 800, marginTop: '6px' }}
-              >
-                Enviar Solicitud a {selectedWorkers.length} Profesional{selectedWorkers.length === 1 ? '' : 'es'} (RF-24)
-              </button>
+              <div className="oy-flow-confirm-wrap" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginTop: '1.25rem', width: '100%' }}>
+                <SlideConfirm
+                  width={380}
+                  label={recipients === 0 ? "Selecciona un destinatario" : `Desliza para enviar a ${recipients} experto${recipients === 1 ? '' : 's'}`}
+                  confirmedLabel="¡Solicitud Confirmada!"
+                  disabled={recipients === 0}
+                  autoReset={false}
+                  onConfirm={() => handleSubmit()}
+                />
+                <button
+                  type="submit"
+                  disabled={recipients === 0}
+                  style={{ display: 'none' }}
+                  aria-hidden="true"
+                >
+                  Confirmar
+                </button>
+              </div>
             </form>
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '24px 8px' }}>
-            <MascotAvatar trade="plomeria" size="md" />
-            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#ECFDF5', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '14px auto 10px' }}>
-              <CheckCircle2 size={28} />
-            </div>
-            <h3 style={{ fontSize: '1.3rem', marginBottom: '6px' }}>¡Solicitud enviada con éxito!</h3>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', maxWidth: '420px', margin: '0 auto 16px' }}>
-              Despachamos la notificación a los <strong>{createdList.length}</strong> profesionales seleccionados en Bogotá.
-              Cuentan con 30 minutos para aceptar antes de expirar (RF-28).
-            </p>
+          ) : (
+            <div className="oy-flow-success" role="status">
+              <div className="oy-flow-success__mascot">
+                <MascotAvatar trade="plomeria" size="md" />
+                <span className="oy-flow-success__check" aria-hidden="true">
+                  <CheckCircle2 size={24} />
+                </span>
+              </div>
+              <h3 className="oy-flow-success__title oy-display">¡Solicitud enviada con éxito!</h3>
+              <p className="oy-flow-success__text">
+                Despachamos la notificación a los <strong>{createdList.length}</strong> profesionales seleccionados en Bogotá.
+                Cuentan con 30 minutos para aceptar antes de expirar. Cuando uno acepte, la solicitud se cierra para los demás.
+              </p>
 
-            <button
-              onClick={onClose}
-              className="btn btn-primary"
-              style={{ padding: '10px 24px', fontSize: '14px' }}
-            >
-              Entendido, ir a Mis Servicios
-            </button>
-          </div>
-        )}
+              <button type="button" onClick={onClose} className="btn btn-primary oy-flow-cta">
+                Entendido, ir a Mis Servicios
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,295 @@
+/* PaperBroadsheet inspirado en el diseño de periódico "Paper Portfolio" de niccolomiranda.com */
+.niccolo-paper-section {
+  position: relative;
+  padding: clamp(4.5rem, 9vw, 8rem) 1.5rem;
+  background: #CDC6BE; /* Color papel prensa característico de Niccolò Miranda */
+  color: #1D1D1B;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow: hidden;
+  border-top: 2px solid #1D1D1B;
+  border-bottom: 2px solid #1D1D1B;
+}
+
+html.theme-dark .niccolo-paper-section,
+[data-theme="dark"] .niccolo-paper-section {
+  background: #1D1D1B;
+  color: #CDC6BE;
+  border-color: rgba(205, 198, 190, 0.3);
+}
+
+.niccolo-paper-wrap {
+  max-width: 1540px;
+  margin: 0 auto;
+}
+
+/* Doble filete de periódico clásico */
+.niccolo-masthead-rule {
+  height: 4px;
+  border-top: 1px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  margin-bottom: 1rem;
+  opacity: 0.85;
+}
+
+.niccolo-masthead-rule--bottom {
+  margin-top: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+/* Barra de metadatos de edición periodística */
+.niccolo-dateline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-family: var(--font-text, 'Inter', sans-serif);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.35rem 0;
+}
+
+/* Gran titular periodístico */
+.niccolo-paper-title {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: clamp(2.4rem, 6.5vw, 5.5rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  text-align: center;
+  margin: 0.75rem 0 1.25rem;
+  text-transform: uppercase;
+}
+
+/* Disposición editorial en 3 columnas estilo periódico impreso */
+.niccolo-broadsheet-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 1fr;
+  gap: clamp(1.5rem, 3vw, 2.75rem);
+  margin-bottom: 3.5rem;
+}
+
+@media (max-width: 1024px) {
+  .niccolo-broadsheet-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Columna editorial principal con letra capitular (Drop Cap) */
+.niccolo-lead-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 1.5px solid rgba(29, 29, 27, 0.2);
+  padding-right: clamp(1rem, 2vw, 2rem);
+}
+
+html.theme-dark .niccolo-lead-col,
+[data-theme="dark"] .niccolo-lead-col {
+  border-color: rgba(205, 198, 190, 0.2);
+}
+
+@media (max-width: 1024px) {
+  .niccolo-lead-col {
+    border-right: none;
+    border-bottom: 1.5px solid rgba(29, 29, 27, 0.2);
+    padding-right: 0;
+    padding-bottom: 2rem;
+  }
+}
+
+.niccolo-lead-kicker {
+  font-family: var(--font-text, 'Inter', sans-serif);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-brand-primary, #E65100);
+  margin-bottom: 0.75rem;
+}
+
+/* Letra Capitular (Drop Cap) idéntica a has-dropcap de Miranda */
+.niccolo-dropcap-p {
+  font-family: var(--font-text, 'Inter', serif);
+  font-size: clamp(1rem, 1.25vw, 1.15rem);
+  line-height: 1.7;
+  margin: 0 0 1.5rem;
+  text-align: justify;
+}
+
+.niccolo-dropcap-p::first-letter {
+  float: left;
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: clamp(3.5rem, 6vw, 4.8rem);
+  line-height: 0.85;
+  padding: 0.5rem 0.65rem 0.3rem 0.5rem;
+  margin: 0.2rem 0.75rem 0.25rem 0;
+  background-color: #1D1D1B;
+  color: #CDC6BE;
+  font-weight: 900;
+  border-radius: 4px;
+}
+
+html.theme-dark .niccolo-dropcap-p::first-letter,
+[data-theme="dark"] .niccolo-dropcap-p::first-letter {
+  background-color: #CDC6BE;
+  color: #1D1D1B;
+}
+
+/* Sello Postal Dentado Giratorio (Postage Stamp) */
+.niccolo-stamp-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  border-radius: 12px;
+  background: rgba(29, 29, 27, 0.05);
+  border: 1px dashed rgba(29, 29, 27, 0.3);
+  margin-top: 1.5rem;
+}
+
+html.theme-dark .niccolo-stamp-wrap,
+[data-theme="dark"] .niccolo-stamp-wrap {
+  background: rgba(205, 198, 190, 0.05);
+  border-color: rgba(205, 198, 190, 0.3);
+}
+
+.niccolo-postage-stamp {
+  position: relative;
+  width: 72px;
+  height: 84px;
+  background: #FFF;
+  border: 2px dashed #1D1D1B;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.niccolo-postage-stamp:hover {
+  transform: rotate(6deg) scale(1.08);
+}
+
+.niccolo-postage-stamp__img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.niccolo-postage-stamp__value {
+  font-family: monospace;
+  font-size: 9px;
+  font-weight: 900;
+  color: #1D1D1B;
+  margin-top: 2px;
+}
+
+/* Columna de Avisos Clasificados (Classifieds) */
+.niccolo-classifieds-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.niccolo-classified-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  padding: 1.25rem;
+  border: 1.5px dashed rgba(29, 29, 27, 0.35);
+  transition: transform 0.25s ease, background-color 0.25s ease;
+}
+
+html.theme-dark .niccolo-classified-card,
+[data-theme="dark"] .niccolo-classified-card {
+  background: rgba(20, 34, 71, 0.6);
+  border-color: rgba(205, 198, 190, 0.3);
+}
+
+.niccolo-classified-card:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+html.theme-dark .niccolo-classified-card:hover,
+[data-theme="dark"] .niccolo-classified-card:hover {
+  background: rgba(20, 34, 71, 0.9);
+}
+
+.niccolo-classified-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.niccolo-classified-num {
+  font-family: monospace;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  opacity: 0.6;
+}
+
+.niccolo-classified-trade {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin: 0;
+  color: inherit;
+}
+
+.niccolo-classified-quote {
+  font-family: var(--font-text, 'Inter', serif);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  font-style: italic;
+  margin: 0 0 0.75rem;
+  opacity: 0.85;
+}
+
+.niccolo-classified-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-text, 'Inter', sans-serif);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.75;
+}
+
+/* Pie de periódico con Doodle de llamada a la acción */
+.niccolo-paper-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(29, 29, 27, 0.2);
+}
+
+html.theme-dark .niccolo-paper-footer,
+[data-theme="dark"] .niccolo-paper-footer {
+  border-color: rgba(205, 198, 190, 0.2);
+}
+
+.niccolo-doodle-cta {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: clamp(1.25rem, 2.5vw, 1.85rem);
+  font-weight: 800;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}

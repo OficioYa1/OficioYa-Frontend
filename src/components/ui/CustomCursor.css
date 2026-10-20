@@ -1,0 +1,102 @@
+/* Custom Cursor inspirado en danilodemarco.com */
+.danilo-cursor-container {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  overflow: hidden;
+}
+
+.danilo-cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background-color: var(--color-brand-primary, #E65100);
+  pointer-events: none;
+  z-index: 100000;
+  transition: opacity 0.25s ease, transform 0.15s ease;
+  box-shadow: 0 0 10px rgba(230, 81, 0, 0.4);
+}
+
+.danilo-cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 38px;
+  height: 38px;
+  margin: -19px 0 0 -19px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(62, 31, 20, 0.4);
+  background: rgba(251, 244, 234, 0.15);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  pointer-events: none;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center center;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              margin 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease,
+              background-color 0.25s ease,
+              opacity 0.25s ease;
+}
+
+[data-theme="dark"] .danilo-cursor-ring {
+  border-color: rgba(255, 138, 80, 0.45);
+  background: rgba(255, 138, 80, 0.08);
+}
+
+/* Hover over interactive element */
+.danilo-cursor-ring.is-hovering {
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  border-color: var(--color-brand-primary, #E65100);
+  background: rgba(230, 81, 0, 0.12);
+  box-shadow: 0 0 20px rgba(230, 81, 0, 0.25);
+}
+
+.danilo-cursor-dot.is-hovering {
+  opacity: 0.3;
+  transform: scale(0.6);
+}
+
+/* Mouse down / Click state */
+.danilo-cursor-ring.is-pressed {
+  transform: scale(0.85);
+  border-color: var(--color-brand-primary, #E65100);
+  background: rgba(230, 81, 0, 0.25);
+}
+
+/* Text label inside cursor ring */
+.danilo-cursor-text {
+  font-family: var(--font-text, 'Inter', sans-serif);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-brand-primary, #E65100);
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  white-space: nowrap;
+}
+
+.danilo-cursor-ring.has-text .danilo-cursor-text {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Ocultar en dispositivos táctiles o accesibilidad reducida */
+@media (hover: none) or (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .danilo-cursor-container {
+    display: none !important;
+  }
+}

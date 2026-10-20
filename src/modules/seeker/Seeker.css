@@ -1,0 +1,812 @@
+/* ============================================================
+   Vistas del contratante (inicio + directorio)
+   Lenguaje sticker de DESIGN.md con la paleta del manual.
+   ============================================================ */
+
+.seeker-home {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: var(--space-12);
+}
+
+.seeker-home__head { margin-top: var(--space-2); }
+
+.seeker-home__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.seeker-live-dot {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: 50%;
+  background: var(--oy-verde-esmeralda);
+}
+
+/* ── Buscador grande del hero ── */
+.seeker-hero-search-wrap {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: var(--space-6);
+  min-height: 90px;
+  width: 100%;
+}
+
+.seeker-hero-search {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: min(100%, 1000px);
+  width: 100%;
+  margin-top: var(--space-8);
+  padding: 8px 8px 8px 20px;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  transition: box-shadow 160ms ease;
+}
+
+.seeker-hero-search:focus-within { box-shadow: 0 0 0 4px var(--color-focus-ring); }
+
+.seeker-hero-search__icon { flex: none; color: var(--color-text-muted); }
+
+.seeker-hero-search__input {
+  flex: 1;
+  min-width: 0;
+  height: 56px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-main);
+  font-size: clamp(1.05rem, 0.9rem + 0.8vw, 1.45rem);
+  font-weight: 600;
+  outline: none;
+}
+
+.seeker-hero-search__input::placeholder { color: var(--color-text-muted); }
+
+.seeker-hero-search__submit {
+  flex: none;
+  height: 52px;
+  padding: 0 22px;
+  gap: 8px;
+}
+
+.seeker-hero-search__submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+@media (max-width: 520px) {
+  .seeker-hero-search { padding-left: 14px; }
+  .seeker-hero-search__input { height: 48px; }
+  .seeker-hero-search__submit { width: 48px; height: 48px; padding: 0; }
+  .seeker-hero-search__submit-text { display: none; }
+}
+
+/* ── Directorio ── */
+.seeker-directory {
+  padding: var(--space-2) 0 var(--space-16);
+  min-width: 0;
+}
+
+.seeker-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.seeker-search {
+  position: relative;
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.seeker-search__icon {
+  position: absolute;
+  top: 50%;
+  left: 20px;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.seeker-search:focus-within .seeker-search__icon {
+  color: var(--brand-amber, #E58F49);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.seeker-search__input {
+  width: 100%;
+  height: 56px;
+  padding: 0 56px 0 52px;
+  border: 1.5px solid var(--color-border, rgba(15, 23, 42, 0.12));
+  border-radius: var(--radius-pill);
+  background: var(--color-surface, #ffffff);
+  color: var(--color-text-main);
+  font-size: 15px;
+  font-weight: 600;
+  outline: none;
+  box-shadow:
+    0 4px 20px -2px rgba(15, 23, 42, 0.08),
+    0 2px 6px -1px rgba(15, 23, 42, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition:
+    border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.22s ease;
+}
+
+html.theme-dark .seeker-search__input,
+[data-theme="dark"] .seeker-search__input {
+  background: var(--color-surface-elevated, #141c2c);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+  box-shadow:
+    0 8px 28px -4px rgba(0, 0, 0, 0.55),
+    0 2px 8px -2px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.seeker-search__input::placeholder { color: var(--color-text-muted); }
+
+.seeker-search__input:focus {
+  border-color: var(--brand-amber, #E58F49);
+  box-shadow:
+    0 10px 32px -4px rgba(229, 143, 73, 0.22),
+    0 0 0 3px rgba(229, 143, 73, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+html.theme-dark .seeker-search__input:focus,
+[data-theme="dark"] .seeker-search__input:focus {
+  border-color: var(--brand-amber, #E58F49);
+  box-shadow:
+    0 12px 36px -4px rgba(0, 0, 0, 0.6),
+    0 0 0 3px rgba(229, 143, 73, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.seeker-search__clear {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.seeker-search__clear:hover {
+  background: rgba(229, 143, 73, 0.15);
+  color: var(--brand-amber, #E58F49);
+}
+
+.seeker-search__clear:active { transform: translateY(-50%) scale(0.92); }
+
+.seeker-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ── Botones con el estilo y animación física de Seek ── */
+.seeker-toolbar__btn {
+  height: 56px;
+  padding: 0 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body, 'DM Sans', -apple-system, sans-serif);
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  box-sizing: border-box;
+  will-change: transform, box-shadow, border-color;
+  transition:
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.22s ease,
+    color 0.22s ease;
+}
+
+/* Botones secundarios (Oficios, Filtros): superficie elevada Seek */
+.seeker-toolbar__btn.btn-secondary {
+  background: var(--color-surface, #ffffff);
+  border: 1.5px solid var(--color-border, rgba(15, 23, 42, 0.12));
+  color: var(--color-text-main, #0f172a);
+  box-shadow:
+    0 4px 20px -2px rgba(15, 23, 42, 0.08),
+    0 2px 6px -1px rgba(15, 23, 42, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+html.theme-dark .seeker-toolbar__btn.btn-secondary,
+[data-theme="dark"] .seeker-toolbar__btn.btn-secondary {
+  background: var(--color-surface-elevated, #141c2c);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--color-text-main, #f8fafc);
+  box-shadow:
+    0 8px 28px -4px rgba(0, 0, 0, 0.55),
+    0 2px 8px -2px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Hover con glow ámbar de Seek */
+.seeker-toolbar__btn.btn-secondary:hover {
+  transform: translateY(-2px);
+  border-color: var(--brand-amber, #E58F49);
+  color: var(--brand-amber, #E58F49);
+  box-shadow:
+    0 8px 26px -2px rgba(229, 143, 73, 0.32),
+    0 2px 8px -1px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html.theme-dark .seeker-toolbar__btn.btn-secondary:hover,
+[data-theme="dark"] .seeker-toolbar__btn.btn-secondary:hover {
+  border-color: var(--brand-amber, #E58F49);
+  color: #FFFFFF;
+  box-shadow:
+    0 10px 30px -3px rgba(229, 143, 73, 0.35),
+    0 3px 10px -2px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Botón primario (Solicitar): gradiente azul vibrante con resplandor */
+.seeker-toolbar__btn.btn-primary {
+  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+  box-shadow:
+    0 6px 22px -2px rgba(37, 99, 235, 0.42),
+    0 2px 8px -1px rgba(29, 78, 216, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.seeker-toolbar__btn.btn-primary:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 10px 30px -2px rgba(37, 99, 235, 0.6),
+    0 0 0 3px rgba(59, 130, 246, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* ── Compresión física de 90ms al hacer clic (firma del botón Seek) ── */
+.seeker-toolbar__btn:active {
+  transform: scale(0.92) !important;
+  transition: transform 0.09s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+/* Micro-animación de iconos al pasar el cursor */
+.seeker-toolbar__btn svg {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.2s ease;
+}
+
+.seeker-toolbar__btn:hover svg {
+  transform: scale(1.14);
+}
+
+.seeker-toolbar__btn.btn-secondary:hover svg {
+  stroke: var(--brand-amber, #E58F49);
+}
+
+.seeker-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand-amber, #E58F49);
+  box-shadow: 0 0 8px rgba(229, 143, 73, 0.85);
+  animation: filterDotPulse 2s infinite ease-in-out;
+}
+
+@keyframes filterDotPulse {
+  0%, 100% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; }
+}
+
+@media (max-width: 520px) {
+  .seeker-toolbar__actions { width: 100%; }
+  .seeker-toolbar__btn { flex: 1; height: 50px; padding: 0 14px; font-size: 13.5px; }
+}
+
+.seeker-btn-sm { min-height: 36px; padding: 6px 14px; font-size: 13px; }
+
+/* ── Sugerencia de Many (búsqueda libre) ── */
+.seeker-nlp {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card);
+  background: var(--wash-amarillo);
+}
+
+.seeker-nlp__text {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.seeker-nlp__title {
+  display: block;
+  color: var(--color-text-main);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.seeker-nlp__sub {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.seeker-nlp__actions { display: flex; align-items: center; gap: var(--space-2); }
+
+/* ── Fila de chips de oficios con JellyRadio (desliza fluido, sin barras feas) ── */
+.seeker-chip-row,
+.seeker-jelly-scroll {
+  display: flex;
+  margin: 0 0 var(--space-4);
+  padding: 4px 0 var(--space-2);
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  overscroll-behavior-x: contain;
+  width: 100%;
+}
+
+.seeker-chip-row::-webkit-scrollbar,
+.seeker-jelly-scroll::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+@media (min-width: 1300px) {
+  .seeker-chip-row,
+  .seeker-jelly-scroll {
+    overflow-x: visible;
+  }
+}
+
+.seeker-chip-row .oy-chip { flex: none; white-space: nowrap; }
+
+/* ── Orden + disponibilidad ── */
+.seeker-sortbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.seeker-sortbar__group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  overflow-x: auto;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.seeker-sortbar__group::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.seeker-sortbar__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 2px;
+  color: var(--color-text-muted);
+}
+
+.seeker-available-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 6px 8px 6px 16px;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--wash-esmeralda);
+  color: var(--color-text-main);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ── Filtros activos como etiquetas sticker ── */
+.seeker-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.seeker-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  max-width: 100%;
+  padding: 3px 12px;
+  border: 1px solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--wash-gris);
+  color: var(--color-text-main);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms var(--ease-out);
+}
+
+.seeker-tag:active { transform: scale(0.97); }
+.seeker-tag--marino { background: var(--wash-marino); }
+.seeker-tag--amarillo { background: var(--wash-amarillo); }
+.seeker-tag--esmeralda { background: var(--wash-esmeralda); color: var(--color-status-text); }
+
+@media (hover: hover) and (pointer: fine) {
+  .seeker-tag:hover { background: var(--color-surface-hover); }
+}
+
+/* ── Aviso de zona ampliada ── */
+.seeker-expanded {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card);
+  background: var(--wash-marino);
+  color: var(--color-text-main);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.seeker-expanded p { margin: 0; }
+
+.seeker-expanded__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: 12px;
+  background: var(--oy-azul-marino);
+  color: #FFFFFF;
+}
+
+.seeker-results-head { margin-top: var(--space-6); }
+
+/* ── Oficios más buscados (GlassIcons) ── */
+.seeker-featured {
+  margin: var(--space-6) 0 var(--space-4);
+  padding: var(--space-5) var(--space-4);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card-lg);
+  background: var(--wash-almendra);
+}
+
+.seeker-featured__title {
+  margin: 0 0 var(--space-4);
+  font-size: clamp(1.4rem, 1.2rem + 1vw, 1.9rem);
+  text-align: center;
+  color: var(--color-text-main);
+}
+
+.seeker-featured .oy-glass-icons { margin-inline: auto; }
+
+@media (max-width: 520px) {
+  .seeker-featured { padding-inline: var(--space-1); }
+}
+
+/* ── Tarjetas de trabajador (ProfileCard) ── */
+.seeker-directory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+}
+
+.seeker-directory-grid > li {
+  width: 100%;
+  max-width: 100%;
+}
+
+.seeker-profile-card { width: 100%; }
+
+@media (max-width: 520px) {
+  .seeker-profile-card .oy-pcard__tile { aspect-ratio: 4 / 3; }
+}
+
+.seeker-card-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: rgba(62, 31, 20, 0.82);
+  font-size: 13px;
+}
+
+.seeker-card-meta strong {
+  color: var(--oy-cacao-profundo, #3E1F14);
+  font-weight: 700;
+}
+
+.seeker-profile-card .seeker-card-meta,
+.oy-pcard--almendra .seeker-card-meta {
+  color: rgba(62, 31, 20, 0.85);
+}
+
+.seeker-profile-card .seeker-card-meta strong,
+.oy-pcard--almendra .seeker-card-meta strong {
+  color: var(--oy-cacao-profundo, #3E1F14);
+}
+
+/* ── Modales ── */
+.seeker-modal--filters { --oy-modal-w: 540px; }
+.seeker-modal--catalog { --oy-modal-w: 760px; }
+
+.seeker-modal__title { margin-top: var(--space-3); }
+
+.seeker-modal__sub {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.seeker-filter-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.seeker-field { display: flex; flex-direction: column; gap: 8px; }
+
+.seeker-field__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.seeker-field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-main);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.seeker-field__value {
+  padding: 2px 10px;
+  border: 1px solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--wash-marino);
+  color: var(--color-text-main);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.seeker-field__scale {
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.seeker-select { border-radius: var(--radius-pill); }
+
+.seeker-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.seeker-chip-grid .oy-chip { justify-content: center; }
+
+@media (min-width: 480px) {
+  .seeker-chip-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.seeker-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card);
+  background: var(--wash-esmeralda);
+}
+
+.seeker-switch-row__title { display: block; font-size: 14px; font-weight: 800; }
+.seeker-switch-row__sub { display: block; color: var(--color-text-muted); font-size: 12px; }
+
+.seeker-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+/* ── Catálogo de oficios ── */
+.seeker-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seeker-catalog-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: var(--space-4);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms var(--ease-out);
+}
+
+.seeker-catalog-card:active { transform: scale(0.98); }
+
+@media (hover: hover) and (pointer: fine) {
+  .seeker-catalog-card:hover { background: var(--wash-marino); }
+}
+
+.seeker-catalog-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.seeker-catalog-card__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.seeker-catalog-card__icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: 10px;
+  background: var(--oy-amarillo-canario);
+  color: var(--oy-cacao-profundo);
+}
+
+.seeker-catalog-card__count { flex: none; font-size: 11px; }
+
+.seeker-catalog-card__desc,
+.seeker-catalog-card__tasks {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.seeker-catalog-card__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px dashed var(--stroke-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.seeker-catalog-card__cta { color: var(--color-trust); }
+
+@media (prefers-reduced-motion: reduce) {
+  .seeker-catalog-card,
+  .seeker-tag { transition: none; }
+}
+
+/* ── Ubicación fuera de Bogotá ── */
+.seeker-geo-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--wash-almendra);
+  color: var(--color-text-main);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.seeker-geo-note svg { flex: none; margin-top: 2px; }
+
+/* ── Disponibilidad por fecha y franja (RF-15) ── */
+.seeker-field__label--sub {
+  margin-top: var(--space-2);
+  font-weight: 600;
+}
+
+.seeker-date-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.seeker-date {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.seeker-chip-grid--slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.seeker-slot-chip {
+  flex-direction: column;
+  gap: 0;
+  padding-inline: 8px;
+  line-height: 1.2;
+}
+
+.seeker-slot-chip__hint {
+  color: inherit;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.seeker-field__hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-caption);
+}

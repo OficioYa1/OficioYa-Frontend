@@ -9,15 +9,16 @@
 /* ── BASE ── */
 .lp-root {
   min-height: 100vh;
-  background: var(--color-bg);
+  background: transparent;
   overflow-x: hidden;
 }
 
 .lp-wrap {
   width: 100%;
-  max-width: 1180px;
+  max-width: 1540px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 clamp(1.5rem, 3vw, 3rem);
+  box-sizing: border-box;
 }
 
 /* ── NAV ── */
@@ -54,7 +55,7 @@
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .lp-brand-logo:hover {
-  transform: scale(1.08) rotate(3deg);
+  transform: scale(1.04); /* el manual prohíbe rotar el logo */
 }
 
 .lp-brand-name {
@@ -68,7 +69,7 @@
 }
 
 .lp-brand-ya {
-  color: var(--brand-amber);
+  color: var(--oy-amarillo-canario);
 }
 
 .lp-brand-tagline {
@@ -318,12 +319,12 @@
 }
 
 .lp-cta-amber {
-  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  background: linear-gradient(135deg, #F59E0B 0%, var(--color-accent-text) 100%);
   color: #fff;
   box-shadow: 0 6px 20px rgba(245,158,11,0.4);
 }
 .lp-cta-amber:hover {
-  background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+  background: linear-gradient(135deg, var(--color-accent-text) 0%, var(--color-accent-text) 100%);
 }
 
 .lp-cta-secondary {
@@ -653,16 +654,16 @@
   margin-bottom: 20px;
 }
 
-.lp-step--blue  { border-top: 3px solid #3B82F6; }
+.lp-step--blue  { border-top: 3px solid var(--color-trust); }
 .lp-step--amber { border-top: 3px solid #F59E0B; }
 .lp-step--green { border-top: 3px solid #10B981; }
 
-.lp-step--blue  .lp-step-icon { background: #EFF6FF; color: #1D4ED8; }
-.lp-step--amber .lp-step-icon { background: #FFFBEB; color: #D97706; }
-.lp-step--green .lp-step-icon { background: #ECFDF5; color: #059669; }
+.lp-step--blue  .lp-step-icon { background: var(--color-trust-soft); color: var(--color-trust); }
+.lp-step--amber .lp-step-icon { background: var(--color-warm-soft); color: var(--color-accent-text); }
+.lp-step--green .lp-step-icon { background: var(--color-status-soft); color: var(--color-status-text); }
 
-html.theme-dark .lp-step--blue  .lp-step-icon { background: rgba(29,78,216,0.15); color: #60A5FA; }
-html.theme-dark .lp-step--amber .lp-step-icon { background: rgba(217,119,6,0.15);  color: #FBBF24; }
+html.theme-dark .lp-step--blue  .lp-step-icon { background: rgba(29,78,216,0.15); color: var(--color-trust); }
+html.theme-dark .lp-step--amber .lp-step-icon { background: rgba(217,119,6,0.15);  color: var(--color-star); }
 html.theme-dark .lp-step--green .lp-step-icon { background: rgba(5,150,105,0.15);  color: #34D399; }
 
 .lp-step-card h3 {
@@ -682,7 +683,7 @@ html.theme-dark .lp-step--green .lp-step-icon { background: rgba(5,150,105,0.15)
 
 /* ── TESTIMONIALS ── */
 .lp-testimon-section {
-  background: var(--color-bg);
+  background: transparent;
   border-top: 1px solid var(--color-border);
 }
 
@@ -756,7 +757,7 @@ html.theme-dark .lp-step--green .lp-step-icon { background: rgba(5,150,105,0.15)
 /* ── CTA WORKER (REDESIGNED) ── */
 .lp-cta-dark {
   padding: 80px 0;
-  background: var(--color-bg);
+  background: transparent;
 }
 
 .lp-cta-card {
@@ -896,11 +897,153 @@ html.theme-dark .lp-cta-card {
   font-weight: 500;
 }
 
+/* ── TESTIMONIOS (Item 18) ── */
+.lp-testimonials {
+  padding: 80px 0;
+  position: relative;
+}
+
+.lp-testimonials-head {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lp-testimonials .lp-sticker {
+  position: static !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.lp-testimonials-title {
+  font-size: clamp(2rem, 1.6rem + 1.8vw, 3rem);
+  font-weight: 800;
+  margin: 8px 0 12px;
+  color: var(--color-text-main);
+  line-height: 1.15;
+}
+
+.lp-testimonials-sub {
+  font-size: 16px;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.lp-testimon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 28px;
+}
+
+.lp-testi-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 32px 28px;
+  background: var(--color-surface);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card);
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.06);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .lp-testi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.12);
+  }
+}
+
+html.theme-dark .lp-testi-card {
+  background: var(--color-surface-elevated);
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.35);
+}
+
+.lp-testi-card__stars {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.lp-testi-card__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  background: var(--color-status-soft);
+  color: var(--color-status-text);
+  border: 1px solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.lp-testi-card__comment {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--color-text-main);
+  margin: 0 0 24px;
+  position: relative;
+  font-style: italic;
+}
+
+.lp-testi-card__quote-icon {
+  display: inline-block;
+  color: var(--color-accent);
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.lp-testi-card__author {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.lp-testi-card__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: var(--stroke-w) solid var(--stroke-ink);
+}
+
+.lp-testi-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lp-testi-card__name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-text-main);
+}
+
+.lp-testi-card__trade {
+  font-size: 12px;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.lp-testi-card__zone {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
 /* ── FOOTER ── */
 .lp-footer {
   border-top: 1px solid var(--color-border);
   padding: 32px 0;
-  background: var(--color-bg);
+  background: transparent;
 }
 
 .lp-footer-inner {

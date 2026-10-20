@@ -1,0 +1,215 @@
+/* ══ Seek.css ══════════════════════════════════════════════════════════════════
+   A search icon that becomes a search field — one single object, not two.
+   Geometry rather than choreography.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sek {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: var(--w, 80px);
+  max-width: 100%;
+  height: var(--shut, 80px);
+  user-select: none;
+  font-family: var(--font-body, 'DM Sans', -apple-system, sans-serif);
+  touch-action: pan-y;
+  box-sizing: border-box;
+}
+
+/* ── The physical skin: circle when shut (80px), pill when open ── */
+.sek-skin {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: var(--w, 80px);
+  height: var(--shut, 80px);
+  border-radius: var(--sek-r, 40px);
+  background: var(--color-surface, #ffffff);
+  border: 2px solid var(--color-border, rgba(15, 23, 42, 0.12));
+  box-shadow:
+    0 8px 28px -2px rgba(15, 23, 42, 0.14),
+    0 2px 8px -1px rgba(15, 23, 42, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transform: translate3d(var(--lx, 0px), var(--ly, 0px), 0);
+  transform-origin: left center;
+  overflow: hidden;
+  box-sizing: border-box;
+  will-change: width, transform;
+  transition:
+    border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.22s ease;
+}
+
+/* Dark theme surfaces */
+html.theme-dark .sek-skin {
+  background: var(--color-surface-elevated, #141c2c);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 8px 28px -4px rgba(0, 0, 0, 0.55),
+    0 2px 8px -2px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Hover state before opening */
+.sek[data-open="false"]:hover .sek-skin {
+  border-color: var(--brand-amber, #E58F49);
+  box-shadow:
+    0 6px 24px -2px rgba(229, 143, 73, 0.28),
+    0 2px 8px -1px rgba(15, 23, 42, 0.06);
+}
+
+/* ── 90ms compression on press: yields before expanding ── */
+.sek[data-press="true"] .sek-skin {
+  transform: translate3d(var(--lx, 0px), var(--ly, 0px), 0) scale(0.92);
+  transition: transform 0.09s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ── Open state: active focus ring ── */
+.sek[data-open="true"] .sek-skin {
+  border-color: var(--brand-amber, #E58F49);
+  box-shadow:
+    0 10px 32px -4px rgba(229, 143, 73, 0.22),
+    0 0 0 3px rgba(229, 143, 73, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+html.theme-dark .sek[data-open="true"] .sek-skin {
+  box-shadow:
+    0 12px 36px -4px rgba(0, 0, 0, 0.6),
+    0 0 0 3px rgba(229, 143, 73, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* ── SVG lens: fixed at left inset, centred in circle and aligned in field ── */
+.sek-lens {
+  position: absolute;
+  left: var(--inset, 22px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--lens, 36px);
+  height: var(--lens, 36px);
+  fill: none;
+  stroke: var(--color-text-main, #0f172a);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+  z-index: 2;
+  transition:
+    stroke-width 0.16s ease,
+    stroke 0.2s ease,
+    transform 0.2s ease;
+}
+
+html.theme-dark .sek-lens {
+  stroke: var(--color-text-main, #f8fafc);
+}
+
+/* The lens thickens a hair while typing to acknowledge input */
+.sek[data-busy="true"] .sek-lens {
+  stroke-width: 2.8;
+  stroke: var(--brand-amber, #E58F49);
+}
+
+.sek[data-open="true"] .sek-lens {
+  stroke: var(--brand-amber, #E58F49);
+}
+
+/* ── The input field: placeholder and caret arrive in the last third ── */
+.sek-field {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding-left: calc(var(--inset, 22px) + var(--lens, 36px) + 16px);
+  padding-right: 68px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--color-text-main, #0f172a);
+  font-family: inherit;
+  font-size: 1.15rem;
+  font-weight: 500;
+  opacity: var(--say, 0);
+  pointer-events: none;
+  transition: opacity 0.12s linear;
+}
+
+html.theme-dark .sek-field {
+  color: var(--color-text-main, #f8fafc);
+}
+
+.sek[data-open="true"] .sek-field {
+  pointer-events: auto;
+}
+
+.sek-field::placeholder {
+  color: var(--color-text-muted, #94a3b8);
+  font-weight: 400;
+  transition: color 0.15s ease;
+}
+
+/* ── Full-surface hit button when shut ── */
+.sek-hit {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 3;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sek-hit:focus-visible {
+  outline: 2px solid var(--brand-amber, #E58F49);
+  outline-offset: 3px;
+}
+
+/* ── Action button when open and query exists ── */
+.sek-action {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brand-amber, #E58F49);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  z-index: 4;
+  padding: 0;
+  box-shadow: 0 4px 14px rgba(229, 143, 73, 0.4);
+  transition:
+    transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.16s ease,
+    opacity 0.15s ease;
+}
+
+.sek-action:hover {
+  background: #d97d36;
+  transform: translateY(-50%) scale(1.08);
+}
+
+.sek-action:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* Reduced motion preference */
+.sek[data-flat="true"] .sek-skin,
+.sek[data-flat="true"] .sek-lens,
+.sek[data-flat="true"] .sek-field {
+  transition: none !important;
+}

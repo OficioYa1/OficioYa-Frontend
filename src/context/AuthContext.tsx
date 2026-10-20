@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User, UserRole } from '../types';
 import { signJWT, verifyJWT } from '../utils/jwt';
 
@@ -7,12 +7,27 @@ interface AuthContextType {
   role: UserRole;
   token: string | null;
   isLoading: boolean;
+  /** OFY-50: valida correo + contraseña contra las cuentas registradas (`oy-users`). */
   login: (email: string, pass: string) => Promise<boolean>;
-  register: (name: string, email: string, pass: string, role?: UserRole) => Promise<boolean>;
+  /** Devuelve false si el correo ya tiene una cuenta activa. */
+  register: (name: string, email: string, pass: string, role?: UserRole, extra?: Partial<User>) => Promise<boolean>;
   logout: () => void;
   switchRole: (newRole: UserRole) => void;
   updateUserProfile: (updates: Partial<User>) => void;
+  /** Busca una cuenta activa por correo o celular (recuperación OFY-75). */
+  findAccount: (emailOrPhone: string) => User | null;
+  /** OFY-75: reemplaza la contraseña de la cuenta con ese correo. */
+  resetPassword: (email: string, newPass: string) => Promise<boolean>;
 }
+
+/** Registro persistido de cuentas (mock del backend). */
+interface StoredAccount {
+  user: User;
+  passwordHash: string;
+}
+
+const USERS_KEY = 'oy-users';
+const DEMO_PASSWORD = 'demo123';
 
 const DEFAULT_USER: User = {
   id: 'usr-default',
@@ -21,8 +36,65 @@ const DEFAULT_USER: User = {
   role: 'seeker',
   phone: '+57 300 123 4567',
   city: 'Bogotá',
-  avatarColor: '#2563EB'
+  avatarColor: 'var(--oy-azul-marino)'
 };
+
+const normalizeEmail = (email: string) => email.trim().toLowerCase();
+const normalizePhone = (phone: string) => phone.replace(/\D/g, '').replace(/^57(?=\d{10}$)/, '');
+
+/** Hash SHA-256 (Web Crypto) con sal por correo; respaldo simple si no hay contexto seguro. */
+async function hashPassword(email: string, pass: string): Promise<string> {
+  const input = `oficioya:${normalizeEmail(email)}:${pass}`;
+  if (globalThis.crypto?.subtle) {
+    const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+    return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
+  }
+  let h = 5381;
+  for (let i = 0; i < input.length; i++) h = ((h << 5) + h + input.charCodeAt(i)) | 0;
+  return `djb2-${(h >>> 0).toString(16)}`;
+}
+
+function readAccounts(): StoredAccount[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+    return Array.isArray(parsed) ? (parsed as StoredAccount[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAccounts(accounts: StoredAccount[]) {
+  try {
+    localStorage.setItem(USERS_KEY, JSON.stringify(accounts));
+  } catch {
+    /* almacenamiento lleno o bloqueado: la sesión sigue en memoria */
+  }
+}
+
+/** Garantiza que la cuenta demo exista (contraseña `demo123`). */
+async function ensureDemoAccount(): Promise<StoredAccount[]> {
+  const accounts = readAccounts();
+  if (accounts.some(a => normalizeEmail(a.user.email) === DEFAULT_USER.email)) return accounts;
+  let demoUser = DEFAULT_USER;
+  try {
+    const session: User | null = JSON.parse(localStorage.getItem('oy-user-data') || 'null');
+    if (session && normalizeEmail(session.email) === DEFAULT_USER.email) demoUser = session;
+  } catch {
+    /* sesión previa ilegible: se usa el perfil demo base */
+  }
+  const next = [...accounts, { user: demoUser, passwordHash: await hashPassword(DEFAULT_USER.email, DEMO_PASSWORD) }];
+  writeAccounts(next);
+  return next;
+}
+
+/** Copia los cambios del usuario en sesión a su registro en `oy-users`. */
+function syncAccount(updated: User) {
+  const accounts = readAccounts();
+  const idx = accounts.findIndex(a => a.user.id === updated.id);
+  if (idx === -1) return;
+  accounts[idx] = { ...accounts[idx], user: updated };
+  writeAccounts(accounts);
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -31,11 +103,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const logout = useCallback(() => {
+    localStorage.removeItem('oy-auth-token');
+    localStorage.removeItem('oy-user-data');
+    setUser(null);
+    setToken(null);
+  }, []);
+
   // Inicializar o verificar JWT desde localStorage
   useEffect(() => {
     async function initAuth() {
       setIsLoading(true);
       try {
+        await ensureDemoAccount();
         const storedToken = localStorage.getItem('oy-auth-token');
         const storedUser = localStorage.getItem('oy-user-data');
 
@@ -50,8 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           logout();
         }
-      } catch (err) {
-        console.error('Error verificando sesión JWT:', err);
+      } catch {
         logout();
       } finally {
         setTimeout(() => setIsLoading(false), 550);
@@ -59,79 +138,105 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     initAuth();
-  }, []);
+  }, [logout]);
 
-  const login = async (email: string, _pass: string): Promise<boolean> => {
-    setIsLoading(true);
-    const existing = user && user.email === email ? user : { ...DEFAULT_USER, email };
+  const startSession = async (sessionUser: User) => {
     const newToken = await signJWT({
-      id: existing.id,
-      email: existing.email,
-      role: existing.role,
-      name: existing.name
+      id: sessionUser.id,
+      email: sessionUser.email,
+      role: sessionUser.role,
+      name: sessionUser.name
     });
-    setUser(existing);
+    setUser(sessionUser);
     setToken(newToken);
     localStorage.setItem('oy-auth-token', newToken);
-    localStorage.setItem('oy-user-data', JSON.stringify(existing));
+    localStorage.setItem('oy-user-data', JSON.stringify(sessionUser));
+  };
+
+  const login = async (email: string, pass: string): Promise<boolean> => {
+    const accounts = await ensureDemoAccount();
+    const account = accounts.find(a => normalizeEmail(a.user.email) === normalizeEmail(email) && !a.user.isDeleted);
+    if (!account) return false;
+    if (account.passwordHash !== (await hashPassword(account.user.email, pass))) return false;
+
+    setIsLoading(true);
+    await startSession(account.user);
     setTimeout(() => setIsLoading(false), 400);
     return true;
   };
 
-  const register = async (name: string, email: string, _pass: string, initialRole: UserRole = 'seeker'): Promise<boolean> => {
+  const register = async (
+    name: string,
+    email: string,
+    pass: string,
+    initialRole: UserRole = 'seeker',
+    extra: Partial<User> = {}
+  ): Promise<boolean> => {
+    const accounts = await ensureDemoAccount();
+    if (accounts.some(a => normalizeEmail(a.user.email) === normalizeEmail(email) && !a.user.isDeleted)) {
+      return false;
+    }
+
     setIsLoading(true);
     const newUser: User = {
       id: `usr-${Date.now()}`,
       name,
-      email,
+      email: email.trim(),
       role: initialRole,
       phone: '+57 300 000 0000',
       city: 'Bogotá',
-      avatarColor: initialRole === 'seeker' ? '#2563EB' : '#EA580C'
+      avatarColor: initialRole === 'seeker' ? 'var(--oy-azul-marino)' : 'var(--oy-naranja-fuego-aa)',
+      ...extra
     };
 
-    const newToken = await signJWT({
-      id: newUser.id,
-      email: newUser.email,
-      role: newUser.role,
-      name: newUser.name
-    });
-
-    setUser(newUser);
-    setToken(newToken);
-    localStorage.setItem('oy-auth-token', newToken);
-    localStorage.setItem('oy-user-data', JSON.stringify(newUser));
+    writeAccounts([
+      ...accounts.filter(a => normalizeEmail(a.user.email) !== normalizeEmail(email)),
+      { user: newUser, passwordHash: await hashPassword(newUser.email, pass) }
+    ]);
+    await startSession(newUser);
     setTimeout(() => setIsLoading(false), 400);
     return true;
-  };
-
-  const logout = () => {
-    localStorage.removeItem('oy-auth-token');
-    localStorage.removeItem('oy-user-data');
-    setUser(null);
-    setToken(null);
   };
 
   const switchRole = async (newRole: UserRole) => {
     if (!user) return;
     const updated = { ...user, role: newRole };
-    setUser(updated);
-    const newToken = await signJWT({
-      id: updated.id,
-      email: updated.email,
-      role: updated.role,
-      name: updated.name
-    });
-    setToken(newToken);
-    localStorage.setItem('oy-auth-token', newToken);
-    localStorage.setItem('oy-user-data', JSON.stringify(updated));
+    syncAccount(updated);
+    await startSession(updated);
   };
 
   const updateUserProfile = (updates: Partial<User>) => {
     if (!user) return;
     const updated = { ...user, ...updates };
     setUser(updated);
-    localStorage.setItem('oy-user-data', JSON.stringify(updated));
+    syncAccount(updated);
+    try {
+      localStorage.setItem('oy-user-data', JSON.stringify(updated));
+    } catch {
+      /* p. ej. foto demasiado grande para el almacenamiento local */
+    }
+  };
+
+  const findAccount = (emailOrPhone: string): User | null => {
+    const target = emailOrPhone.trim();
+    if (!target) return null;
+    const byEmail = target.includes('@');
+    const phoneDigits = normalizePhone(target);
+    const found = readAccounts().find(a => {
+      if (a.user.isDeleted) return false;
+      if (byEmail) return normalizeEmail(a.user.email) === normalizeEmail(target);
+      return Boolean(a.user.phone) && phoneDigits.length >= 7 && normalizePhone(a.user.phone!) === phoneDigits;
+    });
+    return found ? found.user : null;
+  };
+
+  const resetPassword = async (email: string, newPass: string): Promise<boolean> => {
+    const accounts = await ensureDemoAccount();
+    const idx = accounts.findIndex(a => normalizeEmail(a.user.email) === normalizeEmail(email) && !a.user.isDeleted);
+    if (idx === -1) return false;
+    accounts[idx] = { ...accounts[idx], passwordHash: await hashPassword(accounts[idx].user.email, newPass) };
+    writeAccounts(accounts);
+    return true;
   };
 
   return (
@@ -145,7 +250,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         logout,
         switchRole,
-        updateUserProfile
+        updateUserProfile,
+        findAccount,
+        resetPassword
       }}
     >
       {children}

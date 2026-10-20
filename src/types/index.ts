@@ -44,11 +44,18 @@ export interface Review {
   targetRole?: 'worker' | 'client';
 }
 
+// OFY-05: Unidad de cobro de la tarifa
+export type RateUnit = 'hora' | 'visita' | 'm2' | 'servicio';
+
 export interface WorkerServiceProfile {
   id: string;
   trade: TradeCategory;
   tradeLabel: string;
+  /** Tarifa en COP por `rateUnit` (se conserva el nombre por compatibilidad con la API). */
   hourlyRate: number;
+  rateUnit?: RateUnit;
+  /** OFY-04: Distancia máxima que atiende desde su base (km). */
+  maxDistanceKm?: number;
   experienceYears: number;
   coverageZones: string[];
   bio: string;
@@ -70,6 +77,17 @@ export interface WorkerSchedule {
   day: string;
   slots: string[];
 }
+
+// OFY-06: Agenda semanal editable por el trabajador
+export type WeekDay = 'lun' | 'mar' | 'mie' | 'jue' | 'vie' | 'sab' | 'dom';
+
+export interface DaySchedule {
+  active: boolean;
+  from: string;
+  to: string;
+}
+
+export type WeeklyAvailability = Record<WeekDay, DaySchedule>;
 
 export interface TradeReputation {
   rating: number;
@@ -124,6 +142,17 @@ export interface Worker {
   bio: string;
   phone: string;
   services: WorkerServiceProfile[];
+
+  /** Cuenta (User.id) dueña de esta ficha profesional. */
+  ownerUserId?: string;
+  /** Foto de perfil de la ficha (OFY-59). */
+  photoUrl?: string;
+  /** OFY-05: Unidad de cobro del oficio principal. */
+  rateUnit?: RateUnit;
+  /** OFY-04: Distancia máxima de desplazamiento (km). */
+  maxDistanceKm?: number;
+  /** OFY-06: Agenda semanal estructurada; `schedule` es su versión legible. */
+  weeklyAvailability?: WeeklyAvailability;
   
   // RF-09, RF-66, RF-67: Detalles específicos por oficio
   equipment?: string[];
@@ -186,6 +215,14 @@ export interface ServiceRequest {
   
   // RF-24: Solicitud simultánea a varios trabajadores
   broadcastCandidates?: string[];
+  /** Agrupa las solicitudes de un mismo envío múltiple; al aceptar una se cancelan las demás. */
+  broadcastId?: string;
+  /** OFY-22: Oficio requerido por el cliente. */
+  tradeCategory?: TradeCategory;
+  /** Momento en que el trabajador aceptó. */
+  acceptedAt?: string;
+  /** Momento en que se finalizó (OFY-45: ingresos del mes). */
+  completedAt?: string;
   
   // RF-28: Expiración tras 30 minutos sin respuesta
   expiresAt?: string;

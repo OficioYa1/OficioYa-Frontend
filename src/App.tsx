@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
 import type {
   Worker,
   ServiceRequest,
@@ -9,8 +10,11 @@ import type {
   ComplaintTicket,
   TradeCategory,
   ServiceStatus,
-  PushNotification
+  PushNotification,
+  Review
 } from './types';
+import { applyCompletion, applyReview } from './utils/reputation';
+import { createWorkerForUser, findUnclaimedWorkerByName } from './utils/workerProfile';
 import type { Coordinates } from './utils/geo';
 import { FALLBACK_LOCATION_BOGOTA } from './utils/geo';
 import {
@@ -18,6 +22,7 @@ import {
   INITIAL_SERVICES,
   INITIAL_CONVERSATIONS,
   INITIAL_MESSAGES,
+  INITIAL_NOTIFICATIONS,
   getStoredData,
   setStoredData
 } from './services/mockData';
@@ -28,10 +33,11 @@ import { BottomNav } from './components/layout/BottomNav';
 import { MascotAssistant } from './components/mascot/MascotAssistant';
 import { MascotAvatar } from './components/mascot/MascotAvatar';
 import { PushNotificationToast } from './components/common/PushNotificationToast';
+import { NotificationInbox } from './components/common/NotificationInbox';
 
 import { LandingPage } from './modules/landing/LandingPage';
 import { SeekerDirectory } from './modules/seeker/SeekerDirectory';
-import { WorkerProfileModal } from './modules/worker/WorkerProfileModal';
+import { WorkerProfileView } from './modules/worker/WorkerProfileView';
 import { BookingModal } from './modules/booking/BookingModal';
 import { SendRequestModal } from './modules/requests/SendRequestModal';
 import { ChatView } from './modules/chat/ChatView';
@@ -46,7 +52,27 @@ import { AppFooter } from './components/layout/AppFooter';
 import { SeekerHomeView } from './modules/seeker/SeekerHomeView';
 import { ProviderHomeView } from './modules/provider/ProviderHomeView';
 
+import { Home } from 'lucide-react';
+import { LiquidBackground } from './components/background/LiquidBackground';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { StatusScreen } from './components/common/StatusScreen';
+import { ScrollToTop } from './components/common/ScrollToTop';
+import { ContactModal } from './components/common/ContactModal';
+
 import './App.css';
+
+
+const KNOWN_TABS = new Set([
+  'inicio_seeker', 'buscar', 'solicitudes', 'mensajes',
+  'inicio_pro', 'oportunidades', 'alertas', 'clientes', 'perfil',
+]);
+
+/** true si la URL no es la raíz de la app (p. ej. /oficioya-frontend/algo). */
+const isUnknownLocation = () => {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+  const path = window.location.pathname.replace(/\/$/, '');
+  return path !== base && path !== `${base}/index.html`;
+};
 
 /* ── CROSSFADE TRANSITION SYSTEM ── */
 type ViewMode = 'auth' | 'app' | 'landing';
@@ -75,12 +101,13 @@ const MainAppContent: React.FC = () => {
   const { view, visible, navigateTo } = useCrossfade('landing');
   const [pendingRole, setPendingRole] = useState<'seeker' | 'provider'>('seeker');
   const [currentTab, setCurrentTab] = useState<string>(role === 'seeker' ? 'inicio_seeker' : 'inicio_pro');
-  const [currentTradeCategory, setCurrentTradeCategory] = useState<TradeCategory | undefined>(undefined);
-
-  // Reaccionar a cambios de rol para reiniciar la pestaña principal
-  useEffect(() => {
+  const [prevRole, setPrevRole] = useState(role);
+  if (role !== prevRole) {
+    setPrevRole(role);
     setCurrentTab(role === 'seeker' ? 'inicio_seeker' : 'inicio_pro');
-  }, [role]);
+  }
+  const [currentTradeCategory, setCurrentTradeCategory] = useState<TradeCategory | undefined>(undefined);
+  const [isUnknownPath, setIsUnknownPath] = useState(isUnknownLocation);
 
   // RF-63: Geolocalización geoespacial (Bogotá D.C. lat: 4.6768, lng: -74.0482)
   const [userLocation, setUserLocation] = useState<Coordinates>(FALLBACK_LOCATION_BOGOTA);
@@ -88,6 +115,10 @@ const MainAppContent: React.FC = () => {
 
   // RF-61: Notificaciones Push en tiempo real
   const [activePushNotification, setActivePushNotification] = useState<PushNotification | null>(null);
+  const [notifications, setNotifications] = useState<PushNotification[]>(() =>
+    getStoredData('oy-notifications', INITIAL_NOTIFICATIONS)
+  );
+  const [isInboxOpen, setIsInboxOpen] = useState(false);
 
   // Datos Persistentes en localStorage
   const [workers, setWorkers] = useState<Worker[]>(() =>
@@ -115,23 +146,30 @@ const MainAppContent: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [activeChatConvId, setActiveChatConvId] = useState<string | undefined>(undefined);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   const triggerPushNotification = (
     title: string,
     body: string,
     type: 'request' | 'acceptance' | 'message' | 'system'
   ) => {
-    setActivePushNotification({
+    const notification: PushNotification = {
       id: `push-${Date.now()}`,
       title,
       body,
       type,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       read: false
-    });
+    };
+    setActivePushNotification(notification);
+    setNotifications(prev => [notification, ...prev]);
   };
+
+  const closeInbox = React.useCallback(() => {
+    setIsInboxOpen(false);
+    setNotifications(prev => prev.map(n => (n.read ? n : { ...n, read: true })));
+  }, []);
 
   // RF-63: Capturar y actualizar ubicación geoespacial del dispositivo
   const handleRefreshGps = () => {
@@ -144,26 +182,23 @@ const MainAppContent: React.FC = () => {
           };
           setUserLocation(coords);
           setHasGps(true);
-          triggerPushNotification(
-            'GPS Actualizado (RF-63)',
-            `Coordenadas capturadas con éxito: ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`,
-            'system'
-          );
         },
         _err => {
           setUserLocation(FALLBACK_LOCATION_BOGOTA);
           setHasGps(false);
           triggerPushNotification(
-            'Ubicación Bogotá D.C. (RF-63)',
-            'Usando punto central Chapinero/Chicó (4.6768, -74.0482)',
+            'Usamos Bogotá como referencia',
+            'No pudimos leer tu ubicación. Actívala para ver quién está más cerca.',
             'system'
           );
         },
         { enableHighAccuracy: true, timeout: 5000 }
       );
     } else {
-      setUserLocation(FALLBACK_LOCATION_BOGOTA);
-      setHasGps(false);
+      queueMicrotask(() => {
+        setUserLocation(FALLBACK_LOCATION_BOGOTA);
+        setHasGps(false);
+      });
     }
   };
 
@@ -183,9 +218,77 @@ const MainAppContent: React.FC = () => {
 
   // Guardar cambios de mensajes
   useEffect(() => {
+    setStoredData('oy-notifications', notifications);
+  }, [notifications]);
+
+  useEffect(() => {
     setStoredData('oy-messages', messages);
     setStoredData('oy-conversations', conversations);
   }, [messages, conversations]);
+
+  // OFY-01: Vincular la cuenta Profesional con su ficha en `workers` (o crearla la primera vez)
+  useEffect(() => {
+    if (!user || role !== 'provider') return;
+    if (workers.some(w => w.ownerUserId === user.id)) return;
+    const unclaimed = findUnclaimedWorkerByName(workers, user.name);
+    queueMicrotask(() => {
+      if (unclaimed) {
+        setWorkers(prev => prev.map(w => (w.id === unclaimed.id ? { ...w, ownerUserId: user.id } : w)));
+      } else {
+        setWorkers(prev => [createWorkerForUser(user), ...prev]);
+      }
+    });
+  }, [user, role, workers]);
+
+  // OFY-28: Las solicitudes pendientes vencidas pasan a canceladas ("Expirada sin respuesta")
+  const servicesRef = useRef(services);
+  useEffect(() => {
+    servicesRef.current = services;
+  }, [services]);
+
+  useEffect(() => {
+    const expirePending = () => {
+      const now = Date.now();
+      const expired = servicesRef.current.filter(
+        s => s.status === 'pendiente' && s.expiresAt && new Date(s.expiresAt).getTime() < now
+      );
+      if (expired.length === 0) return;
+      const ids = new Set(expired.map(s => s.id));
+      setServices(prev =>
+        prev.map(s =>
+          ids.has(s.id)
+            ? { ...s, status: 'cancelado', isExpired: true, cancelReason: 'Expirada sin respuesta' }
+            : s
+        )
+      );
+    };
+    expirePending();
+    const timer = setInterval(expirePending, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Ruta que no existe (GitHub Pages sirve 404.html con la misma app)
+  if (isUnknownPath) {
+    return (
+      <StatusScreen
+        code="404"
+        title="Esta página no existe"
+        message="Many buscó por todo el barrio y no la encontró. Puede que el enlace esté mal escrito o que la página ya no exista."
+        actions={
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => {
+              window.history.replaceState(null, '', import.meta.env.BASE_URL);
+              setIsUnknownPath(false);
+            }}
+          >
+            <Home size={18} aria-hidden="true" /> Volver al inicio
+          </button>
+        }
+      />
+    );
+  }
 
   // Pantalla de carga (spinner) mientras se verifica el JWT
   if (isLoading) {
@@ -223,6 +326,11 @@ const MainAppContent: React.FC = () => {
             setPendingRole(role ?? 'seeker');
             navigateTo('auth');
           }}
+          onOpenContact={() => setIsContactModalOpen(true)}
+        />
+        <ContactModal
+          isOpen={isContactModalOpen}
+          onClose={() => setIsContactModalOpen(false)}
         />
       </div>
     );
@@ -244,34 +352,69 @@ const MainAppContent: React.FC = () => {
     setServices(prev => [newService, ...prev]);
     // RF-61: Notificación push en tiempo real
     triggerPushNotification(
-      'Solicitud de Servicio Emitida (RF-61)',
-      `Tu solicitud con ${newService.workerName} ha sido agendada con éxito.`,
+      '¡Solicitud enviada!',
+      `Le avisamos a ${newService.workerName}. Te contamos apenas responda.`,
       'request'
     );
   };
 
-  const handleOpenChat = (worker: Worker) => {
+  const handleOpenChat = (worker: Worker, initialMessage?: string) => {
     setSelectedWorkerForProfile(null);
     let conv = conversations.find(c => c.workerId === worker.id);
+    const convId = conv ? conv.id : `conv-${Date.now()}`;
+
     if (!conv) {
       conv = {
-        id: `conv-${Date.now()}`,
+        id: convId,
         workerId: worker.id,
         workerName: worker.name,
         workerTrade: worker.tradeLabel,
         workerAvatarColor: worker.avatarColor,
         workerInitials: worker.initials,
         unreadCount: 0,
-        lastMessage: 'Conversación iniciada',
+        lastMessage: initialMessage ? 'Petición enviada' : 'Conversación iniciada',
         lastMessageTime: 'Ahora'
       };
       setConversations(prev => [conv!, ...prev]);
+    }
+
+    if (initialMessage) {
+      const clientMsg: ChatMessage = {
+        id: `msg-${Date.now()}-summary`,
+        conversationId: convId,
+        senderId: user?.id || 'usr-default',
+        senderRole: 'seeker',
+        text: initialMessage,
+        timestamp: 'Ahora',
+        status: 'delivered'
+      };
+      const workerReply: ChatMessage = {
+        id: `msg-${Date.now()}-reply`,
+        conversationId: convId,
+        senderId: worker.id,
+        senderRole: 'provider',
+        text: `¡Hola ${user?.name ? user.name.split(' ')[0] : ''}! Recibí tu solicitud para ${worker.tradeLabel}. Con gusto la reviso de inmediato para coordinar los detalles.`,
+        timestamp: 'Ahora',
+        status: 'read'
+      };
       setMessages(prev => ({
         ...prev,
-        [conv!.id]: [
+        [convId]: [...(prev[convId] || []), clientMsg, workerReply]
+      }));
+      setConversations(prev =>
+        prev.map(c =>
+          c.id === convId
+            ? { ...c, lastMessage: initialMessage, lastMessageTime: 'Ahora' }
+            : c
+        )
+      );
+    } else if (!conversations.some(c => c.id === convId)) {
+      setMessages(prev => ({
+        ...prev,
+        [convId]: [
           {
             id: `msg-${Date.now()}`,
-            conversationId: conv!.id,
+            conversationId: convId,
             senderId: worker.id,
             senderRole: 'provider',
             text: `¡Hola! Soy ${worker.name}, especialista en ${worker.tradeLabel} en Bogotá. ¿En qué te puedo asesorar?`,
@@ -281,8 +424,27 @@ const MainAppContent: React.FC = () => {
         ]
       }));
     }
-    setActiveChatConvId(conv.id);
-    setIsChatOpen(true);
+
+    setActiveChatConvId(convId);
+    setSelectedWorkerForProfile(null);
+    setCurrentTab('mensajes');
+  };
+
+  const handleCreateServiceAndStartChat = (newService: ServiceRequest, summaryMessage: string) => {
+    setServices(prev => [newService, ...prev]);
+    triggerPushNotification(
+      '¡Petición enviada con éxito!',
+      `Se enviaron los detalles a ${newService.workerName}. Iniciando conversación en el chat.`,
+      'request'
+    );
+    const targetWorker = workers.find(w => w.id === newService.workerId) || ({
+      id: newService.workerId,
+      name: newService.workerName,
+      tradeLabel: newService.workerTrade,
+      avatarColor: newService.workerAvatarColor,
+      initials: newService.workerName.slice(0, 2).toUpperCase()
+    } as Worker);
+    handleOpenChat(targetWorker, summaryMessage);
   };
 
   const handleSendMessage = (conversationId: string, text: string) => {
@@ -309,10 +471,31 @@ const MainAppContent: React.FC = () => {
       )
     );
 
-    // RF-61: Notificación push
+  };
+
+  // OFY-51, OFY-61: respuesta simulada de la otra parte + notificación push de mensaje
+  const handleReceiveMessage = (conversationId: string, text: string) => {
+    const conv = conversations.find(c => c.id === conversationId);
+    const fromProvider = role !== 'provider';
+    const reply: ChatMessage = {
+      id: `msg-${Date.now()}-in`,
+      conversationId,
+      senderId: fromProvider ? conv?.workerId || 'w-unknown' : `client-${conversationId}`,
+      senderRole: fromProvider ? 'provider' : 'seeker',
+      text,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: 'delivered'
+    };
+    setMessages(prev => ({
+      ...prev,
+      [conversationId]: [...(prev[conversationId] || []), reply]
+    }));
+    setConversations(prev =>
+      prev.map(c => (c.id === conversationId ? { ...c, lastMessage: text, lastMessageTime: 'Ahora' } : c))
+    );
     triggerPushNotification(
-      'Mensaje Enviado (RF-61)',
-      text.length > 45 ? `${text.slice(0, 45)}...` : text,
+      `Nuevo mensaje de ${fromProvider ? conv?.workerName ?? 'tu profesional' : 'tu cliente'}`,
+      text,
       'message'
     );
   };
@@ -328,8 +511,10 @@ const MainAppContent: React.FC = () => {
     setServices(prev => [...newRequests, ...prev]);
     // RF-61: Notificación push por solicitud multidestinatario
     triggerPushNotification(
-      'Petición Multidestinatario Despachada (RF-24, RF-61)',
-      `Notificamos a ${newRequests.length} profesionales compatibles en tu zona de Bogotá.`,
+      '¡Solicitud enviada!',
+      newRequests.length === 1
+        ? `Le avisamos a ${newRequests[0].workerName}. Te contamos apenas responda.`
+        : `Le avisamos a ${newRequests.length} profesionales de tu zona. Te contamos apenas respondan.`,
       'request'
     );
   };
@@ -347,39 +532,137 @@ const MainAppContent: React.FC = () => {
     });
   };
 
-  const handleUpdateServiceStatus = (serviceId: string, newStatus: ServiceStatus, reason?: string) => {
-    setServices(prev =>
-      prev.map(s =>
-        s.id === serviceId ? { ...s, status: newStatus, cancelReason: reason } : s
-      )
-    );
+  const updateWorker = (workerId: string, patch: Partial<Worker>) => {
+    setWorkers(prev => prev.map(w => (w.id === workerId ? { ...w, ...patch } : w)));
   };
 
-  const handleSubmitReview = (serviceId: string, _rating: number, _comment: string) => {
+  // OFY-26, OFY-24: Aceptar pasa a "en_curso", cancela el resto del envío múltiple y deja al trabajador ocupado (OFY-31, OFY-33)
+  const acceptRequest = (id: string) => {
+    const target = services.find(s => s.id === id);
+    if (!target || target.status !== 'pendiente') return;
+    const acceptedAt = new Date().toISOString();
     setServices(prev =>
-      prev.map(s => (s.id === serviceId ? { ...s, reviewDone: true } : s))
+      prev.map(s => {
+        if (s.id === id) return { ...s, status: 'en_curso', acceptedAt };
+        if (target.broadcastId && s.broadcastId === target.broadcastId && s.status === 'pendiente') {
+          return { ...s, status: 'cancelado', cancelReason: 'Asignado a otro profesional' };
+        }
+        return s;
+      })
     );
+    updateWorker(target.workerId, { available: false });
     triggerPushNotification(
-      'Reseña Publicada (RF-36)',
-      'Tu valoración ha sido vinculada al servicio completado.',
-      'system'
-    );
-  };
-
-  const handleAcceptIncomingRequest = (id: string) => {
-    setServices(prev =>
-      prev.map(s => (s.id === id ? { ...s, status: 'en_curso' } : s))
-    );
-    triggerPushNotification(
-      '¡Trabajo Aceptado! (RF-26, RF-61)',
-      'El servicio ha sido confirmado e iniciado en tu agenda.',
+      '¡Trabajo aceptado!',
+      'Quedó en tu agenda. Escríbele al cliente para coordinar la llegada.',
       'acceptance'
     );
   };
 
+  // OFY-78: Cambio de estado (Pendiente / En progreso / Finalizado / Cancelado)
+  const handleUpdateServiceStatus = (
+    serviceId: string,
+    newStatus: ServiceStatus,
+    reason?: string,
+    extra?: Partial<ServiceRequest>
+  ) => {
+    const current = services.find(s => s.id === serviceId);
+    if (!current || current.status === newStatus) return;
+    if (current.status === 'pendiente' && newStatus === 'en_curso') {
+      acceptRequest(serviceId);
+      return;
+    }
+
+    const completedAt = newStatus === 'finalizado' ? new Date().toISOString() : current.completedAt;
+    setServices(prev =>
+      prev.map(s =>
+        s.id === serviceId
+          ? {
+              ...s,
+              ...extra,
+              status: newStatus,
+              cancelReason: newStatus === 'cancelado' ? reason : s.cancelReason,
+              cancelledBy: newStatus === 'cancelado' ? (role === 'seeker' ? 'client' : 'worker') : s.cancelledBy,
+              completedAt
+            }
+          : s
+      )
+    );
+
+    // OFY-08, OFY-71: el trabajo finalizado suma al contador; si no tiene otro en curso vuelve a estar disponible
+    if (newStatus === 'finalizado' || (newStatus === 'cancelado' && current.status === 'en_curso')) {
+      const stillBusy = services.some(
+        s => s.id !== serviceId && s.workerId === current.workerId && s.status === 'en_curso'
+      );
+      setWorkers(prev =>
+        prev.map(w => {
+          if (w.id !== current.workerId) return w;
+          const next = newStatus === 'finalizado' ? applyCompletion(w, current.tradeCategory) : w;
+          return stillBusy || next.isPaused ? next : { ...next, available: true };
+        })
+      );
+    }
+  };
+
+  // OFY-34, OFY-36, OFY-37, OFY-39, OFY-56: la reseña se guarda en el trabajador y recalcula su reputación
+  const handleSubmitReview = (serviceId: string, rating: number, comment: string) => {
+    const service = services.find(s => s.id === serviceId);
+    const worker = service ? workers.find(w => w.id === service.workerId) : undefined;
+    if (!service || !worker || service.reviewDone) return;
+
+    const review: Review = {
+      id: `r-${Date.now()}`,
+      author: user?.name || 'Cliente',
+      rating,
+      date: new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }),
+      comment: comment.trim() || 'Sin comentario.',
+      verifiedWork: true,
+      serviceId,
+      tradeCategory: service.tradeCategory ?? worker.trade,
+      targetRole: 'worker'
+    };
+    const updated = applyReview(worker, review);
+    setWorkers(prev => prev.map(w => (w.id === worker.id ? updated : w)));
+    setServices(prev =>
+      prev.map(s =>
+        s.id === serviceId ? { ...s, reviewDone: true, clientRating: rating, clientReview: review.comment } : s
+      )
+    );
+    triggerPushNotification(
+      '¡Gracias por tu reseña!',
+      'Tu opinión ayuda a otros vecinos a elegir con confianza.',
+      'system'
+    );
+    if (updated.isPaused && !worker.isPaused) {
+      triggerPushNotification(
+        `Perfil de ${worker.name} en pausa`,
+        'Su promedio reciente bajó de 3.0. No recibirá solicitudes hasta que moderación lo revise.',
+        'system'
+      );
+    }
+  };
+
+  // OFY-35: el trabajador califica al contratante
+  const handleRateClient = (serviceId: string, rating: number, comment: string) => {
+    setServices(prev =>
+      prev.map(s =>
+        s.id === serviceId
+          ? { ...s, workerRatedClient: true, clientRatingByWorker: rating, workerCommentOnClient: comment.trim() }
+          : s
+      )
+    );
+  };
+
+  const handleAcceptIncomingRequest = (id: string) => {
+    acceptRequest(id);
+  };
+
   const handleRejectIncomingRequest = (id: string) => {
     setServices(prev =>
-      prev.map(s => (s.id === id ? { ...s, status: 'cancelado', cancelReason: 'Rechazado por el profesional' } : s))
+      prev.map(s =>
+        s.id === id
+          ? { ...s, status: 'cancelado', cancelReason: 'Rechazado por el profesional', cancelledBy: 'worker' }
+          : s
+      )
     );
   };
 
@@ -396,13 +679,21 @@ const MainAppContent: React.FC = () => {
     setWorkers(prev =>
       prev.map(w =>
         w.id === workerId
-          ? { ...w, isPaused, available: !isPaused }
+          ? { ...w, isPaused, available: !isPaused, pauseReason: isPaused ? 'Suspendido por moderación.' : undefined }
           : w
       )
     );
   };
 
   const totalUnreadCount = conversations.reduce((acc, c) => acc + c.unreadCount, 0);
+
+  // Ficha del profesional en sesión y servicios visibles según el rol
+  const currentWorker = user ? workers.find(w => w.ownerUserId === user.id) : undefined;
+  const seekerServices = services.filter(s => s.clientId === user?.id);
+  const workerServices = currentWorker ? services.filter(s => s.workerId === currentWorker.id) : [];
+  const liveProfileWorker = selectedWorkerForProfile
+    ? workers.find(w => w.id === selectedWorkerForProfile.id) ?? selectedWorkerForProfile
+    : null;
 
   return (
     <div className={`app-root-layout role-${role} crossfade-wrapper ${visible ? '' : 'crossfade-wrapper--hidden'}`}>
@@ -419,19 +710,47 @@ const MainAppContent: React.FC = () => {
         onRefreshGps={handleRefreshGps}
         hasGps={hasGps}
         currentTab={currentTab}
-        onSelectTab={setCurrentTab}
+        onSelectTab={(tab) => {
+          setSelectedWorkerForProfile(null);
+          setCurrentTab(tab);
+        }}
         unreadCount={totalUnreadCount}
-        isChatOpen={isChatOpen}
-        onToggleChat={() => setIsChatOpen(!isChatOpen)}
+        isChatOpen={currentTab === 'mensajes'}
+        onToggleChat={() => {
+          setSelectedWorkerForProfile(null);
+          setCurrentTab(currentTab === 'mensajes' ? (role === 'seeker' ? 'inicio_seeker' : 'inicio_pro') : 'mensajes');
+        }}
+        notificationCount={notifications.filter(n => !n.read).length}
+        onOpenNotifications={() => setIsInboxOpen(open => !open)}
       />
+
+      {isInboxOpen && (
+        <NotificationInbox
+          notifications={notifications}
+          onClose={closeInbox}
+          onDelete={id => setNotifications(prev => prev.filter(n => n.id !== id))}
+        />
+      )}
 
       <div className="app-main-body">
         {/* Área Central de Contenido */}
-        <main className="app-content-area" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
-          {/* ========================================================
-              VISTAS DE CONTRATANTE (SEEKER)
-              ======================================================== */}
-          {currentTab === 'inicio_seeker' && (
+        <main className="app-content-area">
+          {liveProfileWorker ? (
+            <WorkerProfileView
+              worker={liveProfileWorker}
+              onBack={() => setSelectedWorkerForProfile(null)}
+              onOpenBooking={handleOpenBooking}
+              onOpenChat={handleOpenChat}
+              onOpenSendRequest={handleOpenSendRequest}
+              onOpenReport={handleOpenReportFromWorker}
+              onCreateServiceAndStartChat={handleCreateServiceAndStartChat}
+            />
+          ) : (
+            <>
+              {/* ========================================================
+                  VISTAS DE CONTRATANTE (SEEKER)
+                  ======================================================== */}
+              {currentTab === 'inicio_seeker' && (
             <SeekerHomeView
               workers={workers}
               userLocation={userLocation}
@@ -453,11 +772,12 @@ const MainAppContent: React.FC = () => {
 
           {currentTab === 'solicitudes' && (
             <MyServicesView
-              services={services}
+              services={seekerServices}
               onUpdateServiceStatus={handleUpdateServiceStatus}
               onSubmitReview={handleSubmitReview}
               onOpenReport={handleOpenReportFromService}
               onRehireWorker={handleRehireWorker}
+              onRateClient={handleRateClient}
             />
           )}
 
@@ -466,66 +786,92 @@ const MainAppContent: React.FC = () => {
               ======================================================== */}
           {(currentTab === 'inicio_pro' || currentTab === 'oportunidades') && (
             <ProviderHomeView
-              onRecommend={(id) => console.log('Recomendar', id)}
+              onRecommend={() => triggerPushNotification('Recomendación enviada', 'Compartimos la oportunidad con tus colegas del oficio.', 'system')}
             />
           )}
 
           {currentTab === 'alertas' && (
             <ProviderDashboard
-              incomingRequests={services.filter(s => s.status === 'en_curso')}
+              worker={currentWorker}
+              services={services}
+              incomingRequests={workerServices.filter(s => s.status === 'pendiente')}
               onAcceptRequest={handleAcceptIncomingRequest}
               onRejectRequest={handleRejectIncomingRequest}
+              onUpdateWorker={patch => currentWorker && updateWorker(currentWorker.id, patch)}
             />
           )}
 
           {currentTab === 'clientes' && (
             <MyServicesView
-              services={services}
+              services={workerServices}
               onUpdateServiceStatus={handleUpdateServiceStatus}
               onSubmitReview={handleSubmitReview}
               onOpenReport={handleOpenReportFromService}
               onRehireWorker={handleRehireWorker}
+              onRateClient={handleRateClient}
             />
           )}
 
-          {/* Drawer de Mensajes / Chat (Overlay Sidebar) */}
-          {isChatOpen && (
-            <>
-              <div 
-                className="hide-on-desktop"
-                onClick={() => setIsChatOpen(false)}
-                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, backdropFilter: 'blur(2px)' }}
-              />
-              <ChatView
-                conversations={conversations}
-                messages={messages}
-                initialConversationId={activeChatConvId}
-                onSendMessage={handleSendMessage}
-                workers={workers}
-                onClose={() => setIsChatOpen(false)}
-              />
-            </>
+          {/* Pestaña: Mensajes / Chats en Pantalla Completa */}
+          {currentTab === 'mensajes' && (
+            <ChatView
+              conversations={conversations}
+              messages={messages}
+              initialConversationId={activeChatConvId}
+              onSendMessage={handleSendMessage}
+              onReceiveMessage={handleReceiveMessage}
+              workers={workers}
+              onSelectWorker={(w) => setSelectedWorkerForProfile(w)}
+              onNavigateToDirectory={() => setCurrentTab(role === 'seeker' ? 'buscar' : 'oportunidades')}
+            />
+          )}
+
+          {!KNOWN_TABS.has(currentTab) && (
+            <StatusScreen
+              code="404"
+              title="Esta sección no existe"
+              message="Many no encontró lo que buscabas. Vuelve al inicio para seguir."
+              actions={
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setCurrentTab(role === 'seeker' ? 'inicio_seeker' : 'inicio_pro')}
+                >
+                  <Home size={18} aria-hidden="true" /> Ir al inicio
+                </button>
+              }
+            />
           )}
 
           {/* Pestaña: Perfil */}
           {currentTab === 'perfil' && (
             <UserProfileView
-              services={services}
+              services={role === 'provider' ? workerServices : seekerServices}
               onOpenSettings={() => setIsSettingsOpen(true)}
               onNavigateToTab={setCurrentTab}
             />
+          )}
+            </>
           )}
         </main>
       </div>
 
       {/* Footer Universal de la App */}
-      <AppFooter />
+      <AppFooter onOpenContact={() => setIsContactModalOpen(true)} />
 
       {/* Barra de Navegación Inferior para Móvil */}
       <BottomNav
         currentTab={currentTab}
-        onSelectTab={setCurrentTab}
+        onSelectTab={(tab) => {
+          setSelectedWorkerForProfile(null);
+          setCurrentTab(tab);
+        }}
         unreadCount={totalUnreadCount}
+        isChatOpen={currentTab === 'mensajes'}
+        onToggleChat={() => {
+          setSelectedWorkerForProfile(null);
+          setCurrentTab(currentTab === 'mensajes' ? (role === 'seeker' ? 'inicio_seeker' : 'inicio_pro') : 'mensajes');
+        }}
       />
 
       {/* Widget Interactivo de la Mascota Many */}
@@ -535,17 +881,6 @@ const MainAppContent: React.FC = () => {
       />
 
       {/* Modales del Sistema */}
-      {selectedWorkerForProfile && (
-        <WorkerProfileModal
-          worker={selectedWorkerForProfile}
-          onClose={() => setSelectedWorkerForProfile(null)}
-          onOpenBooking={handleOpenBooking}
-          onOpenChat={handleOpenChat}
-          onOpenSendRequest={handleOpenSendRequest}
-          onOpenReport={handleOpenReportFromWorker}
-        />
-      )}
-
       {selectedWorkerForBooking && (
         <BookingModal
           worker={selectedWorkerForBooking}
@@ -571,8 +906,8 @@ const MainAppContent: React.FC = () => {
           onClose={() => setReportingTarget(null)}
           onSubmitComplaint={(_ticket: ComplaintTicket) => {
             triggerPushNotification(
-              'Reporte Registrado (RF-64)',
-              'Tu queja ha sido turnada al equipo de moderación.',
+              'Recibimos tu reporte',
+              'Nuestro equipo lo va a revisar y te contaremos qué pasó.',
               'system'
             );
           }}
@@ -596,8 +931,18 @@ const MainAppContent: React.FC = () => {
           workers={workers}
           onClose={() => setIsAdminModalOpen(false)}
           onToggleWorkerPause={handleToggleWorkerPause}
+          onUpdateWorker={updateWorker}
         />
       )}
+
+      {/* Formulario de Contacto Validado (Item 12 & 13) */}
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+      />
+
+      {/* Botón Flotante para Volver Arriba (Item 7) */}
+      <ScrollToTop />
     </div>
   );
 };
@@ -606,7 +951,12 @@ export function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <MainAppContent />
+        <LanguageProvider>
+          <LiquidBackground />
+          <ErrorBoundary>
+            <MainAppContent />
+          </ErrorBoundary>
+        </LanguageProvider>
       </ThemeProvider>
     </AuthProvider>
   );

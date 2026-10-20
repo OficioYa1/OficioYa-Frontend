@@ -1,13 +1,13 @@
 // Datos semilla de trabajadores, servicios, chats y tickets en Bogotá D.C.
 
-import type { Worker, ServiceRequest, Conversation, ChatMessage, ComplaintTicket } from '../types';
+import type { Worker, ServiceRequest, Conversation, ChatMessage, PushNotification } from '../types';
 
 export const INITIAL_WORKERS: Worker[] = [
   {
     id: 'w-1',
     name: 'Mateo Gómez',
     initials: 'MG',
-    avatarColor: '#2563EB',
+    avatarColor: 'var(--oy-azul-marino)',
     trade: 'electricidad',
     tradeLabel: 'Electricista Certificado SENA',
     secondaryTrades: ['computacion'],
@@ -104,7 +104,7 @@ export const INITIAL_WORKERS: Worker[] = [
     id: 'w-2',
     name: 'Carlos Restrepo',
     initials: 'CR',
-    avatarColor: '#0D9488',
+    avatarColor: 'var(--oy-naranja-many)',
     trade: 'plomeria',
     tradeLabel: 'Plomería & Redes Hidráulicas',
     secondaryTrades: ['albanileria'],
@@ -185,7 +185,7 @@ export const INITIAL_WORKERS: Worker[] = [
     id: 'w-3',
     name: 'Elena Jaramillo',
     initials: 'EJ',
-    avatarColor: '#E11D48',
+    avatarColor: 'var(--oy-esmeralda-aa)',
     trade: 'pintura',
     tradeLabel: 'Pintura y Acabados de Interiores',
     secondaryTrades: ['hogar'],
@@ -262,7 +262,7 @@ export const INITIAL_WORKERS: Worker[] = [
     id: 'w-4',
     name: 'Andrés Henao',
     initials: 'AH',
-    avatarColor: '#D97706',
+    avatarColor: 'var(--oy-cacao-profundo)',
     trade: 'cerrajeria',
     tradeLabel: 'Cerrajería de Seguridad 24H',
     secondaryTrades: [],
@@ -337,7 +337,7 @@ export const INITIAL_WORKERS: Worker[] = [
     id: 'w-5',
     name: 'Luis Fernando Ortiz',
     initials: 'LO',
-    avatarColor: '#0284C7',
+    avatarColor: 'var(--oy-naranja-fuego-aa)',
     trade: 'electrodomesticos',
     tradeLabel: 'Técnico de Lavadoras y Neveras',
     secondaryTrades: ['electricidad'],
@@ -403,7 +403,7 @@ export const INITIAL_WORKERS: Worker[] = [
     id: 'w-6',
     name: 'Sofía Rendón',
     initials: 'SR',
-    avatarColor: '#7C3AED',
+    avatarColor: 'var(--oy-azul-marino)',
     trade: 'computacion',
     tradeLabel: 'Soporte Técnico y Redes Wi-Fi',
     secondaryTrades: [],
@@ -469,7 +469,7 @@ export const INITIAL_WORKERS: Worker[] = [
     id: 'w-7',
     name: 'Javier Cañas',
     initials: 'JC',
-    avatarColor: '#B45309',
+    avatarColor: 'var(--oy-naranja-many)',
     trade: 'albanileria',
     tradeLabel: 'Albañilería & Remodelaciones',
     secondaryTrades: ['pintura'],
@@ -535,7 +535,7 @@ export const INITIAL_WORKERS: Worker[] = [
     id: 'w-8',
     name: 'Claudia Muñoz',
     initials: 'CM',
-    avatarColor: '#059669',
+    avatarColor: 'var(--oy-esmeralda-aa)',
     trade: 'aseo',
     tradeLabel: 'Aseo Profundo & Desinfección',
     secondaryTrades: ['hogar'],
@@ -601,7 +601,7 @@ export const INITIAL_WORKERS: Worker[] = [
     id: 'w-9',
     name: 'Juan Camilo Vélez',
     initials: 'JV',
-    avatarColor: '#16A34A',
+    avatarColor: 'var(--oy-cacao-profundo)',
     trade: 'jardineria',
     tradeLabel: 'Jardinería & Mantenimiento Verde',
     secondaryTrades: [],
@@ -667,7 +667,7 @@ export const INITIAL_WORKERS: Worker[] = [
     id: 'w-10',
     name: 'Marcela Posada',
     initials: 'MP',
-    avatarColor: '#EC4899',
+    avatarColor: 'var(--oy-naranja-fuego-aa)',
     trade: 'mascotas',
     tradeLabel: 'Peluquería Canina & Cuidado de Mascotas',
     secondaryTrades: [],
@@ -736,7 +736,7 @@ export const INITIAL_WORKERS: Worker[] = [
     id: 'w-11',
     name: 'Rodrigo Barrientos',
     initials: 'RB',
-    avatarColor: '#64748B',
+    avatarColor: 'var(--oy-azul-marino)',
     trade: 'pintura',
     tradeLabel: 'Pintor de Obras Rápidas',
     secondaryTrades: [],
@@ -746,7 +746,7 @@ export const INITIAL_WORKERS: Worker[] = [
     verified: false,
     available: false,
     isPaused: true,
-    pauseReason: 'Suspendido automáticamente: Calificación promedio menor a 3.0 estrellas en sus últimas 5 reseñas (RF-39)',
+    pauseReason: 'Suspendido automáticamente: Calificación promedio menor a 3.0 estrellas en sus últimas 5 reseñas',
     hourlyRate: 28000,
     responseTime: '> 2 horas',
     bio: 'Pintura de apartamentos y rejas en el sur de Bogotá.',
@@ -811,7 +811,7 @@ export const INITIAL_SERVICES: ServiceRequest[] = [
     workerId: 'w-1',
     workerName: 'Mateo Gómez',
     workerTrade: 'Electricista Certificado SENA',
-    workerAvatarColor: '#2563EB',
+    workerAvatarColor: 'var(--color-trust)',
     clientId: 'usr-default',
     clientName: 'Juan Pérez (Tú)',
     clientEmail: 'juan.perez@correo.com',
@@ -861,7 +861,7 @@ export const INITIAL_SERVICES: ServiceRequest[] = [
     workerId: 'w-4',
     workerName: 'Andrés Henao',
     workerTrade: 'Cerrajería de Seguridad 24H',
-    workerAvatarColor: '#D97706',
+    workerAvatarColor: 'var(--color-accent-text)',
     clientId: 'usr-default',
     clientName: 'Juan Pérez (Tú)',
     clientEmail: 'juan.perez@correo.com',
@@ -887,7 +887,7 @@ export const INITIAL_CONVERSATIONS: Conversation[] = [
     workerId: 'w-1',
     workerName: 'Mateo Gómez',
     workerTrade: 'Electricista Certificado SENA',
-    workerAvatarColor: '#2563EB',
+    workerAvatarColor: 'var(--color-trust)',
     workerInitials: 'MG',
     unreadCount: 1,
     lastMessage: 'Voy saliendo con las herramientas hacia Chicó.',
@@ -967,13 +967,49 @@ export const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
   ]
 };
 
+// Bandeja de notificaciones inicial (la más reciente primero)
+export const INITIAL_NOTIFICATIONS: PushNotification[] = [
+  {
+    id: 'notif-1',
+    title: 'Mateo aceptó tu solicitud',
+    body: 'Llega mañana a las 9:00 a. m. para revisar el tablero eléctrico.',
+    type: 'acceptance',
+    timestamp: '10:24 a. m.',
+    read: false
+  },
+  {
+    id: 'notif-2',
+    title: 'Nuevo mensaje de Carlos',
+    body: '¿Me confirmas la dirección exacta del apartamento?',
+    type: 'message',
+    timestamp: '9:02 a. m.',
+    read: false
+  },
+  {
+    id: 'notif-3',
+    title: 'Tu reseña ya es visible',
+    body: 'Gracias por calificar el servicio de pintura en Chapinero.',
+    type: 'system',
+    timestamp: 'Ayer',
+    read: true
+  },
+  {
+    id: 'notif-4',
+    title: 'Solicitud enviada',
+    body: 'Le avisamos a 3 plomeros cercanos. Te contamos cuando respondan.',
+    type: 'request',
+    timestamp: 'Ayer',
+    read: true
+  }
+];
+
 // Helper de persistencia en localStorage
 export const getStoredData = <T>(key: string, fallback: T): T => {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return fallback;
     return JSON.parse(raw);
-  } catch (_e) {
+  } catch {
     return fallback;
   }
 };
@@ -981,7 +1017,7 @@ export const getStoredData = <T>(key: string, fallback: T): T => {
 export const setStoredData = <T>(key: string, data: T): void => {
   try {
     localStorage.setItem(key, JSON.stringify(data));
-  } catch (_e) {
+  } catch {
     // quota exceeded fallback
   }
 };

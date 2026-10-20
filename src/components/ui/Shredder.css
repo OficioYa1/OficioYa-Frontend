@@ -1,0 +1,110 @@
+/* ============================================================
+   Shredder · trituradora de tarjetas
+   Versión en CSS plano (el repo no usa Tailwind). La ranura es
+   Cacao, la sombra del arrastre es cálida y el foco usa el anillo
+   del manual.
+   ============================================================ */
+
+.shredder {
+  position: relative;
+  width: min(var(--sh-w), 100%);
+  height: var(--sh-h);
+  color: var(--sh-ink);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+.shredder[data-disabled] { opacity: 0.6; }
+
+.shredder-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--sh-fall) + var(--sh-slit-h));
+  z-index: 1;
+  margin: 0;
+  padding: 0 var(--sh-inset);
+  list-style: none;
+  clip-path: inset(-9999px -9999px 0 -9999px);
+}
+
+.shredder-slot {
+  position: relative;
+  margin-bottom: var(--sh-gap);
+}
+
+.shredder-slot[data-active] { z-index: 2; }
+.shredder-slot[data-gone] { pointer-events: none; }
+
+.shredder-item {
+  position: relative;
+  transform-origin: center;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+  border-radius: var(--radius-md);
+}
+
+.shredder-item:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+.shredder-slot[data-active] > .shredder-item {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  will-change: transform, filter;
+  filter: drop-shadow(0 0 0 rgba(62, 31, 20, 0));
+  transition: filter 240ms ease;
+}
+
+.shredder-item[data-state='drag'] {
+  cursor: grabbing;
+  filter: drop-shadow(0 14px 22px rgba(62, 31, 20, 0.22)) !important;
+}
+
+.shredder-item[data-state='feed'] {
+  pointer-events: none;
+  cursor: default;
+}
+
+.shredder[data-disabled] .shredder-item { cursor: default; }
+
+/* Ranura de la trituradora */
+.shredder-slit {
+  position: absolute;
+  left: var(--sh-slit-inset);
+  right: var(--sh-slit-inset);
+  bottom: var(--sh-fall);
+  z-index: 3;
+  height: var(--sh-slit-h);
+  border-radius: var(--radius-full);
+  background: var(--sh-slit);
+  will-change: transform;
+}
+
+.shredder-fall {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  height: var(--sh-fall);
+  pointer-events: none;
+}
+
+.shredder-canvas {
+  position: absolute;
+  top: 0;
+  left: calc(-1 * var(--sh-over));
+  display: block;
+  width: calc(100% + var(--sh-over) * 2);
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shredder-slot[data-active] > .shredder-item { transition: none; }
+}

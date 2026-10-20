@@ -1,0 +1,226 @@
+/* ============================================================
+   Componentes base de OficioYa (manual de identidad v1.0)
+   Solo usan tokens de styles/tokens.css.
+   Movimiento: transform/opacity, ease-out, < 250 ms; hover solo
+   en dispositivos con puntero fino.
+   ============================================================ */
+
+/* ── Button ─────────────────────────────────────────────── */
+.oy-btn {
+  --btn-bg: var(--color-action-strong);
+  --btn-fg: var(--color-on-action);
+  --btn-bg-hover: var(--oy-naranja-fuego);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--tap-target);
+  padding: 0 var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-family: var(--font-text);
+  font-size: var(--text-small);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-base) ease,
+    box-shadow var(--dur-base) ease;
+}
+
+.oy-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.oy-btn:disabled,
+.oy-btn[aria-busy='true'] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.oy-btn:focus-visible,
+.oy-card--interactive:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Contratar ahora / acción principal: Naranja Fuego (tono AA) */
+.oy-btn--primary {
+  box-shadow: 0 1px 2px rgba(62, 31, 20, 0.12), 0 4px 12px -4px rgba(234, 88, 12, 0.45);
+}
+
+/* Confianza: acciones estructurales en Azul Marino */
+.oy-btn--trust {
+  --btn-bg: var(--oy-azul-marino);
+  --btn-fg: var(--oy-blanco);
+  --btn-bg-hover: #172E6E;
+}
+
+/* Energía: CTA de marca sobre fondos azules (amarillo + cacao) */
+.oy-btn--energy {
+  --btn-bg: var(--color-energy);
+  --btn-fg: var(--color-on-energy);
+  --btn-bg-hover: #F2B714;
+}
+
+.oy-btn--secondary {
+  --btn-bg: transparent;
+  --btn-fg: var(--color-text-main);
+  --btn-bg-hover: var(--color-surface-hover);
+  border-color: var(--color-border);
+}
+
+.oy-btn--ghost {
+  --btn-bg: transparent;
+  --btn-fg: var(--color-text-main);
+  --btn-bg-hover: var(--color-surface-hover);
+}
+
+.oy-btn--sm { min-height: 36px; padding: 0 var(--space-3); font-size: var(--text-caption); }
+.oy-btn--lg { min-height: 52px; padding: 0 var(--space-6); font-size: var(--text-body); }
+.oy-btn--block { width: 100%; }
+
+@media (hover: hover) and (pointer: fine) {
+  .oy-btn:hover:not(:disabled) {
+    background: var(--btn-bg-hover);
+  }
+}
+
+.oy-btn__spinner {
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: oy-spin 0.6s linear infinite;
+}
+
+@keyframes oy-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Badge ──────────────────────────────────────────────── */
+.oy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-text);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.oy-badge--upper {
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+
+/* "PROFESIONAL VERIFICADO" (manual pág. 10) */
+.oy-badge--verified { background: var(--color-energy); color: var(--color-on-energy); }
+
+/* "DISPONIBLE" (manual pág. 10) */
+.oy-badge--available { background: var(--color-status); color: var(--color-on-status); }
+
+.oy-badge--unavailable {
+  background: var(--color-surface-hover);
+  color: var(--color-text-muted);
+}
+
+.oy-badge--neutral {
+  background: var(--color-surface-hover);
+  color: var(--color-text-main);
+}
+
+.oy-badge--warm { background: var(--color-warm); color: var(--color-detail); }
+
+/* Punto de estado: nunca depende solo del color, siempre va con texto */
+.oy-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.oy-badge--available .oy-badge__dot {
+  animation: oy-dot-pulse 2s ease-in-out infinite;
+}
+
+@keyframes oy-dot-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* ── Card ───────────────────────────────────────────────── */
+.oy-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.oy-card--interactive {
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) ease,
+    border-color var(--dur-base) ease;
+}
+
+.oy-card--interactive:active {
+  transform: scale(0.99);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .oy-card--interactive:hover {
+    border-color: var(--color-border);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* ── Logo ───────────────────────────────────────────────── */
+.oy-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: inherit;
+  text-decoration: none;
+}
+
+.oy-logo__mark {
+  flex-shrink: 0;
+  border-radius: 24%;
+  /* Zona de seguridad: el icono nunca se recorta ni se deforma */
+  object-fit: contain;
+}
+
+.oy-logo__word {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: var(--tracking-display);
+  line-height: 1;
+}
+
+.oy-logo__oficio { color: var(--oy-azul-marino); }
+.oy-logo__ya { color: var(--oy-amarillo-canario); } /* logotipo: exento de contraste (WCAG 1.4.3) */
+
+/* Sobre fondos azules u oscuros: "Oficio" en blanco, "Ya" en amarillo */
+.oy-logo--inverse .oy-logo__oficio { color: var(--oy-blanco); }
+.oy-logo--inverse .oy-logo__ya { color: var(--oy-amarillo-canario); }
+
+html.theme-dark .oy-logo:not(.oy-logo--inverse) .oy-logo__oficio { color: var(--oy-blanco); }
+html.theme-dark .oy-logo:not(.oy-logo--inverse) .oy-logo__ya { color: var(--oy-amarillo-canario); }

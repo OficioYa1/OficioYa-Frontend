@@ -1,0 +1,193 @@
+/* ============================================================
+   Bandeja de notificaciones con trituradora — lenguaje sticker:
+   contorno Cacao, esquinas grandes, lavados planos, sin sombras.
+   ============================================================ */
+.inbox-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+}
+
+.inbox-panel {
+  position: fixed;
+  top: 68px;
+  right: 16px;
+  z-index: 901;
+  width: min(380px, calc(100vw - 32px));
+  max-height: calc(100dvh - 84px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-4) var(--space-4) 0;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-frame);
+  background: #ffffff;
+  box-shadow: 0 20px 50px -10px rgba(15, 23, 42, 0.25);
+  transform-origin: top right;
+  animation: inbox-in 200ms var(--ease-out);
+}
+
+html.theme-dark .inbox-panel {
+  background: #0f172a;
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.7);
+}
+
+.inbox-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: var(--stroke-w) solid var(--stroke-ink);
+}
+
+.inbox-title {
+  margin: 4px 0 0;
+  color: var(--color-trust);
+  font-size: 1.75rem;
+  line-height: 0.95;
+}
+
+html.role-provider .inbox-title { color: var(--oy-cacao-profundo); }
+html.theme-dark .inbox-title { color: var(--color-text-main); }
+
+.inbox-hint {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.inbox-close {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms var(--ease-out);
+}
+
+.inbox-close:active { transform: scale(0.97); }
+
+.inbox-close:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .inbox-close:hover { background: var(--color-surface-hover); }
+}
+
+.inbox-shredder { margin: 0 auto; }
+
+/* Tarjeta: fondo opaco para que las tiras se vean como papel */
+.inbox-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  height: 76px;
+  padding: 12px 14px;
+  overflow: hidden;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: none;
+}
+
+.inbox-card[data-unread] {
+  border-color: var(--stroke-ink);
+  background: var(--wash-almendra);
+}
+
+.inbox-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+}
+
+.inbox-text { flex: 1; min-width: 0; }
+
+.inbox-card-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  color: var(--color-text-main);
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 800;
+}
+
+.inbox-card-title span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inbox-time {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-text);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.inbox-card-body {
+  display: -webkit-box;
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 12.5px;
+  line-height: 1.4;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.inbox-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding: var(--space-6) var(--space-4) var(--space-8);
+  border: var(--stroke-w) dashed var(--stroke-ink);
+  border-radius: var(--radius-card);
+  background: var(--wash-almendra);
+  text-align: center;
+}
+
+.inbox-empty__title {
+  color: var(--color-text-main);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.inbox-empty p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13.5px;
+}
+
+@keyframes inbox-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inbox-panel { animation: none; }
+  .inbox-close { transition: none; }
+}

@@ -1,0 +1,304 @@
+/* ============================================================
+   AppMenu · Menú flotante de cuenta (Mi perfil, Notificaciones, etc.)
+   Superficie 100% opaca para garantizar legibilidad total sobre
+   cualquier sticker, gradiente o fondo.
+   ============================================================ */
+
+.app-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1040;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.app-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: min(290px, calc(100vw - 24px));
+  max-height: calc(100dvh - 80px);
+  padding: 16px;
+  overflow-y: auto;
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  border: 1.5px solid rgba(15, 23, 42, 0.12) !important;
+  border-radius: var(--radius-lg, 18px);
+  box-shadow:
+    0 24px 55px -10px rgba(15, 23, 42, 0.28),
+    0 10px 24px -4px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transform-origin: top right;
+  animation: app-menu-in 180ms var(--ease-out);
+}
+
+html.theme-dark .app-menu {
+  background-color: #0f172a !important;
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  box-shadow:
+    0 28px 70px -12px rgba(0, 0, 0, 0.85),
+    0 12px 28px -4px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Selector de rol segmentado */
+.app-menu-roles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-full);
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+html.theme-dark .app-menu-roles {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.app-menu-role {
+  padding: 7px 10px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease, transform 160ms var(--ease-out);
+}
+
+html.theme-dark .app-menu-role {
+  color: #94a3b8;
+}
+
+.app-menu-role[data-active] {
+  background: var(--role-primary);
+  color: #ffffff !important;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.app-menu-role:active { transform: scale(0.97); }
+
+/* ── Estilos de BranchedMenu dentro de AppMenu ── */
+.app-menu .bm {
+  padding-left: 12px;
+}
+
+.app-menu .bm::before {
+  background: linear-gradient(to bottom, #cbd5e1 0%, #cbd5e1 75%, transparent 100%);
+}
+
+html.theme-dark .app-menu .bm::before {
+  background: linear-gradient(to bottom, #334155 0%, #334155 75%, transparent 100%);
+}
+
+.app-menu .bm-line {
+  stroke: #cbd5e1;
+}
+
+html.theme-dark .app-menu .bm-line {
+  stroke: #334155;
+}
+
+.app-menu .bm-head {
+  padding: 8px 4px 6px;
+  color: #0f172a !important;
+  font-family: var(--font-display, inherit);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+html.theme-dark .app-menu .bm-head {
+  color: #f8fafc !important;
+}
+
+.app-menu .bm-leaf {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px 0 var(--bm-indent);
+  border-radius: 8px;
+  color: #1e293b !important;
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+html.theme-dark .app-menu .bm-leaf {
+  color: #f1f5f9 !important;
+}
+
+.app-menu .bm-leaf:hover {
+  background: #f1f5f9;
+  color: #0f172a !important;
+}
+
+html.theme-dark .app-menu .bm-leaf:hover {
+  background: #1e293b;
+  color: #ffffff !important;
+}
+
+.app-menu .bm-leaf[data-active] {
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--role-primary, #2563eb) !important;
+  font-weight: 700;
+}
+
+html.theme-dark .app-menu .bm-leaf[data-active] {
+  background: rgba(59, 130, 246, 0.16);
+  color: #60a5fa !important;
+}
+
+/* ── Pie de Menú (Modo oscuro, idioma, cerrar sesión) ── */
+.app-menu-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: var(--space-3);
+  margin-top: 4px;
+  border-top: 1px solid #e2e8f0;
+}
+
+html.theme-dark .app-menu-foot {
+  border-top-color: #334155;
+}
+
+.app-menu-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #1e293b;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms var(--ease-out);
+}
+
+html.theme-dark .app-menu-action {
+  color: #f1f5f9;
+}
+
+.app-menu-action:hover {
+  background: #f1f5f9;
+}
+
+html.theme-dark .app-menu-action:hover {
+  background: #1e293b;
+}
+
+.app-menu-action--danger {
+  color: #dc2626 !important;
+  font-weight: 600;
+}
+
+html.theme-dark .app-menu-action--danger {
+  color: #f87171 !important;
+}
+
+.app-menu-action--danger:hover {
+  background: #fee2e2;
+  color: #b91c1c !important;
+}
+
+html.theme-dark .app-menu-action--danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5 !important;
+}
+
+.app-menu-action:active { transform: scale(0.98); }
+
+.app-menu-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.app-menu-switch-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1e293b;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+html.theme-dark .app-menu-switch-label {
+  color: #f1f5f9;
+}
+
+/* Idioma en Menú */
+.app-menu-lang-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.app-menu-lang-btn {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--dur-fast) ease;
+}
+
+html.theme-dark .app-menu-lang-btn {
+  border-color: #334155;
+  background: #1e293b;
+  color: #94a3b8;
+}
+
+.app-menu-lang-btn--active {
+  background: var(--role-primary, #2563eb);
+  color: #ffffff !important;
+  border-color: var(--role-primary, #2563eb);
+}
+
+.app-menu-lang-sep {
+  opacity: 0.4;
+  font-size: 11px;
+}
+
+.app-menu-role:focus-visible,
+.app-menu-action:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+@keyframes app-menu-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-menu { animation: none; }
+}

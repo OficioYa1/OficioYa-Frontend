@@ -1,0 +1,129 @@
+/* ============================================================
+   DriftWall · muro de fotos en 3D que deriva por columnas
+   Fichas con radio 20 y contorno Cacao; velo plano Cacao en reposo
+   que se retira al señalar o enfocar. Sin sombras.
+   ============================================================ */
+
+.oy-drift {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.oy-drift__mask {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  perspective: var(--dw-persp);
+  perspective-origin: 50% 50%;
+  -webkit-mask-image: var(--dw-mask);
+  mask-image: var(--dw-mask);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+.oy-drift__plane {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: row;
+  transform-style: preserve-3d;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.oy-drift__col {
+  position: relative;
+  width: calc(var(--dw-tile-w) + var(--dw-gap));
+  transform-style: preserve-3d;
+}
+
+.oy-drift__track {
+  display: flex;
+  flex-direction: column;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.oy-drift__tile {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 100%;
+  height: calc(var(--dw-tile-h) + var(--dw-gap));
+  outline: none;
+  transform-style: preserve-3d;
+}
+
+.oy-drift__tile[role='button'],
+a.oy-drift__tile { cursor: pointer; }
+
+.oy-drift__inner {
+  position: absolute;
+  inset: calc(var(--dw-gap) / 2);
+  display: block;
+  overflow: hidden;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: var(--dw-radius);
+  background: var(--oy-almendra-claro);
+  opacity: var(--dw-dim);
+  pointer-events: none;
+  transform: translateZ(0);
+  transition: transform 420ms var(--ease-out), opacity 420ms var(--ease-out);
+}
+
+.oy-drift__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  filter: grayscale(var(--dw-gray));
+  transition: filter 420ms var(--ease-out);
+}
+
+.oy-drift__overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--dw-overlay);
+  opacity: 0.38;
+  pointer-events: none;
+  transition: opacity 420ms var(--ease-out);
+}
+
+.oy-drift__tile.is-active .oy-drift__inner,
+.oy-drift__tile:focus-visible .oy-drift__inner {
+  opacity: 1;
+  transform: translateZ(var(--dw-lift));
+}
+
+.oy-drift__tile.is-active .oy-drift__img,
+.oy-drift__tile:focus-visible .oy-drift__img { filter: grayscale(0); }
+
+.oy-drift__tile.is-active .oy-drift__overlay,
+.oy-drift__tile:focus-visible .oy-drift__overlay { opacity: 0; }
+
+.oy-drift__tile:focus-visible .oy-drift__inner {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.oy-drift__toggle {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 2;
+}
+
+.oy-drift__toggle:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oy-drift__inner,
+  .oy-drift__img,
+  .oy-drift__overlay { transition: none; }
+}

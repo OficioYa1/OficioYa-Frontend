@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import type { ServiceRequest, ServiceStatus } from '../../types';
+import { PeekRating } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
+import { PageHero } from '../../components/layout/PageHero';
+import { MascotAvatar } from '../../components/mascot/MascotAvatar';
+import { mediaService, MediaUploadError } from '../../services/mock/mediaService';
+import { motion, AnimatePresence } from 'motion/react';
+import './Services.css';
 import {
   Wrench,
   CheckCircle2,
@@ -8,25 +14,47 @@ import {
   Clock,
   MapPin,
   Calendar,
-  AlertTriangle,
   Star,
-  Sparkles,
   Camera,
   RotateCcw,
   BarChart3,
   UserCheck,
-  Send,
-  X
+  X,
+  MessageSquareWarning,
+  ClipboardList
 } from 'lucide-react';
-import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 
 interface MyServicesViewProps {
   services: ServiceRequest[];
-  onUpdateServiceStatus: (serviceId: string, newStatus: ServiceStatus, reason?: string) => void;
+  onUpdateServiceStatus: (
+    serviceId: string,
+    newStatus: ServiceStatus,
+    reason?: string,
+    extra?: Partial<ServiceRequest>
+  ) => void;
   onSubmitReview: (serviceId: string, rating: number, comment: string) => void;
   onOpenReport: (service: ServiceRequest) => void;
   onRehireWorker?: (workerId: string, workerName: string, trade: string) => void;
+  /** OFY-35: el trabajador califica al contratante. */
+  onRateClient?: (serviceId: string, rating: number, comment: string) => void;
 }
+
+// [OFY-72]: Consultar estado y respuestas de solicitudes enviadas
+// [OFY-44]: Consultar trabajos completados e historial histórico
+const STATUS_META: Record<ServiceStatus, { label: string; tone: string }> = {
+  pendiente: { label: 'Pendiente', tone: 'amarillo' },
+  en_curso: { label: 'En progreso', tone: 'marino' },
+  finalizado: { label: 'Completado', tone: 'esmeralda' },
+  cancelado: { label: 'Cancelado', tone: 'cancelado' }
+};
+
+const FILTER_TABS: { id: ServiceStatus | 'todos'; label: string }[] = [
+  { id: 'todos', label: 'Todos' },
+  { id: 'pendiente', label: 'Pendientes' },
+  { id: 'en_curso', label: 'En progreso / Aceptados' },
+  { id: 'finalizado', label: 'Completados' },
+  { id: 'cancelado', label: 'Cancelados' }
+];
 
 const CANCEL_REASONS = [
   'El profesional no se presentó en la hora pactada',
@@ -42,30 +70,30 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
   onUpdateServiceStatus,
   onSubmitReview,
   onOpenReport,
-  onRehireWorker
+  onRehireWorker,
+  onRateClient
 }) => {
   const { role } = useAuth();
   const [filterStatus, setFilterStatus] = useState<ServiceStatus | 'todos'>('todos');
 
-  // Modal Cancelación con justificación obligatoria (RF-76)
-  const [cancellingService, setCancellingService] = useState<ServiceRequest | null>(null);
+  type InlineActionType = 'complete' | 'cancel' | 'review';
+  const [activeInlineAction, setActiveInlineAction] = useState<{
+    serviceId: string;
+    type: InlineActionType;
+  } | null>(null);
+
+  // Formulario Cancelación con justificación obligatoria (RF-76)
   const [selectedReason, setSelectedReason] = useState<string>(CANCEL_REASONS[0]);
-  const [otherReason, setOtherReason] = useState<string>('');
 
-  // Modal Finalización con Evidencia Fotográfica (RF-62, RF-29)
-  const [completingService, setCompletingService] = useState<ServiceRequest | null>(null);
-  const [completionPhotoUrl, setCompletionPhotoUrl] = useState<string>('https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=500&auto=format&fit=crop');
+  // Formulario Finalización con Evidencia Fotográfica (RF-62, RF-29)
+  const [completionPhotoUrl, setCompletionPhotoUrl] = useState<string>('');
+  const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
+  const [evidenceError, setEvidenceError] = useState<string | null>(null);
 
-  // Modal Calificación Bilateral (RF-34, RF-35, RF-36)
-  const [reviewingService, setReviewingService] = useState<ServiceRequest | null>(null);
+  // Formulario Calificación Bilateral (RF-34, RF-35, RF-36)
   const [reviewRating, setReviewRating] = useState<number>(5);
   const [reviewComment, setReviewComment] = useState<string>('');
   const [reviewSuccess, setReviewSuccess] = useState<boolean>(false);
-
-  // Trabajador calificando al contratante (RF-35)
-  const [ratingClientService, setRatingClientService] = useState<ServiceRequest | null>(null);
-  const [clientRatingValue, setClientRatingValue] = useState<number>(5);
-  const [clientRatingComment, setClientRatingComment] = useState<string>('Excelente cliente, trato muy amable y pago puntual.');
 
   // Vista de estadísticas / más solicitados (RF-46)
   const [showStatsModal, setShowStatsModal] = useState(false);
@@ -99,92 +127,114 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
     ).values()
   );
 
-  const handleConfirmCancel = () => {
-    if (!cancellingService) return;
-    const finalReason = selectedReason === 'Otro motivo' ? otherReason : selectedReason;
-    onUpdateServiceStatus(cancellingService.id, 'cancelado', finalReason);
-    setCancellingService(null);
+  const handleConfirmCancel = (srv: ServiceRequest) => {
+    onUpdateServiceStatus(srv.id, 'cancelado', selectedReason);
+    setActiveInlineAction(null);
   };
 
-  const handleConfirmFinalize = (service: ServiceRequest) => {
-    setCompletingService(service);
-  };
-
-  const handleExecuteFinalize = () => {
-    if (!completingService) return;
-    onUpdateServiceStatus(completingService.id, 'finalizado');
-    const finalized = completingService;
-    setCompletingService(null);
-
-    // Habilitar calificación bilateral (RF-29, RF-34, RF-35)
-    if (role === 'seeker') {
-      setReviewingService(finalized);
-      setReviewRating(5);
-      setReviewComment('');
-      setReviewSuccess(false);
-    } else {
-      setRatingClientService(finalized);
+  // RF-62: foto del trabajo terminado tomada con la cámara o elegida de la galería
+  const handleEvidenceFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setEvidenceError(null);
+    setIsUploadingEvidence(true);
+    try {
+      const media = await mediaService.uploadImage(file, { folder: 'evidence', maxSide: 900 });
+      setCompletionPhotoUrl(media.url);
+    } catch (err) {
+      setEvidenceError(err instanceof MediaUploadError ? err.message : 'No pudimos leer la foto. Intenta con otra.');
+    } finally {
+      setIsUploadingEvidence(false);
     }
   };
 
-  const handleSendReview = () => {
-    if (!reviewingService) return;
-    onSubmitReview(reviewingService.id, reviewRating, reviewComment);
+  // RF-78: el profesional cambia el estado (Pendiente / En progreso / Finalizado)
+  const handleProviderStatus = (service: ServiceRequest, next: ServiceStatus) => {
+    if (next === 'finalizado') {
+      setCompletionPhotoUrl('');
+      setEvidenceError(null);
+      setActiveInlineAction({ serviceId: service.id, type: 'complete' });
+    } else {
+      onUpdateServiceStatus(service.id, next);
+    }
+  };
+
+  const handleExecuteFinalize = (srv: ServiceRequest) => {
+    const evidence = completionPhotoUrl.trim();
+    onUpdateServiceStatus(
+      srv.id,
+      'finalizado',
+      undefined,
+      evidence ? { completionEvidence: [evidence] } : undefined
+    );
+    // Habilitar calificación bilateral inmediata desplegada inline
+    setReviewRating(5);
+    setReviewComment(role === 'seeker' ? '' : 'Excelente cliente, trato muy amable y pago puntual.');
+    setReviewSuccess(false);
+    setActiveInlineAction({ serviceId: srv.id, type: 'review' });
+  };
+
+  const handleSendReview = (srv: ServiceRequest) => {
+    if (role === 'seeker') {
+      onSubmitReview(srv.id, reviewRating, reviewComment);
+    } else {
+      onRateClient?.(srv.id, reviewRating, reviewComment);
+    }
     setReviewSuccess(true);
     setTimeout(() => {
-      setReviewingService(null);
+      setActiveInlineAction(null);
       setReviewSuccess(false);
     }, 1800);
   };
 
-  const handleSendClientRating = () => {
-    setRatingClientService(null);
-  };
+  const isSeeker = role === 'seeker';
+  const activeCount = services.filter(s => s.status === 'en_curso' || s.status === 'pendiente').length;
+  const cancelledCount = services.filter(s => s.status === 'cancelado').length;
 
   return (
-    <div className="services-module container" style={{ padding: '24px 0 60px' }}>
+    <div className="services-module container">
       {/* Cabecera con Botón de Estadísticas (RF-46) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h2 style={{ fontSize: '1.4rem' }}>Mis Servicios & Solicitudes (RF-44, RF-72)</h2>
-          <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-            Seguimiento de citas, cambios de estado y reputación en Bogotá D.C.
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button
-            onClick={() => setShowStatsModal(true)}
-            className="btn btn-secondary"
-            style={{ padding: '6px 14px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            <BarChart3 size={15} /> Estadísticas de Servicios (RF-46)
+      <PageHero
+        tone={isSeeker ? 'marino' : 'fuego'}
+        eyebrow={<><ClipboardList size={14} aria-hidden="true" /> {isSeeker ? 'Mis solicitudes' : 'Mis clientes'}</>}
+        title="Mis Servicios & Solicitudes"
+        subtitle="Seguimiento de citas, cambios de estado y reputación en Bogotá D.C."
+        actions={
+          <button onClick={() => setShowStatsModal(true)} className="btn btn-secondary">
+            <BarChart3 size={16} aria-hidden="true" /> Estadísticas de Servicios
           </button>
+        }
+        stickers={[
+          { icon: <Wrench size={26} />, tone: 'amarillo', style: { top: '14%', right: '6%', rotate: '-10deg' } },
+          { icon: <Star size={24} />, tone: 'esmeralda', style: { top: '46%', right: '16%', rotate: '8deg' } }
+        ]}
+      />
+
+      <div className="svc-stats">
+        <div className="oy-stat svc-stat svc-stat--marino">
+          <span className="oy-stat__value">{activeCount}</span>
+          <span className="oy-stat__label">Activos</span>
+        </div>
+        <div className="oy-stat svc-stat svc-stat--esmeralda">
+          <span className="oy-stat__value">{completedServices.length}</span>
+          <span className="oy-stat__label">Completados</span>
+        </div>
+        <div className="oy-stat svc-stat svc-stat--gris">
+          <span className="oy-stat__value">{cancelledCount}</span>
+          <span className="oy-stat__label">Cancelados</span>
         </div>
       </div>
 
       {/* Filtros por estado (RF-78: pendiente, en_curso, finalizado, cancelado) */}
-      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '20px' }}>
-        {[
-          { id: 'todos', label: 'Todos' },
-          { id: 'en_curso', label: 'En progreso / Aceptados' },
-          { id: 'finalizado', label: 'Completados' },
-          { id: 'cancelado', label: 'Cancelados' }
-        ].map(tab => (
+      <div className="svc-filters" role="group" aria-label="Filtrar servicios por estado">
+        {FILTER_TABS.map(tab => (
           <button
             key={tab.id}
-            onClick={() => setFilterStatus(tab.id as ServiceStatus | 'todos')}
-            style={{
-              padding: '6px 14px',
-              borderRadius: '999px',
-              fontSize: '12px',
-              fontWeight: 700,
-              background: filterStatus === tab.id ? 'var(--role-primary)' : 'var(--color-surface)',
-              color: filterStatus === tab.id ? '#FFFFFF' : 'var(--color-text-muted)',
-              border: '1px solid var(--color-border)',
-              transition: 'all 0.2s',
-              whiteSpace: 'nowrap'
-            }}
+            type="button"
+            className="oy-chip"
+            aria-pressed={filterStatus === tab.id}
+            onClick={() => setFilterStatus(tab.id)}
           >
             {tab.label}
           </button>
@@ -192,50 +242,25 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
       </div>
 
       {/* RF-47 & RF-48: Sección de Trabajadores Contratados Anteriormente */}
-      {role === 'seeker' && previouslyHiredWorkers.length > 0 && (
-        <div style={{ marginBottom: '28px', background: 'var(--color-surface)', padding: '16px 20px', borderRadius: '18px', border: '1px solid var(--color-border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <h3 style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <UserCheck size={18} color="var(--role-primary)" /> Profesionales Contratados Anteriormente (RF-47)
-            </h3>
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-              Recontrata a tu profesional de confianza con 1 clic (RF-48)
-            </span>
+      {isSeeker && previouslyHiredWorkers.length > 0 && (
+        <section className="oy-panel oy-panel--almendra svc-rehire">
+          <div className="svc-rehire__head">
+            <h2 className="svc-rehire__title">
+              <UserCheck size={20} aria-hidden="true" /> Profesionales Contratados Anteriormente
+            </h2>
+            <span className="svc-muted">Recontrata a tu profesional de confianza con 1 clic</span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
+          <div className="svc-rehire__grid">
             {previouslyHiredWorkers.map(w => (
-              <div
-                key={w.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 14px',
-                  background: 'var(--color-surface-hover)',
-                  borderRadius: '12px'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div
-                    style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '50%',
-                      background: w.avatarColor,
-                      color: '#FFF',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 800,
-                      fontSize: '13px'
-                    }}
-                  >
+              <div key={w.id} className="svc-rehire__item">
+                <div className="svc-person">
+                  <span className="svc-avatar" style={{ background: w.avatarColor }} aria-hidden="true">
                     {w.name.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <span style={{ fontWeight: 700, fontSize: '13px', display: 'block' }}>{w.name}</span>
-                    <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{w.trade}</span>
+                  </span>
+                  <div className="svc-person__text">
+                    <span className="svc-person__name">{w.name}</span>
+                    <span className="svc-muted">{w.trade}</span>
                   </div>
                 </div>
 
@@ -244,485 +269,534 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                     if (onRehireWorker) {
                       onRehireWorker(w.id, w.name, w.trade);
                     } else {
-                      alert(`Iniciando nueva solicitud con ${w.name} (RF-48)`);
+                      alert(`Iniciando nueva solicitud con ${w.name}`);
                     }
                   }}
-                  className="btn btn-secondary"
-                  style={{ fontSize: '11px', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                  title="Volver a contactar a este trabajador (RF-48)"
+                  className="btn btn-secondary svc-btn-sm"
+                  title="Volver a contactar a este trabajador"
                 >
-                  <RotateCcw size={12} /> Volver a contratar (RF-48)
+                  <RotateCcw size={13} aria-hidden="true" /> Volver a contratar
                 </button>
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Lista de Servicios */}
       {filteredServices.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--color-text-muted)' }}>
-          <Wrench size={40} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
-          <h3 style={{ fontSize: '1.2rem', marginBottom: '6px' }}>No hay servicios en este estado</h3>
-          <p style={{ fontSize: '13px' }}>Tus solicitudes activas o pasadas aparecerán en esta sección.</p>
+        <div className="oy-empty svc-empty">
+          <MascotAvatar expression="pensativo" size="md" animate="none" />
+          <h3 className="oy-empty__title">No hay servicios en este estado</h3>
+          <p className="oy-empty__text">Tus solicitudes activas o pasadas aparecerán en esta sección.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '18px' }}>
+        <div className="svc-grid">
           {filteredServices.map(srv => {
-            let stripeColor = '#2563EB';
-            let statusLabel = 'En progreso (RF-78)';
-            if (srv.status === 'finalizado') {
-              stripeColor = '#10B981';
-              statusLabel = 'Completado (RF-29)';
-            } else if (srv.status === 'cancelado') {
-              stripeColor = '#EF4444';
-              statusLabel = 'Cancelado (RF-76)';
-            }
+            const baseMeta = STATUS_META[srv.status] ?? STATUS_META.en_curso;
+            const meta = srv.isExpired ? { ...baseMeta, label: 'Expirada' } : baseMeta;
 
             return (
-              <div
-                key={srv.id}
-                className="card"
-                style={{
-                  borderLeft: `5px solid ${stripeColor}`,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  position: 'relative'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-                    <div>
-                      <span className="badge" style={{ background: 'var(--color-surface-hover)', marginBottom: '4px' }}>
-                        {statusLabel}
-                      </span>
-                      <h4 style={{ fontSize: '16px', fontWeight: 800 }}>
-                        {role === 'seeker' ? srv.workerName : srv.clientName}
-                      </h4>
-                      <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                        {srv.workerTrade}
-                      </span>
-                    </div>
+              <article key={srv.id} className={`svc-card svc-card--${meta.tone}`}>
+                <div className="svc-card__top">
+                  <span className={`svc-status svc-status--${meta.tone}`}>{meta.label}</span>
+                  <span className="svc-amount">${srv.amount.toLocaleString()} COP</span>
+                </div>
 
-                    <span style={{ fontWeight: 800, fontSize: '15px', color: 'var(--color-success)' }}>
-                      ${srv.amount.toLocaleString()} COP
-                    </span>
-                  </div>
+                <div className="svc-card__body">
+                  <h3 className="svc-card__name">
+                    {isSeeker ? srv.workerName : srv.clientName}
+                  </h3>
+                  <span className="svc-trade">{srv.workerTrade}</span>
 
-                  <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', background: 'var(--color-surface-hover)', padding: '10px', borderRadius: '8px', marginBottom: '12px' }}>
-                    "{srv.problemDescription}"
-                  </p>
+                  <p className="svc-quote">"{srv.problemDescription}"</p>
 
                   {/* Foto de la solicitud (RF-20) */}
                   {srv.photos && srv.photos.length > 0 && (
-                    <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <img
-                        src={srv.photos[0]}
-                        alt="Evidencia del problema"
-                        style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }}
-                      />
-                      <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
-                        Foto inicial adjunta (RF-20)
-                      </span>
+                    <div className="svc-photo">
+                      <img src={srv.photos[0]} alt="Evidencia del problema" />
+                      <span className="svc-muted">Foto inicial adjunta</span>
                     </div>
                   )}
 
                   {/* Evidencia fotográfica de finalización (RF-62) */}
                   {srv.completionEvidence && srv.completionEvidence.length > 0 && (
-                    <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', background: '#ECFDF5', padding: '6px 10px', borderRadius: '8px' }}>
-                      <img
-                        src={srv.completionEvidence[0]}
-                        alt="Trabajo terminado"
-                        style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }}
-                      />
-                      <span style={{ fontSize: '11px', color: '#065F46', fontWeight: 600 }}>
-                        ✓ Evidencia fotográfica del arreglo terminado (RF-62)
+                    <div className="svc-photo svc-photo--done">
+                      <img src={srv.completionEvidence[0]} alt="Trabajo terminado" />
+                      <span>
+                        <CheckCircle2 size={13} aria-hidden="true" /> Evidencia fotográfica del arreglo terminado
                       </span>
                     </div>
                   )}
 
                   {/* Motivo de cancelación si aplica (RF-76) */}
                   {srv.cancelReason && (
-                    <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#991B1B', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', marginBottom: '12px' }}>
-                      <strong>Motivo de cancelación (RF-76):</strong> {srv.cancelReason}
+                    <div className="svc-cancel-note">
+                      <strong>Motivo de cancelación:</strong> {srv.cancelReason}
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '14px' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Calendar size={13} /> {srv.date}
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Clock size={13} /> {srv.time}
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <MapPin size={13} /> {srv.address}
-                    </span>
-                  </div>
+                  <ul className="svc-meta">
+                    <li><Calendar size={13} aria-hidden="true" /> {srv.date}</li>
+                    <li><Clock size={13} aria-hidden="true" /> {srv.time}</li>
+                    <li><MapPin size={13} aria-hidden="true" /> {srv.address}</li>
+                  </ul>
                 </div>
 
                 {/* Acciones del Servicio (RF-29, RF-34, RF-35, RF-76, RF-78) */}
-                <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {srv.status === 'en_curso' && (
-                    <>
-                      <button
-                        onClick={() => handleConfirmFinalize(srv)}
-                        className="btn btn-primary"
-                        style={{ flex: 1, padding: '8px', fontSize: '12px', background: '#10B981' }}
-                      >
-                        <CheckCircle2 size={14} /> Marcar Completado (RF-29)
-                      </button>
+                {(srv.status === 'pendiente' || srv.status === 'en_curso' || srv.status === 'finalizado') && (
+                  <div className="svc-card__actions">
+                    {!isSeeker && (srv.status === 'pendiente' || srv.status === 'en_curso') && (
+                      <div className="svc-status-field">
+                        <label htmlFor={`svc-status-${srv.id}`} className="svc-label">Estado del servicio</label>
+                        <select
+                          id={`svc-status-${srv.id}`}
+                          className="input-base"
+                          value={srv.status}
+                          onChange={e => handleProviderStatus(srv, e.target.value as ServiceStatus)}
+                        >
+                          <option value="pendiente" disabled={srv.status !== 'pendiente'}>Pendiente</option>
+                          <option value="en_curso">En progreso</option>
+                          <option value="finalizado">Finalizado</option>
+                        </select>
+                      </div>
+                    )}
 
-                      <button
-                        onClick={() => setCancellingService(srv)}
-                        className="btn btn-secondary"
-                        style={{ flex: 1, padding: '8px', fontSize: '12px', color: 'var(--color-danger)' }}
-                      >
-                        <XCircle size={14} /> Cancelar Servicio (RF-76)
-                      </button>
-                    </>
-                  )}
+                    {srv.status === 'pendiente' && (
+                      <>
+                        {isSeeker && (
+                          <span className="svc-muted svc-pending-note">
+                            <Clock size={13} aria-hidden="true" /> Esperando respuesta del profesional
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'cancel') {
+                              setActiveInlineAction(null);
+                            } else {
+                              setSelectedReason(CANCEL_REASONS[0]);
+                              setActiveInlineAction({ serviceId: srv.id, type: 'cancel' });
+                            }
+                          }}
+                          className="btn btn-secondary svc-btn-cancel"
+                          aria-expanded={activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'cancel'}
+                        >
+                          <XCircle size={15} aria-hidden="true" /> {isSeeker ? 'Retirar solicitud' : 'Rechazar'}
+                        </button>
+                      </>
+                    )}
 
-                  {srv.status === 'finalizado' && (
-                    <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      {role === 'seeker' ? (
-                        srv.reviewDone ? (
-                          <span style={{ fontSize: '12px', color: '#10B981', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            ✓ Reseña verificada publicada (RF-36)
+                    {srv.status === 'en_curso' && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'complete') {
+                              setActiveInlineAction(null);
+                            } else {
+                              setCompletionPhotoUrl('');
+                              setEvidenceError(null);
+                              setActiveInlineAction({ serviceId: srv.id, type: 'complete' });
+                            }
+                          }}
+                          className="btn btn-primary svc-btn-complete"
+                          aria-expanded={activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'complete'}
+                        >
+                          <CheckCircle2 size={15} aria-hidden="true" /> Marcar Completado
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'cancel') {
+                              setActiveInlineAction(null);
+                            } else {
+                              setSelectedReason(CANCEL_REASONS[0]);
+                              setActiveInlineAction({ serviceId: srv.id, type: 'cancel' });
+                            }
+                          }}
+                          className="btn btn-secondary svc-btn-cancel"
+                          aria-expanded={activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'cancel'}
+                        >
+                          <XCircle size={15} aria-hidden="true" /> Cancelar Servicio
+                        </button>
+                      </>
+                    )}
+
+                    {srv.status === 'finalizado' && (
+                      <>
+                        {isSeeker ? (
+                          srv.reviewDone ? (
+                            <span className="svc-review-done">
+                              <CheckCircle2 size={14} aria-hidden="true" /> Reseña verificada publicada
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'review') {
+                                  setActiveInlineAction(null);
+                                } else {
+                                  setReviewRating(5);
+                                  setReviewComment('');
+                                  setReviewSuccess(false);
+                                  setActiveInlineAction({ serviceId: srv.id, type: 'review' });
+                                }
+                              }}
+                              className="btn btn-primary svc-btn-sm"
+                              aria-expanded={activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'review'}
+                            >
+                              <Star size={14} aria-hidden="true" /> Calificar Profesional
+                            </button>
+                          )
+                        ) : srv.workerRatedClient ? (
+                          <span className="svc-review-done">
+                            <CheckCircle2 size={14} aria-hidden="true" /> Contratante calificado ({srv.clientRatingByWorker}/5)
                           </span>
                         ) : (
                           <button
+                            type="button"
                             onClick={() => {
-                              setReviewingService(srv);
-                              setReviewRating(5);
-                              setReviewComment('');
+                              if (activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'review') {
+                                setActiveInlineAction(null);
+                              } else {
+                                setReviewRating(5);
+                                setReviewComment('Excelente cliente, trato muy amable y pago puntual.');
+                                setReviewSuccess(false);
+                                setActiveInlineAction({ serviceId: srv.id, type: 'review' });
+                              }
                             }}
-                            className="btn btn-primary"
-                            style={{ fontSize: '12px', padding: '6px 12px' }}
+                            className="btn btn-secondary svc-btn-sm"
+                            aria-expanded={activeInlineAction?.serviceId === srv.id && activeInlineAction.type === 'review'}
                           >
-                            <Star size={13} /> Calificar Profesional (RF-34)
+                            <Star size={14} aria-hidden="true" /> Calificar Contratante
                           </button>
-                        )
-                      ) : (
-                        <button
-                          onClick={() => setRatingClientService(srv)}
-                          className="btn btn-secondary"
-                          style={{ fontSize: '12px', padding: '6px 12px' }}
-                        >
-                          <Star size={13} /> Calificar Contratante (RF-35)
+                        )}
+
+                        <button onClick={() => onOpenReport(srv)} className="svc-link-btn">
+                          <MessageSquareWarning size={13} aria-hidden="true" /> Reportar anomalía
                         </button>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Formulario Desplegable Animado Inline (Sin Popups) */}
+                <AnimatePresence>
+                  {activeInlineAction?.serviceId === srv.id && (
+                    <motion.div
+                      key={`inline-${activeInlineAction.type}-${srv.id}`}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                      className={`svc-inline-form svc-inline-form--${activeInlineAction.type}`}
+                      style={{ overflow: 'hidden' }}
+                    >
+                      {/* FORMULARIO DE COMPLETAR */}
+                      {activeInlineAction.type === 'complete' && (
+                        <>
+                          <div className="svc-inline-form__header">
+                            <div className="svc-inline-form__title-row">
+                              <span className="svc-inline-form__icon svc-inline-form__icon--esmeralda" aria-hidden="true">
+                                <Camera size={18} />
+                              </span>
+                              <div>
+                                <h4 className="svc-inline-form__title">Finalizar Trabajo</h4>
+                                <span className="svc-muted" style={{ fontSize: '11.5px' }}>
+                                  Adjunta evidencia fotográfica opcional del arreglo terminado
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              className="oy-icon-btn svc-inline-form__close"
+                              onClick={() => setActiveInlineAction(null)}
+                              aria-label="Cerrar formulario"
+                            >
+                              <X size={15} />
+                            </button>
+                          </div>
+
+                          <div className="svc-inline-form__body">
+                            <div className="svc-inline-upload-box">
+                              <label htmlFor={`inline-photo-${srv.id}`} className="svc-inline-upload-btn">
+                                <Camera size={16} aria-hidden="true" />
+                                <span>{isUploadingEvidence ? 'Subiendo foto…' : 'Tomar o subir foto de evidencia'}</span>
+                              </label>
+                              <input
+                                id={`inline-photo-${srv.id}`}
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                style={{ display: 'none' }}
+                                onChange={handleEvidenceFile}
+                                disabled={isUploadingEvidence}
+                              />
+                              {evidenceError && (
+                                <span className="svc-muted" role="alert" style={{ color: 'var(--color-danger)' }}>
+                                  {evidenceError}
+                                </span>
+                              )}
+
+                              <div className="svc-inline-url-row">
+                                <input
+                                  type="text"
+                                  className="input-base svc-inline-input"
+                                  value={completionPhotoUrl.startsWith('data:') ? '' : completionPhotoUrl}
+                                  onChange={e => setCompletionPhotoUrl(e.target.value)}
+                                  placeholder="O pega una URL de la imagen..."
+                                />
+                              </div>
+
+                              {completionPhotoUrl && (
+                                <div className="svc-inline-preview">
+                                  <img src={completionPhotoUrl} alt="Vista previa de evidencia" />
+                                  <button
+                                    type="button"
+                                    className="svc-inline-remove-photo"
+                                    onClick={() => setCompletionPhotoUrl('')}
+                                    aria-label="Quitar foto"
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="svc-inline-form__actions">
+                              <button
+                                type="button"
+                                onClick={() => setActiveInlineAction(null)}
+                                className="btn btn-secondary"
+                              >
+                                Cancelar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleExecuteFinalize(srv)}
+                                className="btn btn-primary svc-btn-complete"
+                                disabled={isUploadingEvidence}
+                              >
+                                <CheckCircle2 size={14} aria-hidden="true" /> Confirmar y Finalizar
+                              </button>
+                            </div>
+                          </div>
+                        </>
                       )}
 
-                      <button
-                        onClick={() => onOpenReport(srv)}
-                        style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', fontSize: '11px', cursor: 'pointer' }}
-                      >
-                        Reportar anomalía (RF-64)
-                      </button>
-                    </div>
+                      {/* FORMULARIO DE CANCELAR */}
+                      {activeInlineAction.type === 'cancel' && (
+                        <>
+                          <div className="svc-inline-form__header">
+                            <div className="svc-inline-form__title-row">
+                              <span className="svc-inline-form__icon svc-inline-form__icon--danger" aria-hidden="true">
+                                <XCircle size={18} />
+                              </span>
+                              <div>
+                                <h4 className="svc-inline-form__title">
+                                  {srv.status === 'pendiente'
+                                    ? (isSeeker ? 'Retirar Solicitud' : 'Rechazar Solicitud')
+                                    : 'Cancelar Servicio en Progreso'}
+                                </h4>
+                                <span className="svc-muted" style={{ fontSize: '11.5px' }}>
+                                  Por transparencia y reputación, selecciona el motivo obligatorio
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              className="oy-icon-btn svc-inline-form__close"
+                              onClick={() => setActiveInlineAction(null)}
+                              aria-label="Cerrar formulario"
+                            >
+                              <X size={15} />
+                            </button>
+                          </div>
+
+                          <div className="svc-inline-form__body">
+                            <fieldset className="svc-reasons svc-reasons--compact">
+                              <legend className="sr-only">Motivo de cancelación</legend>
+                              {CANCEL_REASONS.map((r, i) => (
+                                <label
+                                  key={i}
+                                  className="svc-reason svc-reason--compact"
+                                  data-checked={selectedReason === r ? '' : undefined}
+                                >
+                                  <input
+                                    type="radio"
+                                    name={`cancelReason-${srv.id}`}
+                                    checked={selectedReason === r}
+                                    onChange={() => setSelectedReason(r)}
+                                  />
+                                  <span>{r}</span>
+                                </label>
+                              ))}
+                            </fieldset>
+
+                            <div className="svc-inline-form__actions">
+                              <button
+                                type="button"
+                                onClick={() => setActiveInlineAction(null)}
+                                className="btn btn-secondary"
+                              >
+                                Volver
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleConfirmCancel(srv)}
+                                className="btn btn-primary svc-btn-danger"
+                              >
+                                <XCircle size={14} aria-hidden="true" /> Confirmar Cancelación
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* FORMULARIO DE CALIFICAR */}
+                      {activeInlineAction.type === 'review' && (
+                        <>
+                          {!reviewSuccess ? (
+                            <>
+                              <div className="svc-inline-form__header">
+                                <div className="svc-inline-form__title-row">
+                                  <span className="svc-inline-form__icon svc-inline-form__icon--amarillo" aria-hidden="true">
+                                    <Star size={18} />
+                                  </span>
+                                  <div>
+                                    <h4 className="svc-inline-form__title">
+                                      {isSeeker
+                                        ? `Calificar a ${srv.workerName}`
+                                        : `Calificar al Contratante ${srv.clientName}`}
+                                    </h4>
+                                    <span className="svc-muted" style={{ fontSize: '11.5px' }}>
+                                      {isSeeker
+                                        ? `Vinculada a la orden verificada ${srv.id}`
+                                        : 'Valora el trato, las facilidades y la puntualidad'}
+                                    </span>
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  className="oy-icon-btn svc-inline-form__close"
+                                  onClick={() => setActiveInlineAction(null)}
+                                  aria-label="Cerrar formulario"
+                                >
+                                  <X size={15} />
+                                </button>
+                              </div>
+
+                              <div className="svc-inline-form__body">
+                                <div className="svc-rating svc-rating--compact">
+                                  <PeekRating
+                                    value={reviewRating}
+                                    onChange={v => setReviewRating(v || 1)}
+                                    allowClear={false}
+                                    size={28}
+                                    ariaLabel={isSeeker ? 'Calificación del profesional' : 'Calificación del contratante'}
+                                  />
+                                </div>
+
+                                <textarea
+                                  className="input-base svc-inline-textarea"
+                                  rows={2}
+                                  aria-label={isSeeker ? 'Comentario de la reseña' : 'Comentario sobre el contratante'}
+                                  placeholder={
+                                    isSeeker
+                                      ? 'Puntualidad, calidad técnica y cumplimiento del servicio...'
+                                      : 'Trato amable, facilidades brindadas y pago puntual...'
+                                  }
+                                  value={reviewComment}
+                                  onChange={e => setReviewComment(e.target.value)}
+                                />
+
+                                <div className="svc-inline-form__actions">
+                                  <button
+                                    type="button"
+                                    onClick={() => setActiveInlineAction(null)}
+                                    className="btn btn-secondary"
+                                  >
+                                    Omitir
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSendReview(srv)}
+                                    className="btn btn-primary"
+                                  >
+                                    <Star size={14} aria-hidden="true" /> Publicar Calificación
+                                  </button>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="svc-inline-success" role="status">
+                              <MascotAvatar expression="entusiasta" size="sm" animate="none" />
+                              <div>
+                                <h5 style={{ margin: 0, fontSize: '13px', fontWeight: 800 }}>¡Calificación Registrada!</h5>
+                                <p className="svc-muted" style={{ margin: 0, fontSize: '11.5px' }}>
+                                  La reputación digital se actualizó en tiempo real.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </motion.div>
                   )}
-                </div>
-              </div>
+                </AnimatePresence>
+              </article>
             );
           })}
         </div>
       )}
 
-      {/* Modal Finalizar Trabajo con Evidencia Fotográfica (RF-29, RF-62) */}
-      {completingService && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.65)',
-            zIndex: 1100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(5px)',
-            padding: '16px'
-          }}
-        >
-          <div className="card" style={{ width: '100%', maxWidth: '480px', borderRadius: '24px', padding: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#ECFDF5', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Camera size={22} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1.25rem' }}>Finalizar Trabajo (RF-29)</h3>
-                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                  Adjunta evidencia fotográfica del arreglo terminado (RF-62)
-                </span>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                Foto del resultado final / respaldo
-              </label>
-              <input
-                type="text"
-                className="input-base"
-                value={completionPhotoUrl}
-                onChange={e => setCompletionPhotoUrl(e.target.value)}
-                placeholder="URL de la fotografía del trabajo terminado"
-                style={{ fontSize: '12px', marginBottom: '8px' }}
-              />
-              {completionPhotoUrl && (
-                <div style={{ height: '140px', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
-                  <img src={completionPhotoUrl} alt="Vista previa trabajo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button onClick={() => setCompletingService(null)} className="btn btn-secondary" style={{ flex: 1 }}>
-                Cancelar
-              </button>
-              <button onClick={handleExecuteFinalize} className="btn btn-primary" style={{ flex: 1, background: '#10B981' }}>
-                Confirmar y Cerrar Servicio
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Cancelar Servicio con Justificación Obligatoria (RF-76) */}
-      {cancellingService && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.65)',
-            zIndex: 1100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(5px)',
-            padding: '16px'
-          }}
-        >
-          <div className="card" style={{ width: '100%', maxWidth: '460px', borderRadius: '24px', padding: '24px' }}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '10px', color: 'var(--color-danger)' }}>
-              Cancelar Servicio (RF-76)
-            </h3>
-            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '14px' }}>
-              Para cancelar un servicio aceptado se requiere una justificación obligatoria por transparencia.
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
-              {CANCEL_REASONS.map((r, i) => (
-                <label
-                  key={i}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 10px',
-                    borderRadius: '8px',
-                    background: selectedReason === r ? 'var(--color-surface-hover)' : 'transparent',
-                    border: '1px solid var(--color-border)',
-                    fontSize: '12px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="cancelReason"
-                    checked={selectedReason === r}
-                    onChange={() => setSelectedReason(r)}
-                  />
-                  {r}
-                </label>
-              ))}
-            </div>
-
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button onClick={() => setCancellingService(null)} className="btn btn-secondary" style={{ flex: 1 }}>
-                Atrás
-              </button>
-              <button onClick={handleConfirmCancel} className="btn btn-primary" style={{ flex: 1, background: 'var(--color-danger)' }}>
-                Confirmar Cancelación
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Calificar Trabajador (RF-34, RF-36) */}
-      {reviewingService && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.65)',
-            zIndex: 1100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(5px)',
-            padding: '16px'
-          }}
-        >
-          <div className="card" style={{ width: '100%', maxWidth: '460px', borderRadius: '24px', padding: '24px' }}>
-            {!reviewSuccess ? (
-              <div>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '6px' }}>Calificar a {reviewingService.workerName} (RF-34)</h3>
-                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '14px' }}>
-                  Tu reseña quedará vinculada a la transacción verificada {reviewingService.id} (RF-36)
-                </span>
-
-                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '16px' }}>
-                  {[1, 2, 3, 4, 5].map(star => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setReviewRating(star)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
-                    >
-                      <Star size={28} fill={star <= reviewRating ? '#FBBF24' : 'none'} color="#FBBF24" />
-                    </button>
-                  ))}
-                </div>
-
-                <textarea
-                  className="input-base"
-                  rows={3}
-                  placeholder="Describe la puntualidad, calidad técnica y cumplimiento del servicio..."
-                  value={reviewComment}
-                  onChange={e => setReviewComment(e.target.value)}
-                  style={{ marginBottom: '16px' }}
-                />
-
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={() => setReviewingService(null)} className="btn btn-secondary" style={{ flex: 1 }}>
-                    Omitir por ahora
-                  </button>
-                  <button onClick={handleSendReview} className="btn btn-primary" style={{ flex: 1 }}>
-                    Publicar Reseña (RF-36)
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '16px' }}>
-                <CheckCircle2 size={36} color="#10B981" style={{ margin: '0 auto 10px' }} />
-                <h4 style={{ fontSize: '1.2rem', marginBottom: '4px' }}>¡Reseña Publicada!</h4>
-                <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                  La reputación digital del trabajador se ha recalculado en tiempo real (RF-37).
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Modal Calificar Contratante (RF-35) */}
-      {ratingClientService && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.65)',
-            zIndex: 1100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(5px)',
-            padding: '16px'
-          }}
-        >
-          <div className="card" style={{ width: '100%', maxWidth: '460px', borderRadius: '24px', padding: '24px' }}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '6px' }}>
-              Calificar al Contratante {ratingClientService.clientName} (RF-35)
-            </h3>
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '14px' }}>
-              Valora el trato, las facilidades brindadas y la puntualidad del pago.
-            </span>
-
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '16px' }}>
-              {[1, 2, 3, 4, 5].map(star => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setClientRatingValue(star)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
-                >
-                  <Star size={28} fill={star <= clientRatingValue ? '#FBBF24' : 'none'} color="#FBBF24" />
-                </button>
-              ))}
-            </div>
-
-            <textarea
-              className="input-base"
-              rows={2}
-              value={clientRatingComment}
-              onChange={e => setClientRatingComment(e.target.value)}
-              style={{ marginBottom: '16px' }}
-            />
-
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button onClick={() => setRatingClientService(null)} className="btn btn-secondary" style={{ flex: 1 }}>
-                Cancelar
-              </button>
-              <button onClick={handleSendClientRating} className="btn btn-primary" style={{ flex: 1 }}>
-                Guardar Valoración (RF-35)
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Modal Estadísticas de Servicios Más Solicitados (RF-46) */}
       {showStatsModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.65)',
-            zIndex: 1100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(5px)',
-            padding: '16px'
-          }}
-        >
-          <div className="card" style={{ width: '100%', maxWidth: '500px', borderRadius: '24px', padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <BarChart3 size={20} color="var(--role-primary)" />
-                <h3 style={{ fontSize: '1.25rem' }}>Servicios Más Solicitados (RF-46)</h3>
+        <div className="oy-modal-backdrop svc-backdrop">
+          <div
+            className="oy-modal svc-modal svc-modal--marino svc-modal--lg"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="svc-stats-title"
+          >
+            <div className="oy-modal__head">
+              <div className="svc-modal__headline">
+                <span className="svc-modal__icon" aria-hidden="true"><BarChart3 size={22} /></span>
+                <div>
+                  <h3 id="svc-stats-title" className="oy-modal__title">Servicios Más Solicitados</h3>
+                  <span className="svc-muted">Distribución de solicitudes completadas por oficio en Bogotá D.C.</span>
+                </div>
               </div>
-              <button onClick={() => setShowStatsModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                <X size={20} />
+              <button className="oy-icon-btn" onClick={() => setShowStatsModal(false)} aria-label="Cerrar estadísticas">
+                <X size={18} />
               </button>
             </div>
-            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>
-              Distribución de solicitudes completadas por oficio en Bogotá D.C.
-            </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-              {Object.keys(tradeStats).length === 0 ? (
-                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>No hay datos suficientes aún.</span>
-              ) : (
-                Object.entries(tradeStats).map(([trade, count]) => (
-                  <div key={trade} style={{ background: 'var(--color-surface-hover)', padding: '10px 14px', borderRadius: '10px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 700, marginBottom: '4px' }}>
-                      <span>{trade}</span>
-                      <span>{count} solicitudes cerradas</span>
+            <div className="oy-modal__body">
+              <div className="svc-bars">
+                {Object.keys(tradeStats).length === 0 ? (
+                  <span className="svc-muted">No hay datos suficientes aún.</span>
+                ) : (
+                  Object.entries(tradeStats).map(([trade, count]) => (
+                    <div key={trade} className="svc-bar">
+                      <div className="svc-bar__row">
+                        <span>{trade}</span>
+                        <span>{count} solicitudes cerradas</span>
+                      </div>
+                      <div className="svc-bar__track">
+                        <div className="svc-bar__fill" style={{ width: `${Math.min(100, count * 35)}%` }} />
+                      </div>
                     </div>
-                    <div style={{ height: '6px', background: 'var(--color-border)', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${Math.min(100, count * 35)}%`, background: 'var(--role-primary)' }} />
-                    </div>
-                  </div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
+
+              <button onClick={() => setShowStatsModal(false)} className="btn btn-primary svc-btn-block">
+                Cerrar Estadísticas
+              </button>
             </div>
-
-            <button onClick={() => setShowStatsModal(false)} className="btn btn-primary" style={{ width: '100%' }}>
-              Cerrar Estadísticas
-            </button>
           </div>
         </div>
       )}

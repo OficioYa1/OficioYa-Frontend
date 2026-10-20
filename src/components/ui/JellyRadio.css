@@ -1,0 +1,138 @@
+/* ══ JellyRadio.css ═════════════════════════════════════════════════════════
+   Botones con física de resorte gelatinoso (Jelly / Swell / Barge).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.jelly-radio-group {
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+  -webkit-touch-callout: none;
+  gap: var(--jr-gap, 8px);
+  padding: var(--jr-pad-y, 8px) var(--jr-pad-x, 12px);
+  box-sizing: border-box;
+}
+
+.jelly-radio-group[data-disabled] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.jelly-radio-chip {
+  position: relative;
+  margin: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  outline: none;
+  font: inherit;
+  transform-origin: center center;
+  -webkit-tap-highlight-color: transparent;
+  overflow: visible !important;
+}
+
+.jelly-radio-chip[data-on="true"] {
+  cursor: default;
+}
+
+.jelly-radio-chip:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.jelly-radio__inner {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45em;
+  border-radius: var(--jr-radius, 9999px);
+  background: var(--jr-chip, rgba(62, 31, 20, 0.06));
+  color: var(--jr-text, #3E1F14);
+  height: var(--jr-h, 40px);
+  padding: 0 var(--jr-px, 16px);
+  font-size: var(--jr-font, 13.5px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  line-height: 1;
+  border: 1.5px solid var(--color-border, rgba(15, 23, 42, 0.1));
+  box-shadow:
+    0 2px 8px -2px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition:
+    transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+html.theme-dark .jelly-radio__inner,
+[data-theme="dark"] .jelly-radio__inner {
+  background: var(--jr-chip, rgba(255, 255, 255, 0.08));
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--jr-text, #FBF4EA);
+  box-shadow:
+    0 4px 16px -2px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Estado activo / seleccionado */
+.jelly-radio-chip[data-on="true"] .jelly-radio__inner {
+  background: var(--jr-active, var(--color-trust, #3B82F6));
+  color: var(--jr-active-text, #FFFFFF);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 6px 20px -2px rgba(59, 130, 246, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+html.theme-dark .jelly-radio-chip[data-on="true"] .jelly-radio__inner,
+[data-theme="dark"] .jelly-radio-chip[data-on="true"] .jelly-radio__inner {
+  background: var(--jr-active, var(--color-trust, #3B82F6));
+  color: var(--jr-active-text, #FFFFFF);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0 8px 24px -2px rgba(59, 130, 246, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Hover en chips no seleccionados */
+@media (hover: hover) and (pointer: fine) {
+  .jelly-radio-chip[data-on="false"]:hover .jelly-radio__inner {
+    border-color: var(--brand-amber, #E58F49);
+    color: var(--brand-amber, #E58F49);
+    box-shadow: 0 4px 16px -2px rgba(229, 143, 73, 0.28);
+  }
+
+  html.theme-dark .jelly-radio-chip[data-on="false"]:hover .jelly-radio__inner,
+  [data-theme="dark"] .jelly-radio-chip[data-on="false"]:hover .jelly-radio__inner {
+    border-color: var(--brand-amber, #E58F49);
+    color: #FFFFFF;
+    box-shadow: 0 6px 20px -2px rgba(229, 143, 73, 0.35);
+  }
+}
+
+/* Compresión activa */
+.jelly-radio-chip:active .jelly-radio__inner {
+  transform: scale(0.95);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jelly-radio-chip:active .jelly-radio__inner {
+    transform: none;
+  }
+}
+
+.jelly-radio__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jelly-radio__label {
+  display: inline-block;
+}

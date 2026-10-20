@@ -9,17 +9,21 @@
 .app-main-body {
   display: flex;
   flex: 1;
+  width: 100%;
 }
 
 .app-content-area {
   flex: 1;
   min-width: 0;
-  padding-bottom: 70px; /* Espacio para BottomNav en móvil */
+  width: 100%;
+  box-sizing: border-box;
+  padding-inline: clamp(16px, 2.5vw, 48px);
+  padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)); /* Espacio para BottomNav en móvil */
 }
 
 @media (min-width: 768px) {
   .app-content-area {
-    padding-bottom: 20px;
+    padding-bottom: 32px;
   }
 }
 
@@ -85,99 +89,4 @@
   pointer-events: none;
 }
 
-/* Botones refinados para ProviderHomeView */
-.btn-provider-interest {
-  flex: 1;
-  height: 38px;
-  background-color: rgba(245, 158, 11, 0.08);
-  color: #B45309;
-  border: 1px solid rgba(245, 158, 11, 0.15);
-  border-radius: 10px;
-  font-size: 13.5px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: all 0.2s ease;
-}
-
-.btn-provider-interest:hover {
-  background-color: rgba(245, 158, 11, 0.15);
-}
-
-/* Modo oscuro para botón primario (opcional, si hay soporte) */
-html[data-theme="dark"] .btn-provider-interest {
-  background-color: rgba(245, 158, 11, 0.12);
-  color: #FBBF24;
-}
-
-.btn-provider-recommend {
-  height: 38px;
-  background-color: transparent;
-  color: var(--color-text-muted);
-  border: 1px solid rgba(150,150,150,0.2);
-  border-radius: 10px;
-  font-size: 13.5px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0 16px;
-  transition: all 0.2s ease;
-}
-
-.btn-provider-recommend:hover {
-  background-color: var(--color-surface-hover);
-  color: var(--color-text-main);
-  border-color: rgba(150,150,150,0.4);
-}
-
-/* Seeker Directory Worker Row Interacciones */
-.seeker-directory-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-@media (min-width: 800px) {
-  .seeker-directory-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-  }
-}
-
-.seeker-worker-row {
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 24px;
-  background: var(--color-surface);
-  border: 1px solid rgba(150, 150, 150, 0.1);
-  border-radius: 24px;
-}
-.seeker-worker-row:hover {
-  background-color: var(--color-surface-hover);
-  border-color: rgba(150, 150, 150, 0.2);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.04);
-}
-.seeker-worker-img {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.seeker-worker-row:hover .seeker-worker-img {
-  transform: scale(1.06);
-}
-.seeker-worker-action {
-  opacity: 0;
-  transform: translateX(8px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.seeker-worker-row:hover .seeker-worker-action {
-  opacity: 1;
-  transform: translateX(0);
-}
+/* Las clases .seeker-* viven en src/modules/seeker/Seeker.css */

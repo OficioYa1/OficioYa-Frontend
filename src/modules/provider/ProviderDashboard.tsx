@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import type {
+  Worker,
   WorkerServiceProfile,
   ServiceRequest,
   TradeCategory,
   ClientProfile,
   AcceptedPaymentMethod,
-  ReferralRecord
+  ReferralRecord,
+  RateUnit,
+  WeekDay,
+  DaySchedule,
+  WeeklyAvailability,
+  WorkerReferrals
 } from '../../types';
 import {
   Star,
@@ -19,87 +25,86 @@ import {
   Award,
   Users,
   CreditCard,
-  Wrench,
-  Tag,
   Image as ImageIcon,
   UserCheck,
   X,
-  AlertCircle
+  Pencil,
+  Camera,
+  CalendarDays,
+  TrendingUp,
+  Zap,
+  MapPin,
+  ArrowUpCircle,
+  Hourglass
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
+import { SquishSwitch } from '../../components/ui/SquishSwitch';
+import { Upload } from '../../components/ui/Upload';
+import { PageHero } from '../../components/layout/PageHero';
+import { mediaService, MediaUploadError } from '../../services/mock/mediaService';
+import { computeClientReputation, monthlyIncome, topRequested } from '../../utils/reputation';
+import {
+  PROFILE_INCOMPLETE_REASON,
+  RATE_UNITS,
+  TRADE_LABELS,
+  WEEK_DAYS,
+  rateUnitShort,
+  scheduleFromWeek,
+  weekFromSchedule,
+  workerPatchFromServices
+} from '../../utils/workerProfile';
+import './Provider.css';
+
+const PAYMENT_OPTIONS: AcceptedPaymentMethod[] = ['efectivo', 'nequi', 'daviplata', 'bre_b', 'tarjeta'];
+
+const splitList = (text: string) => text.split(',').map(t => t.trim()).filter(Boolean);
+
+/** Recalcula contadores e insignia de referidos: solo cuentan los verificados (OFY-68, OFY-69). */
+const referralsWith = (base: WorkerReferrals, referredList: ReferralRecord[]): WorkerReferrals => {
+  const verified = referredList.filter(r => r.status === 'verificado');
+  const distinct = new Set(verified.map(r => r.trade.toLowerCase())).size;
+  return {
+    ...base,
+    referredList,
+    count: verified.length,
+    distinctTradesCount: distinct,
+    isCommunityReferrer: distinct >= 3
+  };
+};
 
 interface ProviderDashboardProps {
+  /** Ficha del profesional en sesión (fuente: `workers` en App, persistida en `oy-workers`). */
+  worker?: Worker;
+  /** Todas las solicitudes, para estadísticas y reputación de contratantes. */
+  services?: ServiceRequest[];
   incomingRequests: ServiceRequest[];
   onAcceptRequest: (id: string) => void;
   onRejectRequest: (id: string) => void;
+  onUpdateWorker?: (patch: Partial<Worker>) => void;
 }
 
 export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
+  worker,
+  services: allServices = [],
   incomingRequests,
   onAcceptRequest,
-  onRejectRequest
+  onRejectRequest,
+  onUpdateWorker
 }) => {
-  const [isAvailableNow, setIsAvailableNow] = useState(true);
+  const update = (patch: Partial<Worker>) => onUpdateWorker?.(patch);
 
-  // RF-01, RF-02, RF-03, RF-04, RF-05, RF-09, RF-66, RF-67: Oficios registrados con detalles específicos
-  const [services, setServices] = useState<WorkerServiceProfile[]>([
-    {
-      id: 'srv-prof-1',
-      trade: 'electricidad',
-      tradeLabel: 'Electricista Residencial & Comercial SENA',
-      hourlyRate: 45000,
-      experienceYears: 8,
-      coverageZones: ['Chapinero', 'Chicó', 'Usaquén', 'Cedritos'],
-      bio: 'Instalaciones eléctricas certificadas, tableros de protección y cableado.',
-      phone: '+57 312 458 9012',
-      specializations: ['Tableros trifásicos', 'Cableado estructurado', 'Automatización domótica'],
-      equipment: ['Multímetro digital Fluke', 'Ponchadora hidráulica', 'Detector sin contacto'],
-      brands: ['Schneider Electric', 'Legrand', 'Bticino', 'Philips']
-    },
-    {
-      id: 'srv-prof-2',
-      trade: 'electrodomesticos',
-      tradeLabel: 'Reparación de Calentadores y Neveras',
-      hourlyRate: 40000,
-      experienceYears: 5,
-      coverageZones: ['Chapinero', 'Teusaquillo', 'Suba'],
-      bio: 'Mantenimiento preventivo y cambio de repuestos originales.',
-      phone: '+57 312 458 9012',
-      specializations: ['Carga de gas refrigerante', 'Termostatos', 'Bombas de desagüe'],
-      equipment: ['Manómetro refrigeración', 'Bomba de vacío'],
-      brands: ['Haceb', 'Whirlpool', 'Samsung']
-    }
-  ]);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  // RF-60: Métodos de pago aceptados configurables
-  const [paymentMethods, setPaymentMethods] = useState<AcceptedPaymentMethod[]>([
-    'efectivo',
-    'nequi',
-    'daviplata',
-    'bre_b'
-  ]);
-
-  // RF-07: Portafolio de fotografías
-  const [portfolioPhotos, setPortfolioPhotos] = useState<string[]>([
-    'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=500&auto=format&fit=crop'
-  ]);
   const [newPhotoUrl, setNewPhotoUrl] = useState('');
   const [showPhotoModal, setShowPhotoModal] = useState(false);
 
-  // RF-41, RF-42, RF-43: Verificación de Identidad
-  const [completedJobsCount] = useState(42); // >= 10 requerido para elegibilidad (RF-41)
-  const [isIdentityVerified, setIsIdentityVerified] = useState(true);
+  // RF-41, RF-42: Envío de cédula para revisión
   const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [docNumber, setDocNumber] = useState('1.020.845.912');
+  const [docNumber, setDocNumber] = useState(worker?.identityVerification?.documentNumber ?? '');
+  const [docFileUrl, setDocFileUrl] = useState<string | undefined>(worker?.identityVerification?.documentFileUrl);
 
-  // RF-68, RF-69: Referidos
-  const [referralCode] = useState('MGOMEZ-2026');
-  const [referralsList, setReferralsList] = useState<ReferralRecord[]>([
-    { name: 'Carlos Restrepo', trade: 'Plomería', status: 'verificado' },
-    { name: 'Elena Jaramillo', trade: 'Pintura', status: 'verificado' },
-    { name: 'Andrés Henao', trade: 'Cerrajería', status: 'verificado' }
-  ]);
+  // RF-68: Referidos
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [newReferralName, setNewReferralName] = useState('');
   const [newReferralTrade, setNewReferralTrade] = useState('pintura');
@@ -107,256 +112,408 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
   // RF-53: Consulta de Perfil de Contratante
   const [selectedClientForProfile, setSelectedClientForProfile] = useState<ClientProfile | null>(null);
 
-  // Modal para Añadir Servicio (RF-01, RF-09, RF-66, RF-67)
+  // Modal para Añadir Servicio (RF-01, RF-04, RF-05, RF-09, RF-66, RF-67)
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [newTrade, setNewTrade] = useState<TradeCategory>('plomeria');
   const [newTradeLabel, setNewTradeLabel] = useState('');
   const [newHourlyRate, setNewHourlyRate] = useState('42000');
+  const [newRateUnit, setNewRateUnit] = useState<RateUnit>('hora');
   const [newExpYears, setNewExpYears] = useState('4');
   const [newZones, setNewZones] = useState('Chapinero, Chicó, Usaquén');
+  const [newMaxDistance, setNewMaxDistance] = useState('8');
   const [newBio, setNewBio] = useState('Atención de emergencias y servicios a domicilio en Bogotá.');
   const [newEquipment, setNewEquipment] = useState('Herramienta manual, tester');
   const [newBrands, setNewBrands] = useState('Grival, Corona, Pavco');
   const [newSpecializations, setNewSpecializations] = useState('Destapes urgentes, griferías');
+  const [newSpecies, setNewSpecies] = useState('');
 
   // RF-28: Cálculo de tiempo restante de solicitudes (30 minutos sin respuesta)
   const [timeLeftMap, setTimeLeftMap] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    const tick = () => {
       const now = Date.now();
       const updated: Record<string, number> = {};
       incomingRequests.forEach(req => {
         const createdMs = req.createdAt ? new Date(req.createdAt).getTime() : now;
         const expiryMs = req.expiresAt ? new Date(req.expiresAt).getTime() : createdMs + 30 * 60 * 1000;
-        const diffSeconds = Math.max(0, Math.floor((expiryMs - now) / 1000));
-        updated[req.id] = diffSeconds;
+        updated[req.id] = Math.max(0, Math.floor((expiryMs - now) / 1000));
       });
       setTimeLeftMap(updated);
-    }, 1000);
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, [incomingRequests]);
 
+  if (!worker) {
+    return (
+      <div className="provider-dashboard container pv-page">
+        <div className="oy-empty" role="status">
+          <MascotAvatar size="md" expression="pensativo" />
+          <h2 className="oy-empty__title oy-display">Preparando tu ficha profesional…</h2>
+          <p className="oy-empty__text">Entra con una cuenta en modo Profesional para gestionar tus oficios.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isProfileIncomplete = worker.services.length === 0;
+  const isPaused = !!worker.isPaused;
+  const isAvailableNow = worker.available && !isPaused;
+  const services = worker.services;
+  const paymentMethods = worker.acceptedPaymentMethods ?? [];
+  const portfolioPhotos = worker.gallery;
+  const completedJobsCount = worker.completedJobsCount;
+  const weeklySchedule: WeeklyAvailability = worker.weeklyAvailability ?? weekFromSchedule(worker.schedule);
+  const verificationStatus = worker.identityVerification?.status ?? (worker.verified ? 'verified' : 'none');
+  const isIdentityVerified = verificationStatus === 'verified';
+  const isVerificationPending = verificationStatus === 'pending';
+  const isEligibleForVerification = completedJobsCount >= 10;
+  const referrals: WorkerReferrals = worker.referrals ?? {
+    code: `${worker.initials}-${worker.id.slice(-4).toUpperCase()}`,
+    count: 0,
+    distinctTradesCount: 0,
+    isCommunityReferrer: false,
+    referredList: []
+  };
+  const referralsList = referrals.referredList;
+
+  const uploadImage = async (file: File, folder: string): Promise<string | null> => {
+    setPhotoError(null);
+    setIsUploading(true);
+    try {
+      const media = await mediaService.uploadImage(file, { folder, maxSide: 720 });
+      return media.url;
+    } catch (err) {
+      setPhotoError(err instanceof MediaUploadError ? err.message : 'No pudimos subir la foto. Intenta de nuevo.');
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // RF-59: Foto de perfil
+  const handleProfilePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const url = await uploadImage(file, 'avatars');
+    if (url) update({ photoUrl: url });
+  };
+
+  // RF-30, RF-31: "Disponible ya"
+  const setAvailable = (value: boolean) => {
+    if (isPaused) return;
+    update({ available: value });
+  };
+
+  // RF-06: Agenda semanal
+  const updateDay = (day: WeekDay, patch: Partial<DaySchedule>) => {
+    const next: WeeklyAvailability = { ...weeklySchedule, [day]: { ...weeklySchedule[day], ...patch } };
+    update({ weeklyAvailability: next, schedule: scheduleFromWeek(next) });
+  };
+
+  const saveServices = (list: WorkerServiceProfile[]) => {
+    update(workerPatchFromServices(worker, list));
+  };
+
+  const openNewService = () => {
+    setEditingServiceId(null);
+    setNewTradeLabel('');
+    setNewSpecies('');
+    setShowAddModal(true);
+  };
+
+  // RF-57, RF-67: Editar tarifa, zonas y especializaciones de un oficio
+  const openEditService = (srv: WorkerServiceProfile) => {
+    setEditingServiceId(srv.id);
+    setNewTrade(srv.trade);
+    setNewTradeLabel(srv.tradeLabel);
+    setNewHourlyRate(String(srv.hourlyRate));
+    setNewRateUnit(srv.rateUnit ?? 'hora');
+    setNewExpYears(String(srv.experienceYears));
+    setNewZones(srv.coverageZones.join(', '));
+    setNewMaxDistance(srv.maxDistanceKm ? String(srv.maxDistanceKm) : '');
+    setNewBio(srv.bio);
+    setNewEquipment((srv.equipment ?? []).join(', '));
+    setNewBrands((srv.brands ?? []).join(', '));
+    setNewSpecializations((srv.specializations ?? []).join(', '));
+    setNewSpecies((srv.species ?? []).join(', '));
+    setShowAddModal(true);
+  };
+
+  const closeServiceModal = () => {
+    setShowAddModal(false);
+    setEditingServiceId(null);
+  };
+
   const handleAddService = (e: React.FormEvent) => {
     e.preventDefault();
+    const species = splitList(newSpecies);
     const created: WorkerServiceProfile = {
-      id: `srv-prof-${Date.now()}`,
+      id: editingServiceId ?? `srv-prof-${Date.now()}`,
       trade: newTrade,
-      tradeLabel: newTradeLabel || `Servicio de ${newTrade}`,
+      tradeLabel: newTradeLabel || `Servicio de ${TRADE_LABELS[newTrade]}`,
       hourlyRate: parseInt(newHourlyRate) || 40000,
+      rateUnit: newRateUnit,
       experienceYears: parseInt(newExpYears) || 3,
-      coverageZones: newZones.split(',').map(z => z.trim()),
+      coverageZones: splitList(newZones),
+      maxDistanceKm: parseInt(newMaxDistance) || undefined,
       bio: newBio,
-      phone: '+57 312 458 9012',
-      equipment: newEquipment.split(',').map(e => e.trim()).filter(Boolean),
-      brands: newBrands.split(',').map(b => b.trim()).filter(Boolean),
-      specializations: newSpecializations.split(',').map(s => s.trim()).filter(Boolean)
+      phone: worker.phone,
+      equipment: splitList(newEquipment),
+      brands: splitList(newBrands),
+      specializations: splitList(newSpecializations),
+      species: species.length > 0 ? species : undefined
     };
 
-    setServices(prev => [...prev, created]);
-    setShowAddModal(false);
+    saveServices(
+      editingServiceId ? services.map(s => (s.id === editingServiceId ? created : s)) : [...services, created]
+    );
+    closeServiceModal();
     setNewTradeLabel('');
   };
 
   const handleDeleteService = (id: string) => {
-    setServices(prev => prev.filter(s => s.id !== id));
+    saveServices(services.filter(s => s.id !== id));
+  };
+
+  // RF-02: Elegir cuál oficio es el principal
+  const handleMakePrimary = (id: string) => {
+    const target = services.find(s => s.id === id);
+    if (!target) return;
+    saveServices([target, ...services.filter(s => s.id !== id)]);
   };
 
   const togglePaymentMethod = (method: AcceptedPaymentMethod) => {
-    setPaymentMethods(prev =>
-      prev.includes(method) ? prev.filter(m => m !== method) : [...prev, method]
-    );
+    update({
+      acceptedPaymentMethods: paymentMethods.includes(method)
+        ? paymentMethods.filter(m => m !== method)
+        : [...paymentMethods, method]
+    });
   };
 
   const handleAddPhoto = () => {
     if (newPhotoUrl.trim()) {
-      setPortfolioPhotos(prev => [...prev, newPhotoUrl.trim()]);
+      update({ gallery: [...portfolioPhotos, newPhotoUrl.trim()] });
       setNewPhotoUrl('');
       setShowPhotoModal(false);
     }
   };
 
+  const handlePortfolioFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const url = await uploadImage(file, 'portfolio');
+    if (url) {
+      update({ gallery: [...portfolioPhotos, url] });
+      setShowPhotoModal(false);
+    }
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    update({ gallery: portfolioPhotos.filter((_, i) => i !== index) });
+  };
+
+  const handleDocFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const url = await uploadImage(file, 'identity');
+    if (url) setDocFileUrl(url);
+  };
+
+  // RF-42: el envío queda "en revisión" hasta que moderación lo aprueba
+  const handleSubmitVerification = () => {
+    if (!docNumber.trim()) return;
+    update({
+      identityVerification: {
+        status: 'pending',
+        documentType: 'Cédula de Ciudadanía',
+        documentNumber: docNumber.trim(),
+        documentFileUrl: docFileUrl,
+        submittedAt: new Date().toISOString()
+      }
+    });
+    setShowVerificationModal(false);
+  };
+
   const handleAddReferral = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newReferralName.trim()) return;
-    setReferralsList(prev => [
-      ...prev,
-      { name: newReferralName.trim(), trade: newReferralTrade, status: 'verificado' }
-    ]);
+    const label = TRADE_LABELS[newReferralTrade as TradeCategory] ?? newReferralTrade;
+    update({
+      referrals: referralsWith(referrals, [
+        ...referralsList,
+        { name: newReferralName.trim(), trade: label, status: 'pendiente' }
+      ])
+    });
     setNewReferralName('');
     setShowReferralModal(false);
   };
 
-  // RF-69: Insignia de Referente Comunitario Verificado (mínimo 3 oficios distintos)
-  const distinctTradesCount = new Set(referralsList.map(r => r.trade.toLowerCase())).size;
-  const isCommunityReferrer = distinctTradesCount >= 3;
+  // RF-69: Insignia de Referente Comunitario Verificado (mínimo 3 oficios distintos verificados)
+  const distinctTradesCount = referrals.distinctTradesCount;
+  const isCommunityReferrer = referrals.isCommunityReferrer;
+  const pendingReferrals = referralsList.filter(r => r.status === 'pendiente').length;
 
-  // RF-45: Calcular ingresos mensuales referenciales
-  const monthlyRevenue = 1890000;
+  // RF-45: Ingresos reales del mes (servicios finalizados)
+  const monthlyRevenue = monthlyIncome(allServices, worker.id);
+
+  // RF-46: Servicios más solicitados del mes
+  const topRequestedList = topRequested(allServices, worker.id, s =>
+    s.tradeCategory ? TRADE_LABELS[s.tradeCategory] : s.workerTrade
+  );
+
+  // RF-53: Reputación del contratante calculada con las calificaciones de otros profesionales
+  const openClientProfile = (req: ServiceRequest) => {
+    const rep = computeClientReputation(allServices, req.clientId);
+    setSelectedClientForProfile({
+      id: req.clientId,
+      name: req.clientName,
+      avatarColor: 'var(--oy-azul-marino)',
+      ...rep
+    });
+  };
+
+  const activeDays = WEEK_DAYS.filter(d => weeklySchedule[d.key].active).length;
+  const topMax = Math.max(1, ...topRequestedList.map(t => t.count));
 
   return (
-    <div className="provider-dashboard container" style={{ padding: '24px 0 60px' }}>
-      {/* Banner Principal con Toggle "Disponible Ya" (RF-30, RF-31) y Mascota */}
-      <div
-        className="card"
-        style={{
-          background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.08) 0%, rgba(255, 199, 44, 0.12) 100%)',
-          border: '2px solid var(--role-primary)',
-          borderRadius: '24px',
-          padding: '24px',
-          marginBottom: '28px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '20px'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-          <MascotAvatar trade="electricidad" size="md" />
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <h2 style={{ fontSize: '1.4rem' }}>Panel de Control Profesional</h2>
+    <div className="provider-dashboard container pv-page">
+      <PageHero
+        tone="fuego"
+        eyebrow={<><Zap size={14} aria-hidden="true" /> Panel profesional</>}
+        title="Panel de Control Profesional"
+        subtitle="Gestiona tus oficios, cotizaciones entrantes y tu visibilidad en tiempo real para clientes en Bogotá D.C."
+        actions={
+          <button type="button" onClick={openNewService} className="btn btn-primary">
+            <Plus size={16} aria-hidden="true" /> Añadir otro oficio
+          </button>
+        }
+        stickers={[
+          { icon: <Star size={26} />, tone: 'amarillo', style: { top: '12%', right: '6%', rotate: '-9deg' } },
+          { icon: <>${(monthlyRevenue / 1000000).toFixed(1)}M</>, tone: 'blanco', pill: true, style: { top: '18%', right: '20%', rotate: '5deg' } }
+        ]}
+      />
+
+      {/* Panel "Disponible Ya" (RF-30, RF-31), foto de perfil (RF-59) e insignias (RF-43, RF-69) */}
+      <section className="pv-live" data-on={isAvailableNow} aria-label="Estado de disponibilidad">
+        <div className="pv-live__who">
+          <div className="pv-avatar">
+            {worker.photoUrl ? (
+              <img className="pv-avatar__img" src={worker.photoUrl} alt="Tu foto de perfil" />
+            ) : (
+              <div className="pv-avatar__img">
+                <MascotAvatar trade={worker.trade} size="sm" />
+              </div>
+            )}
+            <label className="pv-avatar__edit" title="Cambiar foto de perfil">
+              <Camera size={16} aria-hidden="true" />
+              <span className="pv-visually-hidden">Cambiar foto de perfil</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="pv-visually-hidden"
+                onChange={handleProfilePhoto}
+                disabled={isUploading}
+              />
+            </label>
+          </div>
+          <div className="pv-live__info">
+            <h2 className="pv-live__title oy-display">
+              {isAvailableNow ? 'Disponible ya' : 'Fuera de línea'}
+            </h2>
+            <p className="pv-live__text">
+              {isPaused
+                ? worker.pauseReason === PROFILE_INCOMPLETE_REASON
+                  ? 'Registra tu primer oficio para aparecer en el directorio'
+                  : `Perfil en pausa: ${worker.pauseReason ?? 'revisión de moderación'}`
+                : isAvailableNow ? 'Visible en el mapa local' : 'Oculto para nuevos pedidos'}
+            </p>
+            {photoError && <p className="pv-live__text" role="alert">{photoError}</p>}
+            <div className="pv-badges">
               {isIdentityVerified && (
-                <span className="badge badge-verified" title="Identidad validada con cédula (RF-43)">
-                  <ShieldCheck size={13} /> Identidad Verificada (RF-43)
+                <span className="pv-tag" title="Identidad validada con cédula">
+                  <ShieldCheck size={13} aria-hidden="true" /> Identidad Verificada
                 </span>
               )}
               {isCommunityReferrer && (
-                <span className="badge" style={{ background: '#FEF3C7', color: '#B45309', border: '1px solid #F59E0B' }}>
-                  <Award size={13} /> Referente Comunitario (RF-69)
+                <span className="pv-tag">
+                  <Award size={13} aria-hidden="true" /> Referente Comunitario
                 </span>
               )}
             </div>
-            <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', margin: '4px 0 0' }}>
-              Gestiona tus oficios, cotizaciones entrantes y tu visibilidad en tiempo real para clientes en Bogotá D.C.
-            </p>
           </div>
         </div>
 
-        {/* Toggle Disponible Ya (RF-30, RF-31) */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '14px',
-            background: 'var(--color-surface)',
-            padding: '12px 20px',
-            borderRadius: '999px',
-            border: '1.5px solid var(--color-border)',
-            boxShadow: 'var(--shadow-md)'
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '13px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span
-                style={{
-                  width: '10px',
-                  height: '10px',
-                  borderRadius: '50%',
-                  background: isAvailableNow ? '#10B981' : '#94A3B8',
-                  animation: isAvailableNow ? 'pulseGlow 2s infinite' : 'none'
-                }}
-              />
-              {isAvailableNow ? 'DISPONIBLE YA (RF-30)' : 'FUERA DE LÍNEA (RF-31)'}
-            </span>
-            <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
-              {isAvailableNow ? 'Visible en el mapa local' : 'Oculto para nuevos pedidos'}
-            </span>
-          </div>
-
-          <button
-            onClick={() => setIsAvailableNow(!isAvailableNow)}
-            style={{
-              width: '52px',
-              height: '28px',
-              borderRadius: '999px',
-              background: isAvailableNow ? '#10B981' : 'var(--color-border)',
-              position: 'relative',
-              transition: 'background 0.2s',
-              cursor: 'pointer',
-              border: 'none'
-            }}
-          >
-            <div
-              style={{
-                width: '22px',
-                height: '22px',
-                borderRadius: '50%',
-                background: '#FFFFFF',
-                position: 'absolute',
-                top: '3px',
-                left: isAvailableNow ? '26px' : '4px',
-                transition: 'left 0.2s',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-              }}
-            />
-          </button>
+        <div className="pv-live__switch">
+          <span className="pv-row">
+            <span className="pv-dot" data-on={isAvailableNow} aria-hidden="true" />
+            {isAvailableNow ? 'DISPONIBLE YA' : 'FUERA DE LÍNEA'}
+          </span>
+          <SquishSwitch
+            checked={isAvailableNow}
+            onChange={setAvailable}
+            disabled={isPaused}
+            ariaLabel="Disponible Ya"
+            trackOnColor="var(--oy-cacao-profundo)"
+            width={60}
+            height={34}
+            radius={17}
+          />
         </div>
-      </div>
+      </section>
 
-      {/* Tarjetas de Estadísticas del Proveedor (RF-08, RF-10, RF-45) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '32px' }}>
-        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#ECFDF5', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CheckCircle2 size={24} />
-          </div>
-          <div>
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block' }}>Trabajos Completados (RF-08)</span>
-            <span style={{ fontSize: '1.6rem', fontWeight: 900 }}>{completedJobsCount}</span>
-          </div>
+      {/* Estadísticas (RF-08, RF-10, RF-45) */}
+      <div className="pv-stats">
+        <div className="oy-stat pv-stat--esmeralda">
+          <span className="pv-stat__icon"><CheckCircle2 size={20} aria-hidden="true" /></span>
+          <span className="oy-stat__value">{completedJobsCount}</span>
+          <span className="oy-stat__label">Trabajos Completados</span>
         </div>
-
-        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#FEF3C7', color: '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Star size={24} fill="#FBBF24" color="#FBBF24" />
-          </div>
-          <div>
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block' }}>Calificación Promedio (RF-10)</span>
-            <span style={{ fontSize: '1.6rem', fontWeight: 900 }}>4.9 <small style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontWeight: 400 }}>(38 reseñas)</small></span>
-          </div>
+        <div className="oy-stat pv-stat--amarillo">
+          <span className="pv-stat__icon"><Star size={20} aria-hidden="true" /></span>
+          <span className="oy-stat__value">{worker.reviewCount > 0 ? worker.rating.toFixed(1) : '—'}</span>
+          <span className="oy-stat__label">Calificación Promedio</span>
+          <span className="pv-stat__note">({worker.reviewCount} reseñas)</span>
         </div>
-
-        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--role-primary-light)', color: 'var(--role-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <DollarSign size={24} />
-          </div>
-          <div>
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block' }}>Ingresos Mes (RF-45)</span>
-            <span style={{ fontSize: '1.5rem', fontWeight: 900 }}>${monthlyRevenue.toLocaleString()} <small style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>COP</small></span>
-          </div>
+        <div className="oy-stat pv-stat--fuego">
+          <span className="pv-stat__icon"><DollarSign size={20} aria-hidden="true" /></span>
+          <span className="oy-stat__value">${monthlyRevenue.toLocaleString()}</span>
+          <span className="oy-stat__label">Ingresos Mes</span>
+          <span className="pv-stat__note">COP · servicios finalizados este mes</span>
         </div>
-
-        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <BellRing size={24} />
-          </div>
-          <div>
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block' }}>Solicitudes Pendientes (RF-25)</span>
-            <span style={{ fontSize: '1.6rem', fontWeight: 900 }}>{incomingRequests.length}</span>
-          </div>
+        <div className="oy-stat pv-stat--marino">
+          <span className="pv-stat__icon"><BellRing size={20} aria-hidden="true" /></span>
+          <span className="oy-stat__value">{incomingRequests.length}</span>
+          <span className="oy-stat__label">Solicitudes Pendientes</span>
         </div>
       </div>
 
       {/* Sección 1: Bandeja de Solicitudes Entrantes (RF-25, RF-26, RF-27, RF-28, RF-53) */}
-      <div style={{ marginBottom: '36px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      <section aria-labelledby="pv-inbox-title">
+        <div className="oy-section-head">
           <div>
-            <h3 style={{ fontSize: '1.25rem' }}>Bandeja de Solicitudes Entrantes (RF-25)</h3>
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-              Clientes en Bogotá solicitando atención. Tiempo de respuesta límite: 30 minutos (RF-28).
-            </span>
+            <h2 id="pv-inbox-title" className="oy-section-title oy-display">Bandeja de Solicitudes Entrantes</h2>
+            <p className="oy-section-sub">
+              Clientes en Bogotá solicitando atención. Tiempo de respuesta límite: 30 minutos.
+            </p>
           </div>
-          <span className="badge badge-closest">{incomingRequests.length} pendientes</span>
+          <span className="pv-tag pv-tag--fuego">{incomingRequests.length} pendientes</span>
         </div>
 
         {incomingRequests.length === 0 ? (
-          <div className="card" style={{ textAlign: 'center', padding: '36px', color: 'var(--color-text-muted)' }}>
-            <CheckCircle2 size={36} color="#10B981" style={{ margin: '0 auto 10px' }} />
-            <p>¡Estás al día! No tienes solicitudes pendientes de respuesta en este momento.</p>
+          <div className="oy-empty">
+            <MascotAvatar trade={worker.trade} size="md" expression="alegre" />
+            <h3 className="oy-empty__title oy-display">¡Estás al día!</h3>
+            <p className="oy-empty__text">No tienes solicitudes pendientes de respuesta en este momento.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+          <div className="pv-grid">
             {incomingRequests.map(req => {
               const secondsLeft = timeLeftMap[req.id] !== undefined ? timeLeftMap[req.id] : 1800;
               const minutes = Math.floor(secondsLeft / 60);
@@ -364,177 +521,150 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
               const isUrgentExpiration = secondsLeft < 300; // Menos de 5 minutos
 
               return (
-                <div key={req.id} className="card" style={{ borderLeft: '4px solid var(--role-primary)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-                    <div>
-                      {/* Enlace para consultar perfil del contratante (RF-53) */}
-                      <button
-                        onClick={() =>
-                          setSelectedClientForProfile({
-                            id: req.clientId,
-                            name: req.clientName,
-                            avatarColor: '#2563EB',
-                            rating: 4.9,
-                            reviewCount: 12,
-                            completedServicesCount: 15,
-                            registeredSince: 'Enero 2025'
-                          })
-                        }
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                          cursor: 'pointer',
-                          textAlign: 'left'
-                        }}
-                      >
-                        <span style={{ fontWeight: 800, fontSize: '15px', color: 'var(--role-primary)', textDecoration: 'underline' }}>
-                          {req.clientName}
-                        </span>
-                        <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>
-                          Ver reputación del contratante (RF-53) ↗
-                        </span>
-                      </button>
-                      <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{req.address}</span>
-                    </div>
-
-                    <span
-                      className={`badge ${req.urgency === 'urgente' ? 'badge-danger' : 'badge-available'}`}
-                      style={{ fontSize: '11px', textTransform: 'uppercase' }}
+                <article key={req.id} className="pv-ticket">
+                  <div className="pv-ticket__band pv-row pv-row--between">
+                    {/* Enlace para consultar perfil del contratante (RF-53) */}
+                    <button
+                      type="button"
+                      className="pv-client-link"
+                      onClick={() => openClientProfile(req)}
                     >
-                      {req.urgency === 'urgente' ? '⚡ Urgente' : 'Normal'}
+                      <strong>{req.clientName}</strong>
+                      <small>Ver reputación del contratante ↗</small>
+                    </button>
+                    <span className={`pv-tag ${req.urgency === 'urgente' ? 'pv-tag--danger' : 'pv-tag--esmeralda'}`}>
+                      {req.urgency === 'urgente' ? <><Zap size={12} aria-hidden="true" /> Urgente</> : 'Normal'}
                     </span>
                   </div>
 
-                  <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', background: 'var(--color-surface-hover)', padding: '10px', borderRadius: '8px', marginBottom: '12px' }}>
-                    "{req.problemDescription}"
-                  </p>
+                  <span className="pv-muted pv-note">{req.address}</span>
+
+                  <p className="pv-ticket__quote">"{req.problemDescription}"</p>
 
                   {/* Foto de la solicitud si existe (RF-20) */}
                   {req.photos && req.photos.length > 0 && (
-                    <div style={{ marginBottom: '12px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <img
-                        src={req.photos[0]}
-                        alt="Evidencia del problema"
-                        style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }}
-                      />
-                      <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
-                        Foto del problema adjunta por el cliente (RF-20)
-                      </span>
+                    <div className="pv-evidence">
+                      <img src={req.photos[0]} alt="Evidencia del problema" />
+                      <span>Foto del problema adjunta por el cliente</span>
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', marginBottom: '10px' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-text-muted)' }}>
-                      <Clock size={13} /> {req.time}
-                    </span>
-                    <span style={{ fontWeight: 800, color: 'var(--color-success)', fontSize: '14px' }}>
-                      Presupuesto: ${req.amount.toLocaleString()} COP
-                    </span>
+                  <div className="pv-ticket__meta pv-row--between">
+                    <span><CalendarDays size={14} aria-hidden="true" /> {req.date}</span>
+                    <span><Clock size={14} aria-hidden="true" /> {req.time}</span>
+                    {req.coverageZone && <span><MapPin size={14} aria-hidden="true" /> {req.coverageZone}</span>}
+                  </div>
+
+                  <div className="pv-ticket__budget">
+                    Presupuesto: ${req.amount.toLocaleString()} COP
                   </div>
 
                   {/* Contador Regresivo de Expiración (RF-28) */}
-                  <div
-                    style={{
-                      background: isUrgentExpiration ? '#FEE2E2' : '#EFF6FF',
-                      color: isUrgentExpiration ? '#991B1B' : '#1E40AF',
-                      padding: '6px 10px',
-                      borderRadius: '8px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: '14px'
-                    }}
-                  >
-                    <span>⏱ Tiempo para responder (RF-28):</span>
-                    <span>{minutes}:{seconds < 10 ? `0${seconds}` : seconds} min</span>
+                  <div className="pv-timer" data-urgent={isUrgentExpiration} role="timer" aria-live="off">
+                    <span>Tiempo para responder:</span>
+                    <span className="pv-timer__clock">
+                      {minutes}:{seconds < 10 ? `0${seconds}` : seconds} min
+                    </span>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      onClick={() => onRejectRequest(req.id)}
-                      className="btn btn-secondary"
-                      style={{ flex: 1, padding: '8px', fontSize: '12px' }}
-                    >
-                      Rechazar (RF-27)
+                  <div className="pv-ticket__actions">
+                    <button type="button" onClick={() => onRejectRequest(req.id)} className="btn btn-secondary">
+                      Rechazar
                     </button>
-                    <button
-                      onClick={() => onAcceptRequest(req.id)}
-                      className="btn btn-primary"
-                      style={{ flex: 1, padding: '8px', fontSize: '12px' }}
-                    >
-                      Aceptar Trabajo (RF-26)
+                    <button type="button" onClick={() => onAcceptRequest(req.id)} className="btn btn-primary">
+                      Aceptar Trabajo
                     </button>
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Sección 2: Multi-Servicio & Especializaciones (RF-01, RF-02, RF-03, RF-09, RF-66, RF-67) */}
-      <div style={{ marginBottom: '36px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      {/* Sección 2: Multi-Servicio & Especializaciones (RF-01, RF-02, RF-03, RF-04, RF-05, RF-09, RF-57, RF-66, RF-67) */}
+      <section aria-labelledby="pv-trades-title">
+        <div className="oy-section-head">
           <div>
-            <h3 style={{ fontSize: '1.25rem' }}>Mis Oficios, Especializaciones y Tarifas (RF-01, RF-02, RF-03)</h3>
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-              Configura detalles específicos como equipos, marcas y especialidades (RF-09, RF-67)
-            </span>
+            <h2 id="pv-trades-title" className="oy-section-title oy-display">Mis Oficios, Especializaciones y Tarifas</h2>
+            <p className="oy-section-sub">Configura detalles específicos como equipos, marcas y especialidades</p>
           </div>
-
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="btn btn-primary"
-            style={{ padding: '8px 16px', fontSize: '13px' }}
-          >
-            <Plus size={16} /> Añadir otro oficio
+          <button type="button" onClick={openNewService} className="btn btn-primary">
+            <Plus size={16} aria-hidden="true" /> Añadir otro oficio
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
-          {services.map((srv, index) => (
-            <div key={srv.id} className="card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-                <div>
-                  <span className="badge badge-verified" style={{ marginBottom: '6px' }}>
-                    {index === 0 ? 'OFICIO PRINCIPAL' : 'OFICIO SECUNDARIO'}
-                  </span>
-                  <h4 style={{ fontSize: '15px', fontWeight: 800 }}>{srv.tradeLabel}</h4>
-                </div>
+        {isProfileIncomplete && (
+          <div className="oy-empty">
+            <MascotAvatar size="md" expression="entusiasta" />
+            <h3 className="oy-empty__title oy-display">Registra tu primer oficio</h3>
+            <p className="oy-empty__text">
+              Cuéntale a tus vecinos qué haces, cuánto cobras y en qué zonas trabajas. Así apareces en el directorio.
+            </p>
+            <button type="button" onClick={openNewService} className="btn btn-primary">
+              <Plus size={16} aria-hidden="true" /> Registrar oficio
+            </button>
+          </div>
+        )}
 
-                {index > 0 && (
+        <div className="pv-grid">
+          {services.map((srv, index) => (
+            <article key={srv.id} className="pv-ticket">
+              <div className={`pv-ticket__band pv-row pv-row--between${index === 0 ? '' : ' pv-ticket__band--almendra'}`}>
+                <span className={`pv-tag${index === 0 ? ' pv-tag--solid' : ''}`}>
+                  {index === 0 ? 'OFICIO PRINCIPAL' : 'OFICIO SECUNDARIO'}
+                </span>
+                <div className="pv-row">
                   <button
-                    onClick={() => handleDeleteService(srv.id)}
-                    style={{ padding: '4px', color: 'var(--color-danger)', background: 'none', border: 'none', cursor: 'pointer' }}
-                    title="Eliminar este oficio secundario"
+                    type="button"
+                    className="oy-icon-btn"
+                    onClick={() => openEditService(srv)}
+                    title="Editar este oficio"
+                    aria-label={`Editar ${srv.tradeLabel}`}
                   >
-                    <Trash2 size={16} />
+                    <Pencil size={16} aria-hidden="true" />
                   </button>
-                )}
+                  {index > 0 && (
+                    <button
+                      type="button"
+                      className="oy-icon-btn"
+                      onClick={() => handleMakePrimary(srv.id)}
+                      title="Marcar como oficio principal"
+                      aria-label={`Marcar ${srv.tradeLabel} como oficio principal`}
+                    >
+                      <ArrowUpCircle size={16} aria-hidden="true" />
+                    </button>
+                  )}
+                  {index > 0 && (
+                    <button
+                      type="button"
+                      className="oy-icon-btn pv-icon-btn--danger"
+                      onClick={() => handleDeleteService(srv.id)}
+                      title="Eliminar este oficio secundario"
+                      aria-label={`Eliminar ${srv.tradeLabel}`}
+                    >
+                      <Trash2 size={16} aria-hidden="true" />
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '12px' }}>
-                {srv.bio}
-              </p>
+              <h3 className="pv-ticket__title">{srv.tradeLabel}</h3>
+              <p className="pv-muted pv-copy">{srv.bio}</p>
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', fontSize: '12px', marginBottom: '12px' }}>
-                <span style={{ fontWeight: 700 }}>💰 ${srv.hourlyRate.toLocaleString()} COP/h</span>
-                <span style={{ color: 'var(--color-text-muted)' }}>🕒 {srv.experienceYears} años exp.</span>
+              <div className="pv-row">
+                <span className="pv-tag pv-tag--fuego"><DollarSign size={13} aria-hidden="true" /> ${srv.hourlyRate.toLocaleString()} COP/{rateUnitShort(srv.rateUnit)}</span>
+                <span className="pv-tag"><Clock size={13} aria-hidden="true" /> {srv.experienceYears} años exp.</span>
               </div>
 
               {/* Especializaciones (RF-66, RF-67) */}
               {srv.specializations && srv.specializations.length > 0 && (
-                <div style={{ marginBottom: '10px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>
-                    Especializaciones (RF-67):
-                  </span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                <div>
+                  <span className="pv-label">Especializaciones</span>
+                  <div className="pv-row">
                     {srv.specializations.map((spec, i) => (
-                      <span key={i} style={{ background: 'var(--role-primary-light)', color: 'var(--role-primary)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>
-                        ★ {spec}
+                      <span key={i} className="pv-tag pv-tag--almendra">
+                        <Star size={11} aria-hidden="true" /> {spec}
                       </span>
                     ))}
                   </div>
@@ -542,286 +672,342 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
               )}
 
               {/* Equipos & Marcas (RF-09) */}
-              {(srv.equipment || srv.brands) && (
-                <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '10px', borderTop: '1px solid var(--color-border)', paddingTop: '8px' }}>
-                  {srv.equipment && <div><strong>Equipo:</strong> {srv.equipment.join(', ')}</div>}
-                  {srv.brands && <div><strong>Marcas:</strong> {srv.brands.join(', ')}</div>}
+              {(srv.equipment?.length || srv.brands?.length || srv.species?.length) ? (
+                <div className="pv-details">
+                  {srv.equipment && srv.equipment.length > 0 && <div><strong>Equipo:</strong> {srv.equipment.join(', ')}</div>}
+                  {srv.brands && srv.brands.length > 0 && <div><strong>Marcas:</strong> {srv.brands.join(', ')}</div>}
+                  {srv.species && srv.species.length > 0 && <div><strong>Especies:</strong> {srv.species.join(', ')}</div>}
                 </div>
-              )}
+              ) : null}
 
-              <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '10px' }}>
-                <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>
-                  Zonas de cobertura en Bogotá (RF-04):
-                </span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+              <div className="pv-details">
+                <span className="pv-label">Zonas de cobertura en Bogotá</span>
+                <div className="pv-row">
                   {srv.coverageZones.map((z, i) => (
-                    <span key={i} style={{ background: 'var(--color-surface-hover)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>
-                      {z}
-                    </span>
+                    <span key={i} className="pv-tag">{z}</span>
                   ))}
+                  {srv.maxDistanceKm && (
+                    <span className="pv-tag pv-tag--marino"><MapPin size={13} aria-hidden="true" /> Hasta {srv.maxDistanceKm} km</span>
+                  )}
                 </div>
               </div>
-            </div>
+            </article>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Sección 3: Métodos de Pago & Portafolio (RF-60, RF-07) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '36px' }}>
-        {/* RF-60: Métodos de Pago */}
-        <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-            <CreditCard size={20} color="var(--role-primary)" />
-            <h3 style={{ fontSize: '1.15rem' }}>Métodos de Pago Aceptados (RF-60)</h3>
+      {/* Sección 3: Disponibilidad semanal (RF-06) */}
+      <section aria-labelledby="pv-week-title">
+        <div className="oy-section-head">
+          <div>
+            <h2 id="pv-week-title" className="oy-section-title oy-display">Disponibilidad Semanal</h2>
+            <p className="oy-section-sub">Días y franjas horarias habituales en que atiendes servicios.</p>
           </div>
-          <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '14px' }}>
-            Selecciona los canales en los que recibes pagos para informar al contratante antes del servicio.
-          </p>
+          <span className="pv-tag pv-tag--fuego"><CalendarDays size={13} aria-hidden="true" /> {activeDays} días activos</span>
+        </div>
+        <div className="oy-panel oy-panel--almendra">
+          <div className="pv-week">
+            {WEEK_DAYS.map(d => {
+              const day = weeklySchedule[d.key];
+              return (
+                <div key={d.key} className="pv-day" data-on={day.active}>
+                  <button
+                    type="button"
+                    className="oy-chip"
+                    aria-pressed={day.active}
+                    onClick={() => updateDay(d.key, { active: !day.active })}
+                  >
+                    {d.label}
+                  </button>
+                  {day.active ? (
+                    <div className="pv-day__slot">
+                      <input
+                        type="time"
+                        className="input-base"
+                        value={day.from}
+                        aria-label={`${d.label}: desde`}
+                        onChange={e => updateDay(d.key, { from: e.target.value })}
+                      />
+                      <input
+                        type="time"
+                        className="input-base"
+                        value={day.to}
+                        aria-label={`${d.label}: hasta`}
+                        onChange={e => updateDay(d.key, { to: e.target.value })}
+                      />
+                    </div>
+                  ) : (
+                    <span className="pv-muted pv-day__rest">Descanso</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            {(['efectivo', 'nequi', 'daviplata', 'bre_b', 'tarjeta'] as AcceptedPaymentMethod[]).map(method => (
-              <label
-                key={method}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '8px 12px',
-                  background: paymentMethods.includes(method) ? 'var(--role-primary-light)' : 'var(--color-surface)',
-                  border: paymentMethods.includes(method) ? '1px solid var(--role-primary)' : '1px solid var(--color-border)',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  textTransform: 'capitalize'
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={paymentMethods.includes(method)}
-                  onChange={() => togglePaymentMethod(method)}
-                  style={{ cursor: 'pointer' }}
-                />
-                {method === 'bre_b' ? 'Bre-B (Interoperable)' : method}
-              </label>
-            ))}
+      {/* Sección 4: Métodos de Pago, Portafolio y servicios más solicitados (RF-60, RF-07, RF-46) */}
+      <section aria-labelledby="pv-profile-title">
+        <div className="oy-section-head">
+          <div>
+            <h2 id="pv-profile-title" className="oy-section-title oy-display">Pagos, portafolio y demanda</h2>
+            <p className="oy-section-sub">Lo que ve el contratante antes de solicitarte un servicio.</p>
           </div>
         </div>
 
-        {/* RF-07: Portafolio de Fotografías */}
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <ImageIcon size={20} color="var(--role-primary)" />
-              <h3 style={{ fontSize: '1.15rem' }}>Portafolio de Trabajos (RF-07)</h3>
+        <div className="pv-grid--2 pv-grid">
+          {/* RF-60: Métodos de Pago */}
+          <div className="oy-panel oy-panel--amarillo">
+            <h3 className="pv-panel-title"><CreditCard size={22} aria-hidden="true" /> Métodos de Pago Aceptados</h3>
+            <p className="pv-muted pv-copy">
+              Selecciona los canales en los que recibes pagos para informar al contratante antes del servicio.
+            </p>
+            <div className="pv-chips">
+              {PAYMENT_OPTIONS.map(method => (
+                <button
+                  key={method}
+                  type="button"
+                  className={`oy-chip${method === 'bre_b' ? '' : ' pv-chip--cap'}`}
+                  aria-pressed={paymentMethods.includes(method)}
+                  onClick={() => togglePaymentMethod(method)}
+                >
+                  {paymentMethods.includes(method) && <CheckCircle2 size={14} aria-hidden="true" />}
+                  {method === 'bre_b' ? 'Bre-B (Interoperable)' : method}
+                </button>
+              ))}
             </div>
-            <button
-              onClick={() => setShowPhotoModal(true)}
-              className="btn btn-secondary"
-              style={{ padding: '6px 12px', fontSize: '12px' }}
-            >
-              + Subir foto
-            </button>
           </div>
-          <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '14px' }}>
-            {portfolioPhotos.length} fotos publicadas para generar confianza en tus contratantes.
-          </p>
 
-          <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '6px' }}>
-            {portfolioPhotos.map((url, i) => (
-              <div key={i} style={{ width: '80px', height: '80px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
-                <img src={url} alt={`Trabajo ${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          {/* RF-07: Portafolio de Fotografías */}
+          <div className="oy-panel oy-panel--marino">
+            <div className="pv-row pv-row--between">
+              <h3 className="pv-panel-title"><ImageIcon size={22} aria-hidden="true" /> Portafolio de Trabajos</h3>
+              <button type="button" onClick={() => setShowPhotoModal(true)} className="btn btn-secondary">
+                <Plus size={14} aria-hidden="true" /> Subir foto
+              </button>
+            </div>
+            <p className="pv-muted pv-copy">
+              {portfolioPhotos.length} fotos publicadas para generar confianza en tus contratantes.
+            </p>
+            <div className="pv-portfolio">
+              {portfolioPhotos.map((url, i) => (
+                <div key={`${i}-${url.slice(-12)}`} className="pv-portfolio__item">
+                  <img src={url} alt={`Trabajo ${i + 1}`} />
+                  <button
+                    type="button"
+                    className="oy-icon-btn pv-icon-btn--danger pv-portfolio__remove"
+                    onClick={() => handleRemovePhoto(i)}
+                    aria-label={`Quitar trabajo ${i + 1} del portafolio`}
+                    title="Quitar del portafolio"
+                  >
+                    <Trash2 size={14} aria-hidden="true" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* RF-46: Servicios más solicitados */}
+          <div className="oy-panel oy-panel--gris">
+            <h3 className="pv-panel-title"><TrendingUp size={22} aria-hidden="true" /> Servicios más solicitados</h3>
+            <p className="pv-muted pv-copy">Trabajos completados por categoría este mes.</p>
+            {topRequestedList.length === 0 && (
+              <p className="pv-muted pv-copy">Aún no tienes trabajos finalizados este mes.</p>
+            )}
+            <ol className="pv-top-list">
+              {topRequestedList.map(t => (
+                <li key={t.label}>
+                  <div className="pv-row pv-row--between pv-top-list__row">
+                    <span>{t.label}</span>
+                    <span>{t.count}</span>
+                  </div>
+                  <div className="pv-bar" aria-hidden="true">
+                    <div className="pv-bar__fill" style={{ width: `${(t.count / topMax) * 100}%` }} />
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      {/* Sección 5: Verificación de Identidad & Referidos (RF-41, RF-42, RF-43, RF-68, RF-69) */}
+      <section aria-labelledby="pv-trust-title">
+        <div className="oy-section-head">
+          <div>
+            <h2 id="pv-trust-title" className="oy-section-title oy-display">Confianza y comunidad</h2>
+            <p className="oy-section-sub">Distintivos que te hacen destacar en el directorio.</p>
+          </div>
+        </div>
+
+        <div className="pv-grid--2 pv-grid">
+          {/* RF-41, RF-42, RF-43: Verificación de Identidad */}
+          <div className="oy-panel oy-panel--esmeralda">
+            <h3 className="pv-panel-title"><ShieldCheck size={22} aria-hidden="true" /> Verificación de Identidad</h3>
+            <p className="pv-muted pv-copy">
+              {isEligibleForVerification
+                ? `Has completado ${completedJobsCount} trabajos (mínimo 10 requeridos). Eres elegible para el distintivo oficial.`
+                : `Llevas ${completedJobsCount} trabajos. Completa al menos 10 para solicitar la verificación de identidad.`}
+            </p>
+            <div className="pv-summary pv-row pv-row--between">
+              <div>
+                <span className="pv-label">Estado actual</span>
+                <span className={`pv-tag ${isIdentityVerified ? 'pv-tag--esmeralda' : isVerificationPending ? 'pv-tag--marino' : 'pv-tag--danger'}`}>
+                  {isIdentityVerified
+                    ? <><CheckCircle2 size={13} aria-hidden="true" /> Identidad Verificada Activa</>
+                    : isVerificationPending
+                      ? <><Hourglass size={13} aria-hidden="true" /> En revisión por moderación</>
+                      : 'Pendiente de Documento'}
+                </span>
               </div>
-            ))}
+              <button
+                type="button"
+                onClick={() => setShowVerificationModal(true)}
+                className="btn btn-secondary"
+                disabled={!isIdentityVerified && !isVerificationPending && !isEligibleForVerification}
+              >
+                {isIdentityVerified || isVerificationPending ? 'Ver Soporte' : 'Enviar Cédula'}
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Sección 4: Verificación de Identidad & Referidos (RF-41, RF-42, RF-43, RF-68, RF-69) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-        {/* RF-41, RF-42, RF-43: Verificación de Identidad */}
-        <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-            <ShieldCheck size={22} color={isIdentityVerified ? '#10B981' : 'var(--role-primary)'} />
-            <h3 style={{ fontSize: '1.15rem' }}>Verificación de Identidad (RF-41, RF-42, RF-43)</h3>
-          </div>
-          <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '14px' }}>
-            {completedJobsCount >= 10
-              ? `✅ Has completado ${completedJobsCount} trabajos (mínimo 10 requeridos). Eres elegible para el distintivo oficial.`
-              : `Completa al menos 10 trabajos para solicitar la verificación de identidad.`}
-          </p>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--color-border)', paddingTop: '12px' }}>
-            <div>
-              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Estado Actual:</span>
-              <span className={`badge ${isIdentityVerified ? 'badge-verified' : 'badge-danger'}`} style={{ fontSize: '12px' }}>
-                {isIdentityVerified ? '✓ Identidad Verificada Activa' : 'Pendiente de Documento'}
+          {/* RF-68, RF-69: Referidos y Crecimiento Comunitario */}
+          <div className="oy-panel oy-panel--almendra">
+            <div className="pv-row pv-row--between">
+              <h3 className="pv-panel-title"><Users size={22} aria-hidden="true" /> Referidos Comunitarios</h3>
+              <button type="button" onClick={() => setShowReferralModal(true)} className="btn btn-secondary">
+                <Plus size={14} aria-hidden="true" /> Referir colega
+              </button>
+            </div>
+            <p className="pv-muted pv-copy">
+              Tu código de referido: <span className="pv-code">{referrals.code}</span>. Invita a trabajadores a registrarse.
+            </p>
+            <div className="pv-summary">
+              <div className="pv-row pv-row--between">
+                <span>Referidos verificados:</span>
+                <strong>{referrals.count} colegas</strong>
+              </div>
+              {pendingReferrals > 0 && (
+                <div className="pv-row pv-row--between">
+                  <span>En verificación:</span>
+                  <strong>{pendingReferrals} colegas</strong>
+                </div>
+              )}
+              <div className="pv-row pv-row--between">
+                <span>Oficios distintos:</span>
+                <strong>{distinctTradesCount} oficios (mínimo 3 para insignia)</strong>
+              </div>
+            </div>
+            {isCommunityReferrer && (
+              <span className="pv-tag pv-tag--solid">
+                <Award size={13} aria-hidden="true" /> Insignia Permanente: Referente Comunitario Verificado
               </span>
-            </div>
-            <button
-              onClick={() => setShowVerificationModal(true)}
-              className="btn btn-secondary"
-              style={{ fontSize: '12px', padding: '6px 12px' }}
-            >
-              {isIdentityVerified ? 'Ver Soporte' : 'Enviar Cédula'}
-            </button>
+            )}
           </div>
         </div>
-
-        {/* RF-68, RF-69: Referidos y Crecimiento Comunitario */}
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Users size={22} color="var(--role-primary)" />
-              <h3 style={{ fontSize: '1.15rem' }}>Referidos Comunitarios (RF-68, RF-69)</h3>
-            </div>
-            <button
-              onClick={() => setShowReferralModal(true)}
-              className="btn btn-secondary"
-              style={{ padding: '6px 12px', fontSize: '12px' }}
-            >
-              + Referir colega
-            </button>
-          </div>
-          <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '10px' }}>
-            Tu código de referido: <strong>{referralCode}</strong>. Invita a trabajadores a registrarse.
-          </p>
-
-          <div style={{ background: 'var(--color-surface-hover)', padding: '10px', borderRadius: '10px', marginBottom: '12px', fontSize: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span>Referidos activos:</span>
-              <strong>{referralsList.length} colegas</strong>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Oficios distintos:</span>
-              <strong>{distinctTradesCount} oficios (mínimo 3 para insignia)</strong>
-            </div>
-          </div>
-
-          {isCommunityReferrer && (
-            <span className="badge" style={{ background: '#F59E0B', color: '#FFF', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <Award size={13} /> Insignia Permanente: Referente Comunitario Verificado (RF-69)
-            </span>
-          )}
-        </div>
-      </div>
+      </section>
 
       {/* Modal Consulta de Perfil de Contratante (RF-53) */}
       {selectedClientForProfile && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.65)',
-            zIndex: 1100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(5px)',
-            padding: '16px'
-          }}
-        >
-          <div className="card" style={{ width: '100%', maxWidth: '480px', borderRadius: '24px', padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <UserCheck size={22} color="var(--role-primary)" />
-                <h3 style={{ fontSize: '1.25rem' }}>Perfil del Contratante (RF-53)</h3>
-              </div>
-              <button onClick={() => setSelectedClientForProfile(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                <X size={20} />
+        <div className="oy-modal-backdrop" onClick={() => setSelectedClientForProfile(null)}>
+          <div
+            className="oy-modal pv-modal--client"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pv-client-title"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="oy-modal__head">
+              <h3 id="pv-client-title" className="oy-modal__title pv-row">
+                <UserCheck size={24} aria-hidden="true" /> Perfil del Contratante
+              </h3>
+              <button type="button" className="oy-icon-btn" onClick={() => setSelectedClientForProfile(null)} aria-label="Cerrar">
+                <X size={18} aria-hidden="true" />
               </button>
             </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
-              <div
-                style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '50%',
-                  background: selectedClientForProfile.avatarColor,
-                  color: '#FFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 900,
-                  fontSize: '20px'
-                }}
-              >
-                {selectedClientForProfile.name.slice(0, 2).toUpperCase()}
+            <div className="oy-modal__body">
+              <div className="pv-client-head">
+                <div className="pv-client-avatar" style={{ background: selectedClientForProfile.avatarColor }}>
+                  {selectedClientForProfile.name.slice(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <h4 className="pv-client-name">{selectedClientForProfile.name}</h4>
+                  <span className="pv-muted pv-note">
+                    Miembro desde {selectedClientForProfile.registeredSince}
+                  </span>
+                </div>
               </div>
-              <div>
-                <h4 style={{ fontSize: '16px', fontWeight: 800 }}>{selectedClientForProfile.name}</h4>
-                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                  Miembro desde {selectedClientForProfile.registeredSince}
+
+              <div className="oy-panel oy-panel--amarillo pv-client-rep">
+                <span className="pv-label">Reputación histórica como contratante</span>
+                <div className="pv-rating">
+                  <Star size={22} fill="var(--color-star)" color="var(--oy-cacao-profundo)" aria-hidden="true" /> {selectedClientForProfile.reviewCount > 0 ? selectedClientForProfile.rating.toFixed(1) : '—'}
+                  <span className="pv-muted pv-rating__count">
+                    ({selectedClientForProfile.reviewCount} calificaciones de otros profesionales)
+                  </span>
+                </div>
+                <span className="pv-ok pv-ok--spaced">
+                  <CheckCircle2 size={14} aria-hidden="true" /> {selectedClientForProfile.completedServicesCount} servicios contratados y finalizados en OficioYa
                 </span>
               </div>
+
+              <p className="pv-muted pv-client-note">
+                Esta información te permite evaluar si aceptar la solicitud con base en el historial verificado del usuario.
+              </p>
+
+              <button type="button" onClick={() => setSelectedClientForProfile(null)} className="btn btn-primary pv-btn-block">
+                Cerrar Ficha
+              </button>
             </div>
-
-            <div style={{ background: 'var(--color-surface-hover)', padding: '14px', borderRadius: '12px', marginBottom: '16px' }}>
-              <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>
-                Reputación histórica como contratante:
-              </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '1.4rem', fontWeight: 900, color: '#D97706' }}>
-                <Star size={22} fill="#FBBF24" color="#FBBF24" /> {selectedClientForProfile.rating}
-                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontWeight: 400 }}>
-                  ({selectedClientForProfile.reviewCount} calificaciones de otros profesionales)
-                </span>
-              </div>
-              <span style={{ fontSize: '12px', color: 'var(--color-success)', fontWeight: 600, display: 'block', marginTop: '6px' }}>
-                ✓ {selectedClientForProfile.completedServicesCount} servicios contratados y pagados puntualmente
-              </span>
-            </div>
-
-            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: '0 0 16px' }}>
-              Esta información te permite evaluar si aceptar la solicitud con base en el historial verificado del usuario.
-            </p>
-
-            <button
-              onClick={() => setSelectedClientForProfile(null)}
-              className="btn btn-primary"
-              style={{ width: '100%' }}
-            >
-              Cerrar Ficha
-            </button>
           </div>
         </div>
       )}
 
       {/* Modal Subir Foto de Portafolio (RF-07) */}
       {showPhotoModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.65)',
-            zIndex: 1100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(5px)',
-            padding: '16px'
-          }}
-        >
-          <div className="card" style={{ width: '100%', maxWidth: '440px', borderRadius: '24px', padding: '24px' }}>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '14px' }}>Publicar Fotografía en Portafolio (RF-07)</h3>
-            <label style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
-              URL de la imagen o captura
-            </label>
-            <input
-              type="text"
-              className="input-base"
-              placeholder="https://images.unsplash.com/..."
-              value={newPhotoUrl}
-              onChange={e => setNewPhotoUrl(e.target.value)}
-              style={{ marginBottom: '14px' }}
-            />
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button onClick={() => setShowPhotoModal(false)} className="btn btn-secondary" style={{ flex: 1 }}>
-                Cancelar
+        <div className="oy-modal-backdrop" onClick={() => setShowPhotoModal(false)}>
+          <div
+            className="oy-modal pv-modal--sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pv-photo-title"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="oy-modal__head">
+              <h3 id="pv-photo-title" className="oy-modal__title">Publicar Fotografía en Portafolio</h3>
+              <button type="button" className="oy-icon-btn" onClick={() => setShowPhotoModal(false)} aria-label="Cerrar">
+                <X size={18} aria-hidden="true" />
               </button>
-              <button onClick={handleAddPhoto} className="btn btn-primary" style={{ flex: 1 }}>
-                Guardar Foto
-              </button>
+            </div>
+            <div className="oy-modal__body pv-form">
+              <div>
+                <label htmlFor="pv-photo-url" className="pv-label">URL de la imagen o captura</label>
+                <input
+                  id="pv-photo-url"
+                  type="text"
+                  className="input-base"
+                  placeholder="https://images.unsplash.com/..."
+                  value={newPhotoUrl}
+                  onChange={e => setNewPhotoUrl(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="pv-photo-file" className="pv-label">O sube una foto desde tu celular</label>
+                <input
+                  id="pv-photo-file"
+                  type="file"
+                  accept="image/*"
+                  className="input-base"
+                  onChange={handlePortfolioFile}
+                  disabled={isUploading}
+                />
+                {isUploading && <span className="pv-muted pv-caption" role="status">Subiendo foto…</span>}
+                {photoError && <span className="pv-muted pv-caption" role="alert">{photoError}</span>}
+              </div>
+              <div className="pv-form__actions">
+                <button type="button" onClick={() => setShowPhotoModal(false)} className="btn btn-secondary">Cancelar</button>
+                <button type="button" onClick={handleAddPhoto} className="btn btn-primary">Guardar Foto</button>
+              </div>
             </div>
           </div>
         </div>
@@ -829,58 +1015,95 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
 
       {/* Modal Verificación de Identidad (RF-42, RF-43) */}
       {showVerificationModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.65)',
-            zIndex: 1100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(5px)',
-            padding: '16px'
-          }}
-        >
-          <div className="card" style={{ width: '100%', maxWidth: '460px', borderRadius: '24px', padding: '24px' }}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '12px' }}>Soporte de Identidad Verificada (RF-42, RF-43)</h3>
-            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>
-              Documento validado para emitir el distintivo de Identidad Verificada en tu perfil público de Bogotá.
-            </p>
-
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                Número de Cédula de Ciudadanía
-              </label>
-              <input
-                type="text"
-                className="input-base"
-                value={docNumber}
-                onChange={e => setDocNumber(e.target.value)}
-              />
-            </div>
-
-            <div style={{ padding: '12px', background: 'var(--color-surface-hover)', borderRadius: '10px', marginBottom: '18px', fontSize: '12px' }}>
-              <span style={{ fontWeight: 700, color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <CheckCircle2 size={14} /> Cédula digital validada ante Registraduría
-              </span>
-              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Vigente hasta Diciembre 2027</span>
-            </div>
-
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button onClick={() => setShowVerificationModal(false)} className="btn btn-secondary" style={{ flex: 1 }}>
-                Cerrar
+        <div className="oy-modal-backdrop" onClick={() => setShowVerificationModal(false)}>
+          <div
+            className="oy-modal pv-modal--verify"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pv-verify-title"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="oy-modal__head">
+              <h3 id="pv-verify-title" className="oy-modal__title">Soporte de Identidad Verificada</h3>
+              <button type="button" className="oy-icon-btn" onClick={() => setShowVerificationModal(false)} aria-label="Cerrar">
+                <X size={18} aria-hidden="true" />
               </button>
-              <button
-                onClick={() => {
-                  setIsIdentityVerified(true);
-                  setShowVerificationModal(false);
-                }}
-                className="btn btn-primary"
-                style={{ flex: 1 }}
-              >
-                Confirmar Verificación
-              </button>
+            </div>
+            <div className="oy-modal__body pv-form">
+              <p className="pv-muted pv-copy">
+                {isIdentityVerified
+                  ? 'Documento validado para emitir el distintivo de Identidad Verificada en tu perfil público de Bogotá.'
+                  : isVerificationPending
+                    ? 'Recibimos tu documento. Moderación lo revisa y te avisamos cuando el distintivo quede activo.'
+                    : 'Envía tu cédula y una foto del documento. Moderación la revisa antes de activar el distintivo.'}
+              </p>
+              <div>
+                <label htmlFor="pv-doc" className="pv-label">Número de Cédula de Ciudadanía</label>
+                <input
+                  id="pv-doc"
+                  type="text"
+                  inputMode="numeric"
+                  className="input-base"
+                  value={docNumber}
+                  onChange={e => setDocNumber(e.target.value)}
+                  readOnly={isIdentityVerified || isVerificationPending}
+                  required
+                />
+              </div>
+              {!isIdentityVerified && !isVerificationPending && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <label className="pv-label" style={{ marginBottom: '0.5rem', display: 'block' }}>
+                    Soporte de documento (Arrastra el archivo o sube una foto):
+                  </label>
+                  <Upload
+                    onComplete={(f) => {
+                      if (f.id === 'img') {
+                        setDocFileUrl('https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=80');
+                      }
+                    }}
+                  />
+                  <div style={{ marginTop: '0.75rem', textAlign: 'center' }}>
+                    <label htmlFor="pv-doc-file" className="btn btn-secondary oy-flow-small" style={{ cursor: 'pointer', display: 'inline-flex' }}>
+                      O elegir foto desde mi dispositivo
+                    </label>
+                    <input
+                      id="pv-doc-file"
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      style={{ display: 'none' }}
+                      onChange={handleDocFile}
+                      disabled={isUploading}
+                    />
+                  </div>
+                  {isUploading && <span className="pv-muted pv-caption" role="status">Subiendo foto…</span>}
+                  {photoError && <span className="pv-muted pv-caption" role="alert">{photoError}</span>}
+                </div>
+              )}
+              {docFileUrl && (
+                <div className="pv-evidence">
+                  <img src={docFileUrl} alt="Soporte de la cédula" />
+                  <span>Soporte adjunto</span>
+                </div>
+              )}
+              {isIdentityVerified && (
+                <div className="pv-summary pv-summary--flush">
+                  <span className="pv-ok"><CheckCircle2 size={14} aria-hidden="true" /> Cédula revisada por moderación</span>
+                </div>
+              )}
+              <div className="pv-form__actions">
+                <button type="button" onClick={() => setShowVerificationModal(false)} className="btn btn-secondary">Cerrar</button>
+                {!isIdentityVerified && !isVerificationPending && (
+                  <button
+                    type="button"
+                    onClick={handleSubmitVerification}
+                    className="btn btn-primary"
+                    disabled={!docNumber.trim() || isUploading}
+                  >
+                    Enviar a revisión
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -888,27 +1111,25 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
 
       {/* Modal Referir Colega (RF-68) */}
       {showReferralModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.65)',
-            zIndex: 1100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(5px)',
-            padding: '16px'
-          }}
-        >
-          <div className="card" style={{ width: '100%', maxWidth: '440px', borderRadius: '24px', padding: '24px' }}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '12px' }}>Registrar un Referido (RF-68)</h3>
-            <form onSubmit={handleAddReferral} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="oy-modal-backdrop" onClick={() => setShowReferralModal(false)}>
+          <div
+            className="oy-modal pv-modal--sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pv-ref-title"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="oy-modal__head">
+              <h3 id="pv-ref-title" className="oy-modal__title">Registrar un Referido</h3>
+              <button type="button" className="oy-icon-btn" onClick={() => setShowReferralModal(false)} aria-label="Cerrar">
+                <X size={18} aria-hidden="true" />
+              </button>
+            </div>
+            <form onSubmit={handleAddReferral} className="oy-modal__body pv-form">
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                  Nombre del Trabajador
-                </label>
+                <label htmlFor="pv-ref-name" className="pv-label">Nombre del Trabajador</label>
                 <input
+                  id="pv-ref-name"
                   type="text"
                   className="input-base"
                   placeholder="Ej. Gustavo Bolívar"
@@ -917,12 +1138,10 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   required
                 />
               </div>
-
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                  Oficio del Colega
-                </label>
+                <label htmlFor="pv-ref-trade" className="pv-label">Oficio del Colega</label>
                 <select
+                  id="pv-ref-trade"
                   className="input-base"
                   value={newReferralTrade}
                   onChange={e => setNewReferralTrade(e.target.value)}
@@ -936,41 +1155,38 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   <option value="mascotas">Mascotas</option>
                 </select>
               </div>
-
-              <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                <button type="button" onClick={() => setShowReferralModal(false)} className="btn btn-secondary" style={{ flex: 1 }}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
-                  Registrar Referido
-                </button>
+              <div className="pv-form__actions">
+                <button type="button" onClick={() => setShowReferralModal(false)} className="btn btn-secondary">Cancelar</button>
+                <button type="submit" className="btn btn-primary">Registrar Referido</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Modal Registrar Nuevo Oficio (RF-01, RF-02, RF-03, RF-09, RF-67) */}
+      {/* Modal Registrar / Editar Oficio (RF-01, RF-02, RF-03, RF-04, RF-05, RF-09, RF-57, RF-67) */}
       {showAddModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(4px)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px'
-          }}
-        >
-          <div className="card" style={{ width: '100%', maxWidth: '520px', borderRadius: '24px', padding: '24px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '16px' }}>Registrar Nuevo Oficio (RF-01, RF-03)</h3>
-            <form onSubmit={handleAddService} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div className="oy-modal-backdrop" onClick={closeServiceModal}>
+          <div
+            className="oy-modal pv-modal--trade"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pv-trade-title"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="oy-modal__head">
+              <h3 id="pv-trade-title" className="oy-modal__title">
+                {editingServiceId ? 'Editar Oficio' : 'Registrar Nuevo Oficio'}
+              </h3>
+              <button type="button" className="oy-icon-btn" onClick={closeServiceModal} aria-label="Cerrar">
+                <X size={18} aria-hidden="true" />
+              </button>
+            </div>
+            <form onSubmit={handleAddService} className="oy-modal__body pv-form">
               <div>
-                <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Categoría de Oficio (RF-02, RF-03)</label>
+                <label htmlFor="pv-trade" className="pv-label">Categoría de Oficio</label>
                 <select
+                  id="pv-trade"
                   className="input-base"
                   value={newTrade}
                   onChange={e => setNewTrade(e.target.value as TradeCategory)}
@@ -985,12 +1201,15 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   <option value="aseo">Aseo Profundo</option>
                   <option value="jardineria">Jardinería</option>
                   <option value="mascotas">Cuidado de Mascotas</option>
+                  <option value="hogar">Hogar y reparaciones</option>
+                  <option value="clases">Clases particulares</option>
                 </select>
               </div>
 
               <div>
-                <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Título del Servicio</label>
+                <label htmlFor="pv-trade-label" className="pv-label">Título del Servicio</label>
                 <input
+                  id="pv-trade-label"
                   type="text"
                   className="input-base"
                   value={newTradeLabel}
@@ -1000,10 +1219,11 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div className="pv-form__pair">
                 <div>
-                  <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Tarifa / Hora (COP) (RF-05)</label>
+                  <label htmlFor="pv-rate" className="pv-label">Tarifa (COP)</label>
                   <input
+                    id="pv-rate"
                     type="number"
                     className="input-base"
                     value={newHourlyRate}
@@ -1012,8 +1232,25 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Años Experiencia</label>
+                  <label htmlFor="pv-rate-unit" className="pv-label">Modalidad de cobro</label>
+                  <select
+                    id="pv-rate-unit"
+                    className="input-base"
+                    value={newRateUnit}
+                    onChange={e => setNewRateUnit(e.target.value as RateUnit)}
+                  >
+                    {RATE_UNITS.map(u => (
+                      <option key={u.id} value={u.id}>{u.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="pv-form__pair">
+                <div>
+                  <label htmlFor="pv-exp" className="pv-label">Años Experiencia</label>
                   <input
+                    id="pv-exp"
                     type="number"
                     className="input-base"
                     value={newExpYears}
@@ -1021,11 +1258,25 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                     required
                   />
                 </div>
+                <div>
+                  <label htmlFor="pv-distance" className="pv-label">Distancia máxima (km)</label>
+                  <input
+                    id="pv-distance"
+                    type="number"
+                    min={1}
+                    max={60}
+                    className="input-base"
+                    value={newMaxDistance}
+                    onChange={e => setNewMaxDistance(e.target.value)}
+                    placeholder="8"
+                  />
+                </div>
               </div>
 
               <div>
-                <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Zonas de Cobertura en Bogotá (RF-04)</label>
+                <label htmlFor="pv-zones" className="pv-label">Zonas de Cobertura en Bogotá</label>
                 <input
+                  id="pv-zones"
                   type="text"
                   className="input-base"
                   value={newZones}
@@ -1036,10 +1287,11 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
               </div>
 
               {/* RF-09: Equipamiento y Marcas */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div className="pv-form__pair">
                 <div>
-                  <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Equipos / Herramientas (RF-09)</label>
+                  <label htmlFor="pv-equip" className="pv-label">Equipos / Herramientas</label>
                   <input
+                    id="pv-equip"
                     type="text"
                     className="input-base"
                     value={newEquipment}
@@ -1048,8 +1300,9 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Marcas atendidas (RF-09)</label>
+                  <label htmlFor="pv-brands" className="pv-label">Marcas atendidas</label>
                   <input
+                    id="pv-brands"
                     type="text"
                     className="input-base"
                     value={newBrands}
@@ -1061,8 +1314,9 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
 
               {/* RF-67: Especializaciones */}
               <div>
-                <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Especializaciones registradas (RF-67)</label>
+                <label htmlFor="pv-specs" className="pv-label">Especializaciones registradas</label>
                 <input
+                  id="pv-specs"
                   type="text"
                   className="input-base"
                   value={newSpecializations}
@@ -1071,9 +1325,25 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                 />
               </div>
 
+              {/* RF-09: Especies atendidas (mascotas) */}
+              {(newTrade === 'mascotas' || newSpecies) && (
+                <div>
+                  <label htmlFor="pv-species" className="pv-label">Especies atendidas</label>
+                  <input
+                    id="pv-species"
+                    type="text"
+                    className="input-base"
+                    value={newSpecies}
+                    onChange={e => setNewSpecies(e.target.value)}
+                    placeholder="Perros, gatos, aves"
+                  />
+                </div>
+              )}
+
               <div>
-                <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Descripción / Bio del Servicio</label>
+                <label htmlFor="pv-bio" className="pv-label">Descripción / Bio del Servicio</label>
                 <textarea
+                  id="pv-bio"
                   className="input-base"
                   rows={2}
                   value={newBio}
@@ -1082,21 +1352,10 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="btn btn-secondary"
-                  style={{ flex: 1 }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  style={{ flex: 1 }}
-                >
-                  Guardar Oficio
+              <div className="pv-form__actions">
+                <button type="button" onClick={closeServiceModal} className="btn btn-secondary">Cancelar</button>
+                <button type="submit" className="btn btn-primary">
+                  {editingServiceId ? 'Guardar Cambios' : 'Guardar Oficio'}
                 </button>
               </div>
             </form>

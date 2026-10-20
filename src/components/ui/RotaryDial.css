@@ -1,0 +1,410 @@
+/* RotaryDial.css — Selector mecánico rotatorio inspirado en bleibtgleich.dev */
+
+:root {
+  --rotary-size: 380px;
+  --rotary-hole-size: 64px;
+  --rotary-gap: 16px;
+  --rotary-radius: calc(var(--rotary-size) / 2 - var(--rotary-hole-size) / 2 - var(--rotary-gap));
+}
+
+@media (max-width: 768px) {
+  :root {
+    --rotary-size: 300px;
+    --rotary-hole-size: 52px;
+    --rotary-gap: 12px;
+  }
+}
+
+.oy-rotary-section {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 5rem 1.5rem 6rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.oy-rotary-header {
+  text-align: center;
+  max-width: 740px;
+  margin: 0 auto 3.5rem;
+}
+
+.oy-rotary-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  background: rgba(229, 143, 73, 0.12);
+  border: 1px solid rgba(229, 143, 73, 0.35);
+  border-radius: 9999px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--oy-gold, #E58F49);
+  margin-bottom: 1.25rem;
+}
+
+.oy-rotary-badge-pulse {
+  width: 7px;
+  height: 7px;
+  background-color: var(--oy-gold, #E58F49);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--oy-gold, #E58F49);
+  animation: oyPulse 2s infinite ease-in-out;
+}
+
+@keyframes oyPulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.oy-rotary-title {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: clamp(1.85rem, 4vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--oy-cream, #FBF6EE);
+  margin-bottom: 1rem;
+}
+
+.oy-rotary-subtitle {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: rgba(251, 246, 238, 0.7);
+}
+
+.oy-rotary-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 3.5rem;
+  background: rgba(18, 14, 12, 0.65);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 28px;
+  padding: 3.5rem 3rem;
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+@media (max-width: 992px) {
+  .oy-rotary-layout {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    padding: 2.5rem 1.5rem;
+  }
+}
+
+/* ── CONTENEDOR DEL DISCO TELEFÓNICO ── */
+.oy-rotary-wrapper {
+  position: relative;
+  width: var(--rotary-size);
+  height: var(--rotary-size);
+  margin: 0 auto;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.oy-rotary-disc {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  cursor: grab;
+  will-change: transform;
+}
+
+.oy-rotary-disc:active {
+  cursor: grabbing;
+}
+
+.oy-rotary-outer-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(35, 27, 23, 0.9) 0%, rgba(18, 14, 12, 0.98) 75%);
+  border: 4px solid rgba(229, 143, 73, 0.45);
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.8),
+    inset 0 0 30px rgba(0, 0, 0, 0.9),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+/* ── ORIFICIOS NUMERADOS ── */
+.oy-rotary-hole {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--rotary-hole-size);
+  height: var(--rotary-hole-size);
+  margin: calc(var(--rotary-hole-size) / -2) 0 0 calc(var(--rotary-hole-size) / -2);
+  border-radius: 50%;
+  background: rgba(10, 8, 7, 0.92);
+  border: 2px solid rgba(229, 143, 73, 0.5);
+  box-shadow: 
+    inset 0 4px 8px rgba(0, 0, 0, 0.9),
+    0 2px 6px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--oy-cream, #FBF6EE);
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+  z-index: 3;
+  padding: 0;
+  outline: none;
+}
+
+.oy-rotary-hole:hover {
+  border-color: var(--oy-gold, #E58F49);
+  background: rgba(229, 143, 73, 0.15);
+  box-shadow: 0 0 14px rgba(229, 143, 73, 0.5);
+}
+
+.oy-rotary-hole.is-active {
+  border-color: #55BA95;
+  background: rgba(85, 186, 149, 0.25);
+  box-shadow: 0 0 20px rgba(85, 186, 149, 0.6);
+  color: #55BA95;
+}
+
+.oy-hole-number {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.oy-hole-icon {
+  font-size: 0.75rem;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+/* ── CENTRO FIJO (HUB) ── */
+.oy-rotary-center-hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(var(--rotary-size) * 0.38);
+  height: calc(var(--rotary-size) * 0.38);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #2B1E17 0%, #120D0A 85%);
+  border: 3px solid rgba(229, 143, 73, 0.6);
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.7),
+    inset 0 2px 4px rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.oy-hub-inner {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+.oy-hub-number-display {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: var(--oy-gold, #E58F49);
+  line-height: 1;
+}
+
+.oy-hub-category-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--oy-cream, #FBF6EE);
+  opacity: 0.8;
+  max-width: 90px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 0.25rem;
+}
+
+/* ── TOPE METÁLICO (FINGER STOP) ── */
+.oy-rotary-finger-stop {
+  position: absolute;
+  bottom: 12%;
+  right: 14%;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.oy-finger-stop-bracket {
+  width: 28px;
+  height: 48px;
+  border-right: 5px solid rgba(255, 255, 255, 0.75);
+  border-bottom: 5px solid rgba(255, 255, 255, 0.75);
+  border-bottom-right-radius: 12px;
+  transform: rotate(-35deg);
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.oy-finger-stop-tip {
+  position: absolute;
+  bottom: -4px;
+  right: -5px;
+  width: 10px;
+  height: 10px;
+  background: var(--oy-gold, #E58F49);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--oy-gold, #E58F49);
+}
+
+/* ── TARJETA TÉCNICA DEL OFICIO SELECCIONADO ── */
+.oy-rotary-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.25rem;
+}
+
+.oy-card-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.oy-card-num-pill {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--oy-gold, #E58F49);
+  padding: 0.35rem 0.75rem;
+  background: rgba(229, 143, 73, 0.12);
+  border: 1px solid rgba(229, 143, 73, 0.3);
+  border-radius: 6px;
+}
+
+.oy-card-eta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: rgba(251, 246, 238, 0.75);
+}
+
+.oy-eta-dot {
+  width: 8px;
+  height: 8px;
+  background: #55BA95;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #55BA95;
+}
+
+.oy-card-trade-title {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--oy-cream, #FBF6EE);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.oy-card-trade-title svg {
+  color: var(--oy-gold, #E58F49);
+}
+
+.oy-card-desc {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: rgba(251, 246, 238, 0.8);
+  margin: 0;
+}
+
+.oy-card-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .oy-card-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oy-card-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.oy-stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(251, 246, 238, 0.5);
+}
+
+.oy-stat-val {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--oy-cream, #FBF6EE);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.oy-stat-icon-check {
+  color: #55BA95;
+}
+
+.oy-stat-val--free {
+  color: #55BA95;
+}
+
+.oy-rotary-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1.15rem 1.5rem;
+  margin-top: 0.75rem;
+  background: linear-gradient(135deg, #E58F49 0%, #D47A32 100%);
+  color: #120D0A;
+  border: none;
+  border-radius: 14px;
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 25px -5px rgba(229, 143, 73, 0.4);
+  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.oy-rotary-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -5px rgba(229, 143, 73, 0.55);
+  filter: brightness(1.06);
+}
+
+.oy-rotary-action-btn:active {
+  transform: translateY(0);
+}

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { MapPin, Clock, ArrowRight, Share, Info, CheckCircle } from 'lucide-react';
-import type { ServiceRequest, TradeCategory } from '../../types';
+import { MapPin, Clock, Share, Info, CheckCircle, Sparkles, Wrench } from 'lucide-react';
+import { PageHero } from '../../components/layout/PageHero';
+import { MascotAvatar } from '../../components/mascot/MascotAvatar';
+import './Provider.css';
+import type { TradeCategory } from '../../types';
 
 interface ProviderHomeViewProps {
   onRecommend: (requestId: string) => void;
@@ -59,95 +62,93 @@ export const ProviderHomeView: React.FC<ProviderHomeViewProps> = ({ onRecommend 
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', paddingBottom: '48px' }}>
-      
-      {/* HEADER */}
-      <div style={{ marginTop: '24px' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-1px', marginBottom: '8px', color: 'var(--color-text-main)' }}>
-          Oportunidades cerca de ti
-        </h1>
-        <p style={{ fontSize: '1.1rem', color: 'var(--color-text-muted)' }}>
-          Personas cerca de tu zona de cobertura necesitan ayuda ahora mismo.
-        </p>
-      </div>
+    <div className="pv-page">
+      <PageHero
+        tone="almendra"
+        eyebrow={<><Sparkles size={14} aria-hidden="true" /> Oportunidades</>}
+        title="Oportunidades cerca de ti"
+        subtitle="Personas cerca de tu zona de cobertura necesitan ayuda ahora mismo."
+        stickers={[
+          { icon: <Wrench size={26} />, tone: 'fuego', style: { top: '14%', right: '7%', rotate: '-10deg' } },
+          { icon: <MapPin size={24} />, tone: 'amarillo', style: { top: '52%', right: '17%', rotate: '8deg' } },
+          { icon: <>{opportunities.length} cerca</>, tone: 'blanco', pill: true, style: { top: '20%', right: '24%', rotate: '-4deg' } }
+        ]}
+      />
 
       {/* ALERTAS */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <h3 style={{ fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-muted)', marginBottom: '4px' }}>Alertas y oportunidades</h3>
-        
-        <div style={{ background: '#EFF6FF', borderLeft: '4px solid #3B82F6', padding: '16px', borderRadius: '0 12px 12px 0', fontSize: '15px', color: '#1E3A8A', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Info size={18} color="#3B82F6" />
-          <span>Nueva solicitud de <strong>Plomería</strong> a 1.2 km de ti.</span>
+      <section aria-labelledby="pv-alerts-title">
+        <div className="oy-section-head" style={{ marginTop: 0 }}>
+          <h2 id="pv-alerts-title" className="oy-section-title oy-display">Alertas y oportunidades</h2>
         </div>
-        
-        <div style={{ background: '#ECFDF5', borderLeft: '4px solid #10B981', padding: '16px', borderRadius: '0 12px 12px 0', fontSize: '15px', color: '#065F46', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <CheckCircle size={18} color="#10B981" />
-          <span>Un colega te recomendó para una solicitud de Electricidad.</span>
+        <div className="pv-alerts">
+          <div className="pv-alert" role="status">
+            <span className="pv-alert__icon"><Info size={16} aria-hidden="true" /></span>
+            <span>Nueva solicitud de <strong>Plomería</strong> a 1.2 km de ti.</span>
+          </div>
+          <div className="pv-alert pv-alert--esmeralda">
+            <span className="pv-alert__icon"><CheckCircle size={16} aria-hidden="true" /></span>
+            <span>Un colega te recomendó para una solicitud de Electricidad.</span>
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* LISTA DE SOLICITUDES (TARJETAS) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
-        {opportunities.map(req => (
-          <div key={req.id} style={{
-            background: 'var(--color-surface)',
-            border: '1px solid rgba(150,150,150,0.15)',
-            borderRadius: '24px',
-            padding: '24px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-            transition: 'all 0.2s ease',
-            opacity: interestId === req.id ? 0.5 : 1
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <span style={{ background: '#F3F4F6', color: '#374151', padding: '4px 10px', borderRadius: '8px', fontSize: '13px', fontWeight: 700 }}>
-                {req.tradeLabel}
-              </span>
-              <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
-                {req.postedAt}
-              </span>
-            </div>
-
-            <p style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-text-main)', lineHeight: 1.4, margin: 0 }}>
-              "{req.problem}"
-            </p>
-
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', fontSize: '14px', color: 'var(--color-text-muted)' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={16} /> {req.zone} • {req.distance} km</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Clock size={16} /> {req.urgency}</span>
-            </div>
-
-            <div style={{ background: '#F9FAFB', padding: '12px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-              Presupuesto: {req.budget}
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', marginTop: 'auto', paddingTop: '8px' }}>
-              <button 
-                onClick={() => handleInterest(req.id)}
-                className="btn-provider-interest"
-              >
-                {interestId === req.id ? 'Contactando...' : 'Me interesa'}
-              </button>
-              <button 
-                onClick={() => onRecommend(req.id)}
-                className="btn-provider-recommend"
-                title="Recomendar a un colega si no es de tu especialidad"
-              >
-                <Share size={16} /> Recomendar
-              </button>
-            </div>
+      <section aria-labelledby="pv-opps-title">
+        <div className="oy-section-head">
+          <div>
+            <h2 id="pv-opps-title" className="oy-section-title oy-display">Solicitudes abiertas</h2>
+            <p className="oy-section-sub">Responde rápido: los clientes eligen a quien muestra interés primero.</p>
           </div>
-        ))}
-        {opportunities.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '64px', background: 'var(--color-surface)', borderRadius: '24px' }}>
-            <h3 style={{ fontSize: '20px', marginBottom: '8px' }}>No hay más oportunidades nuevas</h3>
-            <p style={{ color: 'var(--color-text-muted)' }}>Te notificaremos cuando alguien publique una solicitud cerca de ti.</p>
+          <span className="pv-tag pv-tag--fuego">{opportunities.length} disponibles</span>
+        </div>
+
+        {opportunities.length === 0 ? (
+          <div className="oy-empty">
+            <MascotAvatar size="md" expression="alegre" />
+            <h3 className="oy-empty__title oy-display">No hay más oportunidades nuevas</h3>
+            <p className="oy-empty__text">Te notificaremos cuando alguien publique una solicitud cerca de ti.</p>
+          </div>
+        ) : (
+          <div className="pv-grid">
+            {opportunities.map(req => (
+              <article key={req.id} className="pv-ticket" data-busy={interestId === req.id}>
+                <div className="pv-ticket__band pv-row pv-row--between">
+                  <span className="pv-tag pv-tag--solid">{req.tradeLabel}</span>
+                  <span className="pv-muted" style={{ fontSize: '13px' }}>{req.postedAt}</span>
+                </div>
+
+                <p className="pv-ticket__quote">"{req.problem}"</p>
+
+                <div className="pv-ticket__meta">
+                  <span><MapPin size={16} aria-hidden="true" /> {req.zone} • {req.distance} km</span>
+                  <span><Clock size={16} aria-hidden="true" /> {req.urgency}</span>
+                </div>
+
+                <div className="pv-ticket__budget">Presupuesto: {req.budget}</div>
+
+                <div className="pv-ticket__actions">
+                  <button
+                    type="button"
+                    onClick={() => handleInterest(req.id)}
+                    className="btn btn-primary"
+                    disabled={interestId === req.id}
+                  >
+                    {interestId === req.id ? 'Contactando...' : 'Me interesa'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onRecommend(req.id)}
+                    className="btn btn-secondary"
+                    title="Recomendar a un colega si no es de tu especialidad"
+                  >
+                    <Share size={16} aria-hidden="true" /> Recomendar
+                  </button>
+                </div>
+              </article>
+            ))}
           </div>
         )}
-      </div>
-
+      </section>
     </div>
   );
 };

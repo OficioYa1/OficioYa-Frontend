@@ -10,6 +10,7 @@ import {
   Briefcase
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
+import './Profile.css';
 
 interface UserProfileViewProps {
   services: ServiceRequest[];
@@ -25,165 +26,129 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
   const { user, role } = useAuth();
   const { theme, fontScale } = useTheme();
 
+  const activeCount = services.filter(s => s.status === 'en_curso').length;
+  const doneCount = services.filter(s => s.status === 'finalizado').length;
+
   return (
-    <div className="user-profile container" style={{ padding: '24px 0 60px' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        {/* Tarjeta de Cabecera del Perfil */}
-        <div
-          className="card"
-          style={{
-            borderRadius: '24px',
-            padding: '28px',
-            marginBottom: '24px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '20px',
-            background: 'var(--color-surface)'
-          }}
+    <div className="user-profile container pf-page">
+      <div className="pf-wrap">
+        {/* Banda de cabecera del perfil */}
+        <section
+          className={`pf-hero ${role === 'seeker' ? 'pf-hero--marino' : 'pf-hero--almendra'}`}
+          aria-labelledby="pf-name"
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <span className="oy-sticker oy-sticker--amarillo oy-sticker--pill pf-hero__sticker" aria-hidden="true">
+            {role === 'seeker' ? 'Contratante' : 'Profesional'}
+          </span>
+
+          <div className="pf-hero__id">
             <div
-              style={{
-                width: '74px',
-                height: '74px',
-                borderRadius: '50%',
-                background: user?.avatarColor || 'var(--role-primary)',
-                color: '#FFF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 900,
-                fontSize: '26px',
-                boxShadow: 'var(--shadow-md)'
-              }}
+              className="pf-avatar"
+              style={{ '--pf-avatar-bg': user?.avatarColor || 'var(--role-primary)' } as React.CSSProperties}
+              aria-hidden="true"
             >
               {user?.name ? user.name.slice(0, 2).toUpperCase() : 'OY'}
             </div>
 
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <h2 style={{ fontSize: '1.4rem' }}>{user?.name || 'Usuario'}</h2>
-                <span className="badge badge-verified">
+            <div className="pf-hero__text">
+              <span className="oy-eyebrow">Mi perfil</span>
+              <h2 id="pf-name" className="oy-display pf-hero__name">{user?.name || 'Usuario'}</h2>
+              <div className="pf-badges">
+                <span className="badge badge-verified pf-badge-sticker">
                   <ShieldCheck size={12} /> Verificado
                 </span>
               </div>
-              <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
-                {user?.email}
-              </span>
+              <span className="pf-hero__email">{user?.email}</span>
 
-              <div style={{ display: 'flex', gap: '16px', marginTop: '8px', fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Phone size={13} /> {user?.phone || '+57 300 123 4567'}
+              <div className="pf-meta">
+                <span className="pf-meta__item">
+                  <Phone size={13} aria-hidden="true" /> {user?.phone || '+57 300 123 4567'}
                 </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <MapPin size={13} /> {user?.city || 'Bogotá D.C., Colombia'}
+                <span className="pf-meta__item">
+                  <MapPin size={13} aria-hidden="true" /> {user?.city || 'Bogotá D.C., Colombia'}
                 </span>
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button
-              onClick={onOpenSettings}
-              className="btn btn-secondary"
-              style={{ padding: '8px 16px', fontSize: '13px' }}
-            >
-              <Settings size={16} /> Configuración
+          <div className="pf-hero__actions">
+            <button onClick={onOpenSettings} className="btn btn-secondary">
+              <Settings size={16} aria-hidden="true" /> Configuración
             </button>
           </div>
-        </div>
+        </section>
 
         {/* Sección según Rol (Contratante vs Profesional) */}
         {role === 'seeker' ? (
-          <div className="card" style={{ padding: '24px', borderRadius: '20px', marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <section className="oy-panel pf-section" aria-labelledby="pf-seeker-title">
+            <div className="pf-section__head">
               <div>
-                <h3 style={{ fontSize: '1.15rem' }}>Resumen de Contratante</h3>
-                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                  Historial de servicios solicitados en tu zona
-                </span>
+                <h3 id="pf-seeker-title" className="oy-section-title">Resumen de Contratante</h3>
+                <p className="oy-section-sub">Historial de servicios solicitados en tu zona</p>
               </div>
-              <button
-                onClick={() => onNavigateToTab('servicios')}
-                className="btn btn-secondary"
-                style={{ fontSize: '12px', padding: '6px 12px' }}
-              >
+              <button onClick={() => onNavigateToTab('solicitudes')} className="btn btn-secondary">
                 Ver todos ({services.length})
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-              <div style={{ background: 'var(--color-surface-hover)', padding: '14px', borderRadius: '12px' }}>
-                <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Servicios Activos</span>
-                <span style={{ fontSize: '1.4rem', fontWeight: 800 }}>
-                  {services.filter(s => s.status === 'en_curso').length}
-                </span>
+            <div className="pf-stats">
+              <div className="oy-stat pf-stat--marino">
+                <span className="oy-stat__label">Servicios Activos</span>
+                <span className="oy-stat__value">{activeCount}</span>
               </div>
 
-              <div style={{ background: 'var(--color-surface-hover)', padding: '14px', borderRadius: '12px' }}>
-                <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Servicios Concluidos</span>
-                <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--color-success)' }}>
-                  {services.filter(s => s.status === 'finalizado').length}
-                </span>
+              <div className="oy-stat pf-stat--esmeralda">
+                <span className="oy-stat__label">Servicios Concluidos</span>
+                <span className="oy-stat__value">{doneCount}</span>
               </div>
 
-              <div style={{ background: 'var(--color-surface-hover)', padding: '14px', borderRadius: '12px' }}>
-                <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block' }}>Garantía Digital</span>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#3B82F6', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
-                  <ShieldCheck size={16} /> 100% Protegida
+              <div className="oy-stat pf-stat--amarillo">
+                <span className="oy-stat__label">Garantía Digital</span>
+                <span className="pf-stat__guarantee">
+                  <ShieldCheck size={18} aria-hidden="true" /> 100% Protegida
                 </span>
               </div>
             </div>
-          </div>
+          </section>
         ) : (
-          <div className="card" style={{ padding: '24px', borderRadius: '20px', marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <section className="oy-panel pf-section" aria-labelledby="pf-pro-title">
+            <div className="pf-section__head">
               <div>
-                <h3 style={{ fontSize: '1.15rem' }}>Perfil Profesional</h3>
-                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                  Oficios técnicos publicados y validados
-                </span>
+                <h3 id="pf-pro-title" className="oy-section-title">Perfil Profesional</h3>
+                <p className="oy-section-sub">Oficios técnicos publicados y validados</p>
               </div>
-              <button
-                onClick={() => onNavigateToTab('dashboard-pro')}
-                className="btn btn-primary"
-                style={{ fontSize: '12px', padding: '6px 12px' }}
-              >
-                <Briefcase size={14} /> Ir a Mi Taller
+              <button onClick={() => onNavigateToTab('alertas')} className="btn btn-primary">
+                <Briefcase size={14} aria-hidden="true" /> Ir a Mi Taller
               </button>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', background: 'var(--color-surface-hover)', padding: '14px', borderRadius: '14px' }}>
+            <div className="pf-trade">
               <MascotAvatar trade="electricidad" size="sm" />
               <div>
-                <span style={{ fontWeight: 700, fontSize: '14px', display: 'block' }}>
-                  Electricista & Mantenimiento General
-                </span>
-                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
+                <span className="pf-trade__title">Electricista & Mantenimiento General</span>
+                <span className="pf-trade__sub">
                   Tarifa base: $45.000 COP/h • Cobertura: Bogotá D.C. & Sabana Centro
                 </span>
               </div>
             </div>
-          </div>
+          </section>
         )}
 
-        {/* Tarjeta de Preferencias de Accesibilidad Rápidas */}
-        <div className="card" style={{ padding: '20px', borderRadius: '20px' }}>
-          <h4 style={{ fontSize: '14px', marginBottom: '12px' }}>Ajustes de Interfaz Activos</h4>
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', fontSize: '12px' }}>
-            <span style={{ background: 'var(--color-surface-hover)', padding: '6px 12px', borderRadius: '999px' }}>
+        {/* Preferencias de accesibilidad rápidas */}
+        <section className="oy-panel oy-panel--gris pf-section" aria-labelledby="pf-ui-title">
+          <h4 id="pf-ui-title" className="oy-label pf-ui__title">Ajustes de Interfaz Activos</h4>
+          <div className="pf-pills">
+            <span className="pf-pill">
               Tema: <strong>{theme === 'light' ? 'Claro ☀️' : 'Oscuro 🌙'}</strong>
             </span>
-            <span style={{ background: 'var(--color-surface-hover)', padding: '6px 12px', borderRadius: '999px' }}>
+            <span className="pf-pill">
               Escala de Fuente: <strong>{fontScale.toUpperCase()}</strong>
             </span>
-            <span style={{ background: 'var(--color-surface-hover)', padding: '6px 12px', borderRadius: '999px' }}>
+            <span className="pf-pill">
               Rol Activo: <strong>{role === 'seeker' ? 'Contratante' : 'Profesional'}</strong>
             </span>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

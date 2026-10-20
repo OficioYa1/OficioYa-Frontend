@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { MascotExpression, TradeCategory } from '../../types';
 import { MascotAvatar } from './MascotAvatar';
 import { useAuth } from '../../context/AuthContext';
 import { X, ChevronRight } from 'lucide-react';
+import { useSpring, useTransition, animated, config } from '@react-spring/web';
+import './MascotAssistant.css';
 
 interface MascotAssistantProps {
   currentTrade?: TradeCategory;
@@ -65,26 +67,29 @@ export const MascotAssistant: React.FC<MascotAssistantProps> = ({
 }) => {
   const { role } = useAuth();
   const [isOpen, setIsOpen] = useState(true);
-  const [currentState, setCurrentState] = useState<ManyState>(CONTEXT_STATES.directorio_seeker);
+  const [interactiveState, setInteractiveState] = useState<ManyState | null>(null);
+  const [isWaving, setIsWaving] = useState(false);
   const [interactionIndex, setInteractionIndex] = useState(0);
-  const [isInteracting, setIsInteracting] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Update state based on context
-  useEffect(() => {
-    if (customMessage) {
-      setCurrentState({ expression: 'entusiasta', message: customMessage, animate: 'wave' });
-      return;
-    }
-    const contextKey = activeView === 'directorio'
-      ? `directorio_${role}`
-      : activeView;
-    setCurrentState(CONTEXT_STATES[contextKey] ?? CONTEXT_STATES.directorio_seeker);
-  }, [role, activeView, customMessage]);
+  // Física de resorte para avatar y burbuja
+  const [avatarSpring, avatarApi] = useSpring(() => ({
+    scale: 1,
+    config: config.wobbly
+  }));
 
-  // Update message when trade changes
-  useEffect(() => {
-    if (currentTrade && !customMessage) {
+  const bubbleTransitions = useTransition(isOpen, {
+    from: { opacity: 0, transform: 'scale(0.85) translateY(14px)' },
+    enter: { opacity: 1, transform: 'scale(1) translateY(0px)' },
+    leave: { opacity: 0, transform: 'scale(0.9) translateY(10px)' },
+    config: { tension: 340, friction: 24 }
+  });
+
+  const defaultState: ManyState = useMemo(() => {
+    if (customMessage) {
+      return { expression: 'entusiasta', message: customMessage, animate: 'wave' };
+    }
+    if (currentTrade) {
       const tradeLabels: Partial<Record<TradeCategory, string>> = {
         electricidad: 'electricidad',
         plomeria: 'plomería',
@@ -99,175 +104,104 @@ export const MascotAssistant: React.FC<MascotAssistantProps> = ({
         albanileria: 'albañilería',
         clases: 'clases particulares',
       };
-      setCurrentState({
+      return {
         expression: 'pensativo',
         message: `Buscando expertos en ${tradeLabels[currentTrade] ?? currentTrade}. Revisa las reseñas verificadas.`,
         animate: 'idle',
-      });
+      };
     }
-  }, [currentTrade, customMessage]);
+    const contextKey = activeView === 'directorio' ? `directorio_${role}` : activeView;
+    return CONTEXT_STATES[contextKey] ?? CONTEXT_STATES.directorio_seeker;
+  }, [role, activeView, customMessage, currentTrade]);
+
+  const baseState = interactiveState ?? defaultState;
+  const currentState: ManyState = isWaving ? { ...baseState, animate: 'wave' } : baseState;
 
   // Auto-idle timer: wave every 15s to draw attention
   useEffect(() => {
     if (!isOpen) return;
     const interval = setInterval(() => {
-      if (!isInteracting) {
-        setCurrentState(prev => ({ ...prev, animate: 'wave' }));
+      if (!interactiveState) {
+        setIsWaving(true);
         setTimeout(() => {
-          setCurrentState(prev => ({ ...prev, animate: 'float' }));
+          setIsWaving(false);
         }, 900);
       }
     }, 15000);
     return () => clearInterval(interval);
-  }, [isOpen, isInteracting]);
+  }, [isOpen, interactiveState]);
 
   const handleManyClick = () => {
-    setIsInteracting(true);
+    // Reacción elástica de Many
+    avatarApi.start({
+      to: [{ scale: 1.2 }, { scale: 1 }],
+      from: { scale: 0.88 }
+    });
+
     const next = INTERACTION_MESSAGES[interactionIndex % INTERACTION_MESSAGES.length];
-    setCurrentState(next);
+    setInteractiveState(next);
     setInteractionIndex(i => i + 1);
 
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     idleTimerRef.current = setTimeout(() => {
-      setIsInteracting(false);
+      setInteractiveState(null);
     }, 4000);
   };
 
   return (
-    <aside
-      aria-label="Asistente interactivo Many"
-      style={{
-        position: 'fixed',
-        bottom: '24px',
-        right: '24px',
-        zIndex: 990,
-        display: 'flex',
-        alignItems: 'flex-end',
-        flexDirection: 'column',
-        gap: '10px',
-        maxWidth: '300px',
-      }}
-    >
-      {/* Chat bubble */}
-      {isOpen && (
-        <div
-          className="many-bubble"
-          style={{
-            background: 'var(--color-surface)',
-            border: '1.5px solid var(--color-border)',
-            borderRadius: '18px 18px 4px 18px',
-            padding: '14px 16px',
-            boxShadow: 'var(--shadow-lg)',
-            animation: 'many-bubble-in 0.35s cubic-bezier(0.34,1.56,0.64,1)',
-            position: 'relative',
-          }}
-        >
-          {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span
-              style={{
-                fontWeight: 800,
-                fontSize: '11px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.6px',
-                color: 'var(--brand-amber)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-              }}
-            >
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: '#10B981',
-                  display: 'inline-block',
-                  animation: 'many-status-pulse 2s ease-in-out infinite',
-                }}
-              />
-              Many
-            </span>
-            <button
-              onClick={() => setIsOpen(false)}
-              style={{
-                padding: '2px',
-                color: 'var(--color-text-subtle)',
-                borderRadius: '6px',
-                transition: 'color 0.15s',
-              }}
-              aria-label="Cerrar asistente"
-            >
-              <X size={14} />
+    <aside aria-label="Asistente interactivo Many" className="many-assistant">
+      {bubbleTransitions((style, item) =>
+        item ? (
+          <animated.div style={style} className="many-bubble many-assistant__bubble">
+            <div className="many-assistant__head">
+              <span className="many-assistant__name">
+                <span className="many-assistant__status" aria-hidden="true" />
+                Many
+              </span>
+              <button
+                type="button"
+                className="many-assistant__close"
+                onClick={() => setIsOpen(false)}
+                aria-label="Cerrar asistente"
+              >
+                <X size={14} aria-hidden="true" />
+              </button>
+            </div>
+
+            <p className="many-assistant__message" aria-live="polite">
+              {currentState.message}
+            </p>
+
+            <button type="button" className="many-assistant__hint" onClick={handleManyClick}>
+              <ChevronRight size={12} aria-hidden="true" />
+              Haz clic en Many para más consejos
             </button>
-          </div>
-
-          {/* Message */}
-          <p
-            style={{
-              margin: 0,
-              fontSize: '13px',
-              lineHeight: 1.55,
-              fontWeight: 500,
-              color: 'var(--color-text-main)',
-            }}
-          >
-            {currentState.message}
-          </p>
-
-          {/* Hint */}
-          <div
-            style={{
-              marginTop: '10px',
-              paddingTop: '8px',
-              borderTop: '1px solid var(--color-border-subtle)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontSize: '11px',
-              color: 'var(--color-text-subtle)',
-              cursor: 'pointer',
-            }}
-            onClick={handleManyClick}
-          >
-            <ChevronRight size={12} />
-            Haz clic en Many para más consejos
-          </div>
-        </div>
+          </animated.div>
+        ) : null
       )}
 
-      {/* Many avatar row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-end' }}>
+      <div className="many-assistant__row">
         {!isOpen && (
-          <button
-            onClick={() => setIsOpen(true)}
-            style={{
-              background: 'var(--color-surface)',
-              border: '1.5px solid var(--color-border)',
-              borderRadius: '999px',
-              padding: '8px 14px',
-              fontSize: '12px',
-              fontWeight: 700,
-              color: 'var(--color-text-main)',
-              boxShadow: 'var(--shadow-md)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer',
-              animation: 'popIn 0.3s ease-out',
-            }}
-          >
+          <button type="button" className="many-assistant__open" onClick={() => setIsOpen(true)}>
             Hablar con Many
           </button>
         )}
 
-        <MascotAvatar
-          trade={currentTrade}
-          expression={currentState.expression}
-          size="md"
-          animate={currentState.animate}
-          onClick={handleManyClick}
-        />
+        <animated.div
+          style={{
+            transform: avatarSpring.scale.to(s => `scale(${s})`),
+            display: 'inline-flex',
+            willChange: 'transform'
+          }}
+        >
+          <MascotAvatar
+            trade={currentTrade}
+            expression={currentState.expression}
+            size="md"
+            animate={currentState.animate}
+            onClick={handleManyClick}
+          />
+        </animated.div>
       </div>
     </aside>
   );

@@ -1,36 +1,76 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { TradeCategory } from '../../types';
 import {
-  Wrench, Zap, PaintBucket, KeyRound, MapPin,
-  ArrowRight, UserCheck, Award, Star, Tv2, BookOpen,
-  CheckCircle2, TrendingUp, Plus, Minus,
+  Wrench, Zap, PaintBucket, KeyRound, Tv2, BookOpen,
+  ArrowRight, Award, Plus, Minus, LogIn, Search, HelpCircle, Briefcase, ChevronDown, Menu, X,
+  UserCheck, Star, ShieldCheck, Quote, CheckCircle2
 } from 'lucide-react';
 import './LandingPage.css';
+import './LandingSticker.css';
+import './LandingLiquidNav.css';
 import { AppFooter } from '../../components/layout/AppFooter';
-import { TrueFocus } from '../../components/ui/TrueFocus';
+import { BRAND_ASSETS } from '../../utils/assets';
+import { StrokeText, BorderGlow, DriftWall, RollingText } from '../../components/ui';
+import type { DriftWallItem } from '../../components/ui';
+import { EditorialManifesto } from '../../components/landing/EditorialManifesto';
+import { AsymmetricShowcase } from '../../components/landing/AsymmetricShowcase';
+import { SkillsTrain } from '../../components/landing/SkillsTrain';
+import { StickyProcess } from '../../components/landing/StickyProcess';
+import { RetroInspector } from '../../components/landing/RetroInspector';
+import { PaperBroadsheet } from '../../components/landing/PaperBroadsheet';
+import { LightBreakIntro } from '../../components/landing/LightBreakIntro';
+import { ToolboxOrbit } from '../../components/landing/ToolboxOrbit';
+import { INITIAL_WORKERS } from '../../services/mockData';
+import { ScrollToTop } from '../../components/common/ScrollToTop';
 
-interface LandingPageProps { onEnterApp: (role?: 'seeker' | 'provider') => void; }
+const PlasmaWarp = React.lazy(() => import('../../components/background/PlasmaWarp'));
+
+const TESTIMONIALS = [
+  {
+    name: 'Camila Restrepo',
+    zone: 'Cedritos · Bogotá',
+    trade: 'Plomería de emergencia',
+    rating: 5,
+    comment: 'Tenía una fuga urgente bajo el lavaplatos un domingo a las 8 p.m. Don Carlos llegó en 18 minutos y dejó todo impecable. El trato directo y transparente me dio total tranquilidad.',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+  },
+  {
+    name: 'Andrés Felipe Morales',
+    zone: 'Chapinero Alto · Bogotá',
+    trade: 'Electricidad e iluminación',
+    rating: 5,
+    comment: 'Instalaron todo el cableado y luminarias de mi apartamento. Poder revisar las fotos de sus trabajos anteriores antes de contratar fue el factor decisivo. Recomendadísimo.',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+  },
+  {
+    name: 'Valentina Gómez',
+    zone: 'Modelia · Bogotá',
+    trade: 'Aseo profundo y desinfección',
+    rating: 5,
+    comment: 'Doña Claudia hizo el aseo de entrega de mudanza. Dejó los tapetes y muebles a vapor como nuevos. Pagué directo por Nequi sin enredos de comisiones ni intermediarios.',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80'
+  }
+];
+
+interface LandingPageProps {
+  onEnterApp: (role?: 'seeker' | 'provider') => void;
+  onOpenContact?: () => void;
+}
 
 interface TradeOption {
   key: TradeCategory; label: string; icon: React.ReactNode;
-  tagline: string; color: string;
+  tagline: string;
 }
 
 const TRADES: TradeOption[] = [
-  { key: 'electricidad',    label: 'Electricidad',    icon: <Zap size={15} />,        tagline: 'Instalaciones eléctricas, cableado y circuitos seguros.',            color: '#FFC72C' },
-  { key: 'plomeria',        label: 'Plomería',        icon: <Wrench size={15} />,      tagline: 'Destapes, fugas y redes hidráulicas con garantía de trabajo.',        color: '#3B82F6' },
-  { key: 'pintura',         label: 'Pintura',         icon: <PaintBucket size={15} />, tagline: 'Acabados finos y pintura arquitectónica para tu hogar.',                color: '#8B5CF6' },
-  { key: 'cerrajeria',      label: 'Cerrajería',      icon: <KeyRound size={15} />,    tagline: 'Aperturas de emergencia 24 horas, sin daño a tus cerraduras.',         color: '#10B981' },
-  { key: 'electrodomesticos', label: 'Electrodomésticos', icon: <Tv2 size={15} />,    tagline: 'Reparación de lavadoras, neveras y aires acondicionados.',             color: '#F97316' },
-  { key: 'clases',          label: 'Clases',          icon: <BookOpen size={15} />,    tagline: 'Profesores particulares verificados para todas las materias.',          color: '#EC4899' },
+  { key: 'electricidad',    label: 'Electricidad',    icon: <Zap size={15} />,        tagline: 'Instalaciones eléctricas, cableado y circuitos seguros.' },
+  { key: 'plomeria',        label: 'Plomería',        icon: <Wrench size={15} />,      tagline: 'Destapes, fugas y redes hidráulicas con garantía de trabajo.' },
+  { key: 'pintura',         label: 'Pintura',         icon: <PaintBucket size={15} />, tagline: 'Acabados finos y pintura arquitectónica para tu hogar.' },
+  { key: 'cerrajeria',      label: 'Cerrajería',      icon: <KeyRound size={15} />,    tagline: 'Aperturas de emergencia 24 horas, sin daño a tus cerraduras.' },
+  { key: 'electrodomesticos', label: 'Electrodomésticos', icon: <Tv2 size={15} />,    tagline: 'Reparación de lavadoras, neveras y aires acondicionados.' },
+  { key: 'clases',          label: 'Clases',          icon: <BookOpen size={15} />,    tagline: 'Profesores particulares verificados para todas las materias.' },
 ];
 
-const STATS = [
-  { label: 'Profesionales activos',  value: '2.400+',  icon: <UserCheck size={22} />,    color: '#3B82F6' },
-  { label: 'Servicios completados',  value: '18.000+', icon: <CheckCircle2 size={22} />, color: '#10B981' },
-  { label: 'Calificación promedio',  value: '4.8 / 5', icon: <Star size={22} />,         color: '#FBBF24' },
-  { label: 'Tiempo de respuesta',    value: '< 20 min',icon: <TrendingUp size={22} />,   color: '#F97316' },
-];
 
 const FAQS = [
   { q: '¿Cómo verifican a los profesionales?', a: 'Validamos antecedentes judiciales, revisamos su cédula de ciudadanía y requerimos al menos 3 reseñas de clientes reales antes de activar su perfil.' },
@@ -39,97 +79,84 @@ const FAQS = [
   { q: '¿En qué zonas de Bogotá funciona?', a: 'Actualmente operamos en todas las localidades de Bogotá D.C. y municipios del área metropolitana como Chía, Soacha y Cota.' },
 ];
 
+// Fotos de portafolio de los trabajadores semilla (sin repetir URL).
+const PORTFOLIO: DriftWallItem[] = (() => {
+  const seen = new Set<string>();
+  const out: DriftWallItem[] = [];
+  INITIAL_WORKERS.forEach(w => w.gallery.forEach(url => {
+    if (seen.has(url)) return;
+    seen.add(url);
+    out.push({ image: url, title: `${w.tradeLabel}: trabajo de ${w.name}` });
+  }));
+  return out;
+})();
+
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  // Sin IntersectionObserver o con movimiento reducido, el contenido se muestra de una vez.
+  const [visible, setVisible] = useState(
+    () => typeof IntersectionObserver === 'undefined' ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
   useEffect(() => {
-    const el = ref.current; if (!el) return;
+    const el = ref.current;
+    if (!el || visible) return;
     const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          obs.disconnect();
+        }
+      },
       { threshold: 0.12 }
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, []);
-  return { ref, visible };
+  }, [visible]);
+  return [ref, visible] as const;
 }
 
-// Texto con efecto hover de color
-function HoverText({ children, hoverColor = '#FFC72C', style = {} }: {
-  children: React.ReactNode; hoverColor?: string; style?: React.CSSProperties;
-}) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <span
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        color: hovered ? hoverColor : 'inherit',
-        transition: 'color 0.22s ease',
-        cursor: 'pointer',
-        ...style,
-      }}
-    >
-      {children}
-    </span>
-  );
+// Texto con efecto hover de color (solo con puntero fino, ver LandingSticker.css)
+type HoverTone = 'action' | 'trust' | 'accent' | 'status' | 'energy';
+function HoverText({ children, tone = 'action' }: { children: React.ReactNode; tone?: HoverTone }) {
+  return <span className={`lp-hover lp-hover--${tone}`}>{children}</span>;
 }
 
 // Item desplegable FAQ
+
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{
-      borderBottom: '1px solid rgba(255,255,255,0.08)',
-      overflow: 'hidden',
-    }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{
-          width: '100%', display: 'flex', justifyContent: 'space-between',
-          alignItems: 'center', padding: '20px 0', background: 'none',
-          border: 'none', cursor: 'pointer', textAlign: 'left', gap: '16px',
-        }}
-      >
-        <span style={{
-          fontFamily: 'var(--font-heading)', fontSize: '17px', fontWeight: 600,
-          color: open ? '#FFC72C' : '#fff', transition: 'color 0.22s ease',
-        }}>
-          {q}
-        </span>
-        <span style={{
-          flexShrink: 0, color: open ? '#FFC72C' : 'rgba(255,255,255,0.4)',
-          transition: 'all 0.3s ease', transform: open ? 'rotate(0deg)' : 'rotate(0deg)',
-        }}>
-          {open ? <Minus size={18} /> : <Plus size={18} />}
-        </span>
+    <div className="lp-faq-item" data-open={open ? '' : undefined}>
+      <button type="button" className="lp-faq-q" aria-expanded={open} onClick={() => setOpen(o => !o)}>
+        <span>{q}</span>
+        <span className="lp-faq-icon" aria-hidden="true">{open ? <Minus size={18} /> : <Plus size={18} />}</span>
       </button>
-      <div style={{
-        maxHeight: open ? '200px' : '0',
-        overflow: 'hidden',
-        transition: 'max-height 0.4s cubic-bezier(0.4,0,0.2,1)',
-      }}>
-        <p style={{
-          fontFamily: 'var(--font-body)', fontSize: '15px',
-          color: 'rgba(255,255,255,0.6)', lineHeight: 1.7,
-          paddingBottom: '20px', margin: 0,
-        }}>
-          {a}
-        </p>
+      <div className="lp-faq-fold">
+        <div className="lp-faq-fold-inner">
+          <p className="lp-faq-a">{a}</p>
+        </div>
       </div>
     </div>
   );
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
-  const [selectedTrade, setSelectedTrade] = useState<TradeCategory>('electricidad');
-  const [manyAnimate, setManyAnimate] = useState<'float' | 'wave'>('float');
-  const [heroVisible, setHeroVisible] = useState(false);
+export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenContact }) => {
+  const [showLightIntro, setShowLightIntro] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('oy_intro_seen') !== 'true';
+    } catch {
+      return true;
+    }
+  });
 
-  const statsReveal  = useReveal();
-  const stepsReveal  = useReveal();
-  const faqReveal    = useReveal();
-  const ctaReveal    = useReveal();
+  const [selectedTrade, setSelectedTrade] = useState<TradeCategory>('electricidad');
+  const [heroVisible, setHeroVisible] = useState(false);
+  const [showSearchMenu, setShowSearchMenu] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  const [faqRef, faqVisible]     = useReveal();
+  const [ctaRef, ctaVisible]     = useReveal();
 
   useEffect(() => {
     const t = setTimeout(() => setHeroVisible(true), 80);
@@ -141,110 +168,213 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
 
   const handleTradeSelect = (trade: TradeCategory) => {
     setSelectedTrade(trade);
-    setManyAnimate('wave');
-    setTimeout(() => setManyAnimate('float'), 800);
   };
-  const triggerWave = () => { setManyAnimate('wave'); setTimeout(() => setManyAnimate('float'), 800); };
-  const currentTrade = TRADES.find(t => t.key === selectedTrade)!;
 
   return (
     <div className="lp-root">
+      {/* ── INTRO INTERACTIVA: BLACKOUT → SWITCH ROJO "DESCUBRE" → BOMBILLO QUE SE ROMPE ── */}
+      {showLightIntro && (
+        <LightBreakIntro
+          onComplete={() => setShowLightIntro(false)}
+        />
+      )}
 
-      {/* ── NAV ── */}
-      <nav className="lp-nav">
+      {/* ── MARQUESINA (único movimiento continuo, estilo sticker) ── */}
+      <div className="lp-marquee" aria-hidden="true">
+        <div className="lp-marquee-track">
+          {[0, 1].map(copy => (
+            <span key={copy} className="lp-marquee-run">
+              {['Plomería', 'Electricidad', 'Pintura', 'Cerrajería', 'Electrodomésticos', 'Clases', 'Reputación verificada', 'Pago directo'].map(w => (
+                <span key={w} className="lp-marquee-item">{w}<span className="lp-marquee-dot">✦</span></span>
+              ))}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* ── NAV LIQUID 3D ── */}
+      <nav className={`lp-nav lp-nav--liquid-3d ${mobileNavOpen ? 'lp-nav--mobile-open' : ''}`}>
         <div className="lp-wrap lp-nav-inner">
           <div className="lp-brand">
-            <img src="/assets/mascot/logo1.0.png" alt="OficioYa" className="lp-brand-logo" />
+            <img src={BRAND_ASSETS.logo} alt="OficioYa" className="lp-brand-logo" />
             <div>
               <span className="lp-brand-name">Oficio<span className="lp-brand-ya">Ya</span></span>
               <span className="lp-brand-tagline">Directorio Inteligente</span>
             </div>
           </div>
 
-          {/* Nav links con hover de color — sin recuadros */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
-            <HoverText hoverColor="#FFC72C" style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 500, color: 'var(--color-text-muted)' }}>
-              <span onClick={handleStartAsSeeker}>Buscar</span>
-            </HoverText>
-            <HoverText hoverColor="#FFC72C" style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 500, color: 'var(--color-text-muted)' }}>
-              <span onClick={() => document.getElementById('faq-section')?.scrollIntoView({ behavior: 'smooth' })}>Preguntas</span>
-            </HoverText>
-            <HoverText hoverColor="#FFC72C" style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 500, color: 'var(--color-text-muted)' }}>
-              <span onClick={handleStartAsProvider}>Para trabajadores</span>
-            </HoverText>
-            <button onClick={handleStartAsSeeker} className="lp-btn-cta">
-              Explorar <ArrowRight size={14} />
+          {/* Botón hamburguesa para móvil */}
+          <button
+            type="button"
+            className="lp-nav-mobile-toggle"
+            onClick={() => setMobileNavOpen(!mobileNavOpen)}
+            aria-label={mobileNavOpen ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={mobileNavOpen}
+          >
+            {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+
+          {/* Nav links con micro-interacciones Liquid 3D */}
+          <div className={`lp-nav-actions ${mobileNavOpen ? 'lp-nav-actions--mobile-open' : ''}`}>
+            {/* Buscar con submenú desplegable Liquid 3D */}
+            <div
+              className="lp-nav-item-wrap"
+              onMouseEnter={() => setShowSearchMenu(true)}
+              onMouseLeave={() => setShowSearchMenu(false)}
+            >
+              <button
+                type="button"
+                className={`lp-nav-link lp-nav-link--liquid ${showSearchMenu ? 'lp-nav-link--active' : ''}`}
+                onClick={handleStartAsSeeker}
+                data-cursor-text="Directorio"
+                aria-haspopup="true"
+                aria-expanded={showSearchMenu}
+              >
+                <Search size={15} className="lp-nav-link__icon" aria-hidden="true" />
+                <RollingText text="Buscar" alternateText="Directorio" />
+                <ChevronDown size={13} className={`lp-nav-chevron ${showSearchMenu ? 'lp-nav-chevron--open' : ''}`} aria-hidden="true" />
+              </button>
+
+              {/* Submenú flotante Liquid 3D de oficios */}
+              {showSearchMenu && (
+                <div className="lp-liquid-menu" role="menu">
+                  <div className="lp-liquid-menu__header">
+                    <span className="lp-liquid-menu__title">Oficios Verificados en Bogotá</span>
+                    <span className="lp-liquid-menu__badge">Sin intermediarios</span>
+                  </div>
+                  <div className="lp-liquid-menu__grid">
+                    {TRADES.map(trade => (
+                      <button
+                        key={trade.key}
+                        type="button"
+                        role="menuitem"
+                        className="lp-liquid-menu__item"
+                        onClick={() => {
+                          setSelectedTrade(trade.key);
+                          setMobileNavOpen(false);
+                          handleStartAsSeeker();
+                        }}
+                      >
+                        <span className="lp-liquid-menu__icon-box">
+                          {trade.icon}
+                        </span>
+                        <div className="lp-liquid-menu__item-text">
+                          <span className="lp-liquid-menu__item-label">{trade.label}</span>
+                          <span className="lp-liquid-menu__item-sub">{trade.tagline.slice(0, 32)}...</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Preguntas */}
+            <button
+              type="button"
+              className="lp-nav-link lp-nav-link--liquid"
+              onClick={() => {
+                setMobileNavOpen(false);
+                document.getElementById('faq-section')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              data-cursor-text="Dudas"
+            >
+              <HelpCircle size={15} className="lp-nav-link__icon" aria-hidden="true" />
+              <RollingText text="Preguntas" alternateText="FAQ" />
+            </button>
+
+            {/* Para trabajadores */}
+            <button
+              type="button"
+              className="lp-nav-link lp-nav-link--liquid"
+              onClick={() => {
+                setMobileNavOpen(false);
+                handleStartAsProvider();
+              }}
+              data-cursor-text="Trabajar"
+            >
+              <Briefcase size={15} className="lp-nav-link__icon" aria-hidden="true" />
+              <RollingText text="Para trabajadores" alternateText="Ofrecer oficio" />
+            </button>
+
+            {/* Botón para revivir el efecto del bombillo */}
+            <button
+              type="button"
+              className="lp-nav-link lp-nav-link--liquid"
+              onClick={() => setShowLightIntro(true)}
+              data-cursor-text="Bombillo"
+              title="Revivir animación del bombillo e interruptor"
+            >
+              <Zap size={14} className="lp-nav-link__icon" style={{ color: 'var(--brand-yellow, #FFC72C)' }} aria-hidden="true" />
+              <span>Intro Luz</span>
+            </button>
+
+            {/* Iniciar sesión Liquid 3D Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileNavOpen(false);
+                handleStartAsSeeker();
+              }}
+              className="lp-btn-liquid-3d"
+              data-cursor-text="Iniciar Sesion"
+              aria-label="Iniciar Sesion en OficioYa"
+            >
+              <span className="lp-btn-liquid-3d__glare" aria-hidden="true" />
+              <span className="lp-btn-liquid-3d__content">
+                <LogIn size={15} aria-hidden="true" />
+                <span>Iniciar Sesion</span>
+                <ArrowRight size={14} className="lp-btn-liquid-3d__arrow" aria-hidden="true" />
+              </span>
             </button>
           </div>
         </div>
       </nav>
 
       {/* ── HERO ── */}
-      <section
-        className={`lp-hero ${heroVisible ? 'lp-hero--in' : ''}`}
-        style={{
-          background: 'linear-gradient(160deg, #0A1628 0%, #0F2040 45%, #131A2E 100%)',
-          color: '#fff', textAlign: 'center', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', minHeight: '92vh',
-          padding: '60px 24px 40px', position: 'relative', overflow: 'hidden',
-        }}
-      >
-        {/* Fondo decorativo */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(245,158,11,0.12) 0%, transparent 70%)' }} />
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.4), transparent)' }} />
+      <section className={`lp-hero lp-hero-band ${heroVisible ? 'lp-hero--in' : ''}`}>
+        {/* Stickers decorativos con la paleta del manual (estáticos, rotados) */}
+        <div className="lp-stickers" aria-hidden="true">
+          <span className="lp-sticker lp-sticker--amarillo lp-sticker--a"><Wrench size={28} /></span>
+          <span className="lp-sticker lp-sticker--esmeralda lp-sticker--b"><UserCheck size={26} /></span>
+          <span className="lp-sticker lp-sticker--fuego lp-sticker--c"><Zap size={26} /></span>
+          <span className="lp-sticker lp-sticker--marino lp-sticker--d"><Award size={26} /></span>
+        </div>
 
         {/* Badge ciudad — texto suelto, sin recuadro opaco */}
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '28px',
-          fontFamily: 'var(--font-ui)', fontSize: '13px', fontWeight: 500, color: 'rgba(255,255,255,0.5)',
-          letterSpacing: '0.3px',
-        }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981', animation: 'many-status-pulse 2s infinite', flexShrink: 0 }} />
+        <div className="lp-hero-city">
+          <span className="lp-hero-city-dot" />
           Bogotá D.C.
         </div>
 
         {/* Wordmark */}
-        <h1 style={{
-          fontFamily: 'var(--font-heading)', fontSize: 'clamp(4rem, 9vw, 7.5rem)',
-          fontWeight: 900, letterSpacing: '-3px', lineHeight: 0.92, marginBottom: '20px',
-          background: 'linear-gradient(135deg, #FFFFFF 0%, #FFC72C 55%, #F59E0B 100%)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-        }}>
-          OficioYa
+        <h1 className="oy-display lp-wordmark" aria-label="OficioYa">
+          <span className="lp-wordmark-oficio">Oficio</span>
+          <span className="lp-wordmark-ya">Ya</span>
         </h1>
 
         {/* Eslogan */}
-        <div style={{
-          fontFamily: 'var(--font-body)', fontSize: 'clamp(1.15rem, 2.5vw, 1.5rem)',
-          fontWeight: 400, color: 'rgba(255,255,255,0.7)', marginBottom: '16px',
-          maxWidth: '540px', lineHeight: 1.55, letterSpacing: '-0.2px',
-        }}>
-          <TrueFocus
-            sentence="El talento de tu zona a un click de distancia"
-            blurAmount={3}
-            borderColor="#2F6BFF"
-            animationDuration={0.4}
-          />
-        </div>
+        <p className="lp-hero-slogan">
+          El talento de tu zona a un click de distancia
+        </p>
 
         {/* Texto descriptivo — sin recuadro, flotante */}
-        <p style={{
-          fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 400,
-          color: 'rgba(255,255,255,0.38)', marginBottom: '48px', maxWidth: '400px',
-        }}>
+        <p className="lp-hero-copy">
           Plomeros, electricistas, pintores y más — con{' '}
-          <HoverText hoverColor="#FFC72C" style={{ fontWeight: 600 }}>reputación verificada</HoverText>
+          <span className="lp-hero-copy-strong"><HoverText>reputación verificada</HoverText></span>
           {' '}y geolocalización en tiempo real.
         </p>
 
         {/* CTAs */}
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '72px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <button
-            onClick={handleStartAsSeeker}
-            className="lp-hero-btn-primary"
-          >
-            Buscar expertos
-          </button>
+        <div className="lp-hero-ctas">
+          <BorderGlow animated>
+            <button
+              onClick={handleStartAsSeeker}
+              className="lp-hero-btn-primary"
+            >
+              Buscar expertos
+            </button>
+          </BorderGlow>
           <button
             onClick={handleStartAsProvider}
             className="lp-hero-btn-ghost"
@@ -253,150 +383,92 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
           </button>
         </div>
 
-        {/* Many mascot */}
-        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-          <div style={{
-            position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)',
-            width: '280px', height: '280px', borderRadius: '50%',
-            background: `radial-gradient(circle, ${currentTrade.color}30 0%, transparent 70%)`,
-            transition: 'background 0.5s ease', pointerEvents: 'none',
-          }} />
+        {/* Caja de herramientas interactiva con órbita espacial 3D */}
+        <ToolboxOrbit
+          currentTrade={selectedTrade}
+          onSelectTrade={handleTradeSelect}
+        />
+      </section>
 
-          {selectedTrade === 'plomeria' ? (
-            <img src="/assets/mascot/many-plomero.png" alt="Many Plomero"
-              className={`lp-many-hero-img ${manyAnimate === 'wave' ? 'lp-many-waving' : ''}`}
-              onClick={triggerWave} style={{ height: '300px', objectFit: 'contain', cursor: 'pointer', position: 'relative' }} />
-          ) : selectedTrade === 'electricidad' ? (
-            <img src="/assets/mascot/many-electricista.png" alt="Many Electricista"
-              className={`lp-many-hero-img ${manyAnimate === 'wave' ? 'lp-many-waving' : ''}`}
-              onClick={triggerWave} style={{ height: '300px', objectFit: 'contain', cursor: 'pointer', position: 'relative' }} />
-          ) : (
-            <img src="/assets/mascot/many-wave.png" alt="Many OficioYa"
-              className={`lp-many-hero-img ${manyAnimate === 'wave' ? 'lp-many-waving' : ''}`}
-              onClick={triggerWave} style={{ height: '300px', objectFit: 'contain', cursor: 'pointer', position: 'relative' }} />
-          )}
+      {/* ── MANIFIESTO EDITORIAL (Inspirado en danilodemarco.com) ── */}
+      <EditorialManifesto onExplore={handleStartAsSeeker} />
 
-          {/* Tagline del oficio — texto suelto */}
-          <p style={{
-            fontFamily: 'var(--font-body)', fontSize: '13px', color: 'rgba(255,255,255,0.4)',
-            fontStyle: 'italic', maxWidth: '320px', textAlign: 'center', margin: 0,
-          }}>
-            {currentTrade.tagline}
+      {/* ── CARAVANA / TREN DE OFICIOS (Inspirado en ollivere.webflow.io) ── */}
+      <SkillsTrain onSelectTrade={(trade) => handleTradeSelect(trade as any)} />
+
+      {/* ── METODOLOGÍA SIN VUELTAS: PROCESO STICKY (Inspirado en ollivere.webflow.io) ── */}
+      <StickyProcess onStart={handleStartAsSeeker} />
+
+      {/* ── INSPECTOR DE HERRAMIENTAS Y FICHA TÉCNICA 3D (Inspirado en thibaut.cool) ── */}
+      <RetroInspector 
+        selectedTrade={selectedTrade}
+        onSelectTrade={(trade) => handleTradeSelect(trade as any)}
+        onExploreExperts={() => handleStartAsSeeker()}
+      />
+
+      {/* ── EDICIÓN EDITORIAL IMPRESA / BROADSHEET & CLASIFICADOS (Inspirado en niccolomiranda.com) ── */}
+      <PaperBroadsheet onExplore={handleStartAsSeeker} />
+
+
+      {/* ── SELECCIÓN EDITORIAL ASIMÉTRICA (Inspirado en danilodemarco.com) ── */}
+      <AsymmetricShowcase onSelectWorker={() => handleStartAsSeeker()} />
+
+      {/* ── TRABAJOS REALES: muro de portafolio ── */}
+      <section className="lp-work" aria-labelledby="lp-work-title">
+        <div className="lp-wrap lp-work-head">
+          <span className="lp-sticker lp-sticker--esmeralda lp-sticker--pill">Portafolio verificado</span>
+          <h2 id="lp-work-title" className="oy-display lp-work-title">Trabajos reales en Bogotá</h2>
+          <p className="lp-work-sub">
+            Fotos de obras terminadas por los profesionales de OficioYa. Pasa el puntero para detener el muro o elige una para buscar expertos.
           </p>
-
-          {/* Selector oficios */}
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-            {TRADES.map(t => (
-              <button
-                key={t.key}
-                onClick={() => handleTradeSelect(t.key)}
-                style={{
-                  background: selectedTrade === t.key ? t.color : 'transparent',
-                  color: selectedTrade === t.key
-                    ? (t.key === 'electricidad' ? '#0A1628' : '#fff')
-                    : 'rgba(255,255,255,0.45)',
-                  border: selectedTrade === t.key ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '999px', padding: '7px 16px',
-                  fontSize: '12px', fontWeight: selectedTrade === t.key ? 700 : 400,
-                  cursor: 'pointer', fontFamily: 'var(--font-ui)',
-                  display: 'flex', alignItems: 'center', gap: '5px',
-                  transition: 'all 0.25s ease',
-                  boxShadow: selectedTrade === t.key ? `0 4px 14px ${t.color}45` : 'none',
-                }}
-              >
-                {t.icon} {t.label}
-              </button>
-            ))}
+        </div>
+        <div className="lp-wrap">
+          <div className="lp-work-wall">
+            <DriftWall
+              items={PORTFOLIO}
+              ariaLabel="Fotos de trabajos realizados"
+              onItemClick={handleStartAsSeeker}
+            />
           </div>
         </div>
       </section>
 
-      {/* ── STATS — texto flotante, sin cards ── */}
-      <div ref={statsReveal.ref} style={{ padding: '56px 0', borderBottom: '1px solid var(--color-border)' }}>
+      {/* ── TESTIMONIOS VERIFICADOS (Item 18) ── */}
+      <section className="lp-testimonials" aria-labelledby="lp-testimonials-title">
         <div className="lp-wrap">
-          {/* Título suelto, sin recuadro */}
-          <p style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--color-text-subtle)', textAlign: 'center', marginBottom: '40px' }}>
-            OficioYa en números
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0' }}>
-            {STATS.map((s, i) => (
-              <div key={s.label} style={{
-                textAlign: 'center', padding: '8px 16px',
-                borderRight: i < 3 ? '1px solid var(--color-border)' : 'none',
-                opacity: statsReveal.visible ? 1 : 0,
-                transform: statsReveal.visible ? 'translateY(0)' : 'translateY(20px)',
-                transition: `all 0.5s ease ${i * 0.1}s`,
-              }}>
-                <div style={{ fontFamily: 'var(--font-heading)', fontSize: '2.4rem', fontWeight: 900, color: s.color, letterSpacing: '-1px', lineHeight: 1 }}>
-                  {s.value}
-                </div>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '6px', fontWeight: 400 }}>
-                  {s.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── CÓMO FUNCIONA ── */}
-      <section ref={stepsReveal.ref} style={{ padding: '96px 0' }}>
-        <div className="lp-wrap">
-          {/* Título + subtítulo sueltos */}
-          <div style={{ marginBottom: '64px' }}>
-            <p style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--brand-amber)', marginBottom: '12px' }}>
-              Simple y transparente
-            </p>
-            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 800, letterSpacing: '-1px', color: 'var(--color-text-main)', marginBottom: '12px', maxWidth: '480px' }}>
-              Tres pasos, cero intermediarios.
+          <div className="lp-testimonials-head">
+            <span className="lp-sticker lp-sticker--esmeralda lp-sticker--pill">Opiniones demo</span>
+            <h2 id="lp-testimonials-title" className="oy-display lp-testimonials-title">
+              Historias de clientes en Bogotá
             </h2>
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--color-text-muted)', maxWidth: '400px', lineHeight: 1.65 }}>
-              Sin comisiones ocultas, sin grupos de WhatsApp incómodos.
+            <p className="lp-testimonials-sub">
+              Vecinos reales que resolvieron sus problemas de hogar sin comisiones, con precio acordado y garantía.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '32px' }}>
-            {[
-              { n: '01', icon: <MapPin size={22} />, color: '#3B82F6', title: 'Búsqueda hiperlocal', desc: 'Activa tu GPS o selecciona tu localidad. Ves en tiempo real quién está disponible a menos de 2 km.' },
-              { n: '02', icon: <Award size={22} />, color: '#F59E0B', title: 'Reputación verificada', desc: 'Calificaciones reales de vecinos, fotos de trabajos terminados y antecedentes validados.' },
-              { n: '03', icon: <UserCheck size={22} />, color: '#10B981', title: 'Trato directo', desc: 'Contactas, acordás la tarifa y pagás en efectivo, transferencia o Bre-B. Sin intermediarios.' },
-            ].map((s, i) => (
-              <div
-                key={s.n}
-                style={{
-                  padding: '40px 32px',
-                  background: 'var(--color-surface)',
-                  borderRadius: '24px',
-                  boxShadow: '0 2px 20px rgba(0,0,0,0.04)',
-                  opacity: stepsReveal.visible ? 1 : 0,
-                  transform: stepsReveal.visible ? 'translateY(0)' : 'translateY(30px)',
-                  transition: `all 0.55s ease ${i * 0.12}s`,
-                  position: 'relative', overflow: 'hidden',
-                }}
-              >
-                {/* Número decorativo — sin recuadro */}
-                <span style={{
-                  position: 'absolute', top: '16px', right: '24px',
-                  fontFamily: 'var(--font-heading)', fontSize: '3rem', fontWeight: 900,
-                  color: 'var(--color-border)', lineHeight: 1, pointerEvents: 'none',
-                }}>
-                  {s.n}
-                </span>
-                <div style={{
-                  width: '48px', height: '48px', borderRadius: '14px',
-                  background: `${s.color}18`, color: s.color,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginBottom: '20px',
-                }}>
-                  {s.icon}
+          <div className="lp-testimon-grid">
+            {TESTIMONIALS.map((t, idx) => (
+              <div key={idx} className="lp-testi-card">
+                <div className="lp-testi-card__stars">
+                  {Array.from({ length: t.rating }).map((_, i) => (
+                    <Star key={i} size={16} fill="var(--color-star)" color="var(--stroke-ink)" />
+                  ))}
+                  <span className="lp-testi-card__badge">
+                    <ShieldCheck size={13} aria-hidden="true" /> Verificado
+                  </span>
                 </div>
-                {/* Título hover color */}
-                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', fontWeight: 700, marginBottom: '10px' }}>
-                  <HoverText hoverColor={s.color}>{s.title}</HoverText>
-                </h3>
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--color-text-muted)', lineHeight: 1.7, margin: 0 }}>
-                  {s.desc}
+                <p className="lp-testi-card__comment">
+                  <Quote size={16} className="lp-testi-card__quote-icon" aria-hidden="true" />
+                  "{t.comment}"
                 </p>
+                <div className="lp-testi-card__author">
+                  <img src={t.avatar} alt={t.name} className="lp-testi-card__avatar" loading="lazy" />
+                  <div className="lp-testi-card__meta">
+                    <strong className="lp-testi-card__name">{t.name}</strong>
+                    <span className="lp-testi-card__trade">{t.trade}</span>
+                    <span className="lp-testi-card__zone">{t.zone}</span>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -404,62 +476,48 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
       </section>
 
       {/* ── FAQ DESPLEGABLE ── */}
-      <section
-        id="faq-section"
-        ref={faqReveal.ref}
-        style={{
-          padding: '80px 0',
-          background: 'linear-gradient(160deg, #0A1628 0%, #0F2040 100%)',
-        }}
-      >
-        <div className="lp-wrap" style={{ maxWidth: '720px' }}>
-          {/* Títulos sueltos sobre fondo oscuro */}
-          <p style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#FFC72C', marginBottom: '12px' }}>
-            Preguntas frecuentes
-          </p>
-          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(1.8rem, 3vw, 2.4rem)', fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', marginBottom: '48px' }}>
-            Todo lo que necesitas saber.
+      <section id="faq-section" ref={faqRef} className="lp-faq">
+        <div className="lp-wrap lp-faq-wrap">
+          <span className="lp-sticker lp-sticker--amarillo lp-sticker--pill">Preguntas frecuentes</span>
+          <h2 className="oy-display lp-faq-title">
+            <StrokeText text="Todo lo que" tone="cacao" trigger="scroll" fontSize={64} />{' '}
+            <StrokeText text="necesitas saber." tone="cacao" trigger="scroll" fontSize={64} />
           </h2>
 
-          <div style={{
-            opacity: faqReveal.visible ? 1 : 0,
-            transform: faqReveal.visible ? 'translateY(0)' : 'translateY(24px)',
-            transition: 'all 0.5s ease',
-          }}>
+          <div className={`lp-faq-list ${faqVisible ? 'lp-faq-list--in' : ''}`}>
             {FAQS.map((faq, i) => (
               <FaqItem key={i} q={faq.q} a={faq.a} />
             ))}
           </div>
 
-          {/* Texto CTA suelto, sin recuadro */}
-          <p style={{
-            fontFamily: 'var(--font-body)', fontSize: '14px',
-            color: 'rgba(255,255,255,0.4)', marginTop: '40px', textAlign: 'center',
-          }}>
+          <p className="lp-faq-more">
             ¿Tienes otra pregunta?{' '}
-            <HoverText hoverColor="#FFC72C" style={{ fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>
-              <span onClick={handleStartAsSeeker}>Contáctanos desde la app</span>
-            </HoverText>
+            <button type="button" className="lp-faq-link" onClick={handleStartAsSeeker}>
+              Contáctanos desde la app
+            </button>
           </p>
         </div>
       </section>
 
       {/* ── CTA WORKER ── */}
-      <section ref={ctaReveal.ref} className={`lp-cta-dark ${ctaReveal.visible ? 'lp-reveal' : ''}`}>
+      <section ref={ctaRef} className={`lp-cta-dark ${ctaVisible ? 'lp-reveal' : ''}`}>
         <div className="lp-wrap">
           <div className="lp-cta-card">
+            <React.Suspense fallback={null}>
+              <PlasmaWarp className="lp-cta-warp" />
+            </React.Suspense>
             <div className="lp-cta-mascot-col">
               <div className="lp-cta-glow" />
-              <img src="/assets/mascot/many-wave.png" alt="Many" className="lp-cta-mascot-img" />
+              <img src={BRAND_ASSETS.manyWave} alt="Many" className="lp-cta-mascot-img" />
               <div className="lp-cta-badge-pill">
-                <CheckCircle2 size={14} color="#22C55E" />
+                <CheckCircle2 size={14} className="lp-cta-badge-icon" />
                 <span>100% de tus ingresos son tuyos</span>
               </div>
             </div>
 
             <div className="lp-cta-content-col">
               {/* Eyebrow — texto suelto sin recuadro */}
-              <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#FFC72C', display: 'block', marginBottom: '10px' }}>
+              <span className="lp-cta-kicker">
                 Para técnicos y profesionales
               </span>
               <h2 className="lp-cta-title">¿Eres trabajador independiente?</h2>
@@ -468,26 +526,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
               </p>
 
               {/* Beneficios — texto suelto, solo con punto de color */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
+              <div className="lp-cta-list">
                 {[
                   'Cobro 100% directo con el cliente',
                   'Control de tus horarios y zona de cobertura',
                   'Calificaciones verificadas para ganar más clientes',
                 ].map((b, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#F59E0B', flexShrink: 0 }} />
-                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 500, color: '#E2E8F0' }}>
-                      <HoverText hoverColor="#FFC72C">{b}</HoverText>
+                  <div key={i} className="lp-cta-list-item">
+                    <span className="lp-cta-list-dot" />
+                    <span className="lp-cta-list-text">
+                      <HoverText tone="energy">{b}</HoverText>
                     </span>
                   </div>
                 ))}
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-                <button onClick={handleStartAsProvider} className="lp-cta-primary lp-cta-amber">
-                  Empezar gratis <ArrowRight size={16} />
-                </button>
-                <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>
+              <div className="lp-cta-actions-row">
+                <BorderGlow>
+                  <button onClick={handleStartAsProvider} className="lp-cta-primary lp-cta-amber">
+                    Empezar gratis <ArrowRight size={16} />
+                  </button>
+                </BorderGlow>
+                <span className="lp-cta-note">
                   Sin tarjeta de crédito
                 </span>
               </div>
@@ -497,7 +557,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
       </section>
 
       {/* ── FOOTER ── */}
-      <AppFooter />
+      <AppFooter onOpenContact={onOpenContact} />
+
+      {/* Botón Flotante para Volver Arriba (Item 7) */}
+      <ScrollToTop />
     </div>
   );
 };

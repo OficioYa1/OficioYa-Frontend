@@ -1,0 +1,149 @@
+/* ============================================================
+   OFICIOYA · DESIGN TOKENS
+   Fuente de verdad: Manual de identidad Oficio Ya v1.0
+   (págs. 08 Color, 09 Tipografía, 10 Elementos, 11 Iconografía).
+
+   Tres capas:
+   1. Primitivos  (--oy-*)     → los 8 colores del manual, sin tocar.
+   2. Semánticos  (--color-*)  → para qué se usa cada color en la UI.
+   3. Escalas     (--text-*, --space-*, --radius-*, --ease-*, --dur-*).
+
+   Los componentes usan SOLO tokens semánticos. Si necesitas un color que
+   no está aquí, primero pregúntate si el manual lo permite ("no mezclar
+   colores, estilos o mensajes sin jerarquía").
+   ============================================================ */
+
+:root {
+  /* ── 1. PRIMITIVOS: paleta oficial del manual ─────────────── */
+  --oy-amarillo-canario: #FFC72C; /* Energía */
+  --oy-ambar-calido:     #F59E0B; /* Acento */
+  --oy-verde-esmeralda:  #10B981; /* Estado */
+  --oy-naranja-many:     #C9622A; /* Many (pelaje) */
+  --oy-azul-marino:      #1E3A8A; /* Confianza */
+  --oy-naranja-fuego:    #EA580C; /* Acción */
+  --oy-cacao-profundo:   #3E1F14; /* Detalle */
+  --oy-almendra-claro:   #F8D8A8; /* Calidez */
+
+  /* Tonos derivados SOLO para cumplir WCAG 2.1 AA (OFY-NF-07).
+     Se usan cuando un color del manual no alcanza 4.5:1 con el texto. */
+  --oy-naranja-fuego-aa: #C2410C; /* blanco encima = 5.18:1 (el #EA580C da 3.56:1) */
+  --oy-ambar-aa:         #B45309; /* texto ámbar sobre blanco = 5.02:1 */
+  --oy-esmeralda-aa:     #047857; /* texto verde sobre blanco = 5.48:1 */
+
+  /* Neutros (documento de entrega técnica, compatibles con el manual) */
+  --oy-blanco:      #FFFFFF;
+  --oy-superficie:  #F8FAFC;
+  --oy-carbon:      #1E293B;
+  --oy-gris-700:    #475569;
+  --oy-gris-500:    #64748B;
+  --oy-gris-200:    #E2E8F0;
+  --oy-gris-100:    #F1F5F9;
+
+  /* Error: el manual no define rojo; se reserva para errores y acciones
+     destructivas, nunca como color decorativo. */
+  --oy-rojo:        #DC2626;
+  --oy-rojo-suave:  #FEF2F2;
+
+  /* ── 2. SEMÁNTICOS ─────────────────────────────────────────── */
+  --color-trust:            var(--oy-azul-marino);
+  --color-trust-soft:       #E8EDF8;
+  --color-energy:           var(--oy-amarillo-canario);
+  --color-on-energy:        var(--oy-cacao-profundo);   /* 9.54:1 */
+  --color-accent:           var(--oy-ambar-calido);
+  --color-accent-text:      var(--oy-ambar-aa);
+  --color-action:           var(--oy-naranja-fuego);     /* iconos, bordes, texto grande */
+  --color-action-strong:    var(--oy-naranja-fuego-aa);  /* fondo de botones con texto */
+  --color-on-action:        var(--oy-blanco);
+  --color-status:           var(--oy-verde-esmeralda);
+  --color-on-status:        var(--oy-cacao-profundo);   /* 5.87:1 · "DISPONIBLE" */
+  --color-status-text:      var(--oy-esmeralda-aa);
+  --color-status-soft:      #ECFDF5;
+  --color-many:             var(--oy-naranja-many);
+  --color-detail:           var(--oy-cacao-profundo);
+  --color-warm:             var(--oy-almendra-claro);
+  --color-warm-soft:        #FDF3E4;
+  --color-star:             var(--oy-ambar-calido);
+  --color-error:            var(--oy-rojo);
+  --color-error-soft:       var(--oy-rojo-suave);
+  --color-focus-ring:       var(--oy-azul-marino);
+
+  /* Lenguaje "sticker" (docs/STYLE_REFERENCE.md): contorno Cacao y píldoras */
+  --stroke-ink:             var(--oy-cacao-profundo);
+  --stroke-w:               1.5px;
+  --radius-card-lg:         40px;
+  --wash-marino:            #E4EAF6;
+  --wash-esmeralda:         #DDF5EA;
+
+  /* ── 3. TIPOGRAFÍA ─────────────────────────────────────────── */
+  /* Manual: DM Sans → títulos y mensajes clave · Inter → texto, datos e interfaz */
+  --font-display: 'DM Sans', 'Inter', system-ui, sans-serif;
+  --font-text:    'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Escala del manual (58 / 34 / 24) adaptada a pantalla con clamp().
+     Datos y metadatos según el documento técnico (17 / 14 / 12). */
+  --text-display: clamp(2.5rem, 1.6rem + 3.6vw, 3.625rem); /* 40 → 58 */
+  --text-h1:      clamp(1.75rem, 1.4rem + 1.4vw, 2.125rem); /* 28 → 34 */
+  --text-h2:      clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);   /* 20 → 24 */
+  --text-h3:      1.25rem;  /* 20 · nombre del profesional en tarjetas */
+  --text-data:    1.0625rem;/* 17 · tarifa, km, calificación (DM Sans bold) */
+  --text-body:    1rem;     /* 16 */
+  --text-small:   0.875rem; /* 14 · cuerpo secundario, inputs */
+  --text-caption: 0.75rem;  /* 12 · badges, metadatos */
+
+  --leading-tight: 1.15;
+  --leading-snug:  1.3;
+  --leading-body:  1.55;
+  --tracking-display: -0.02em;
+  --tracking-label:   0.06em;
+
+  /* ── 4. ESPACIADO (base 4 px) ──────────────────────────────── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+
+  /* ── 5. FORMA ──────────────────────────────────────────────── */
+  /* Tarjetas y marcos redondeados como en el manual (pág. 10) */
+  --radius-xs: 6px;
+  --radius-control: 12px;
+  --radius-card: 20px;
+  --radius-frame: 28px;
+  --radius-pill: 9999px;
+
+  --tap-target: 44px; /* mínimo táctil */
+
+  /* ── 6. MOVIMIENTO ─────────────────────────────────────────── */
+  /* Curvas: entrada desacelerada para lo que aparece, "spring" suave para
+     respuestas táctiles. Duraciones cortas: la app es de uso urgente. */
+  --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --dur-instant: 100ms;
+  --dur-fast:    160ms;
+  --dur-base:    240ms;
+  --dur-slow:    360ms;
+}
+
+/* Modo oscuro: los colores del manual se mantienen; solo se aclaran los
+   que serían ilegibles sobre fondo oscuro (azul marino, textos AA). */
+html.theme-dark {
+  --color-trust:         #A9BCF0; /* tinte del azul marino · 9.41:1 sobre #111827 */
+  --color-trust-soft:    rgba(30, 58, 138, 0.35);
+  --color-accent-text:   var(--oy-ambar-calido);
+  --color-status-text:   #34D399;
+  --color-status-soft:   rgba(16, 185, 129, 0.15);
+  --color-warm-soft:     rgba(248, 216, 168, 0.12);
+  --color-error-soft:    rgba(220, 38, 38, 0.15);
+  --color-focus-ring:    var(--oy-amarillo-canario);
+
+  --stroke-ink:          rgba(248, 216, 168, 0.32);
+  --wash-marino:         rgba(30, 58, 138, 0.28);
+  --wash-esmeralda:      rgba(16, 185, 129, 0.14);
+}

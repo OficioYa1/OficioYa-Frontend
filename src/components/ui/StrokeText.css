@@ -1,0 +1,75 @@
+/* ============================================================
+   StrokeText · titular que se dibuja con trazo y se rellena
+   Trazo y relleno del manual: Cacao y Azul Marino (en oscuro,
+   Almendra y el tinte claro del Azul Marino para seguir en AA).
+   ============================================================ */
+
+.oy-stroke-text {
+  --st-ink: var(--oy-cacao-profundo);
+  --st-trust: var(--oy-azul-marino);
+  display: block;
+  max-width: 100%;
+  line-height: 0;
+}
+
+html.theme-dark .oy-stroke-text {
+  --st-ink: var(--oy-almendra-claro);
+  --st-trust: var(--color-trust);
+}
+
+.oy-stroke-text--marino { --st-stroke: var(--st-ink); --st-fill: var(--st-trust); }
+.oy-stroke-text--cacao { --st-stroke: var(--st-trust); --st-fill: var(--st-ink); }
+
+.oy-stroke-text--hover { cursor: default; }
+
+.oy-stroke-text__svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.oy-stroke-text__svg text {
+  font-family: var(--font-display);
+  user-select: none;
+}
+
+.oy-stroke-text__stroke {
+  fill: none;
+  stroke: var(--st-stroke);
+}
+
+.oy-stroke-text__fill {
+  fill: var(--st-fill);
+  stroke: none;
+}
+
+/* Texto real: oculto a la vista, siempre disponible para lectores de pantalla */
+.oy-stroke-text__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Móvil: el SVG no salta de línea, así que se muestra el texto normal */
+@media (max-width: 767px) {
+  .oy-stroke-text--fallback { line-height: inherit; }
+
+  .oy-stroke-text--fallback .oy-stroke-text__label {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  .oy-stroke-text--fallback .oy-stroke-text__svg { display: none; }
+}

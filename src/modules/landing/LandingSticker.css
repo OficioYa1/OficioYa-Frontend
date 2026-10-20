@@ -1,0 +1,871 @@
+/* ============================================================
+   Landing · capa "sticker" (docs/STYLE_REFERENCE.md)
+   Va después de LandingPage.css y la reemplaza donde choca:
+   sin degradados ni sombras, contorno Cacao, píldoras, display
+   aplastado y stickers con la paleta del manual.
+   ============================================================ */
+
+/* ── Marquesina Cacao / Almendra ── */
+.lp-marquee {
+  overflow: hidden;
+  background: var(--oy-cacao-profundo);
+  color: var(--oy-almendra-claro);
+  border-bottom: var(--stroke-w) solid var(--oy-cacao-profundo);
+}
+
+.lp-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: lp-marquee 38s linear infinite;
+}
+
+.lp-marquee-run { display: flex; }
+
+.lp-marquee-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  padding: 9px 0 9px 18px;
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.lp-marquee-dot { color: var(--oy-amarillo-canario); }
+
+@keyframes lp-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ── Nav: superficie plana con contorno (sin vidrio ni sombra) ── */
+.lp-nav {
+  background: var(--color-surface);
+  border-bottom: var(--stroke-w) solid var(--stroke-ink);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* "Ya" del nombre: mini sticker Amarillo con texto Cacao (nunca texto amarillo sobre claro) */
+.lp-brand-ya {
+  display: inline-block;
+  margin-left: 0.06em;
+  padding: 0 0.14em;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: 0.24em;
+  background: var(--oy-amarillo-canario);
+  color: var(--oy-cacao-profundo);
+}
+
+.lp-nav-link {
+  min-height: var(--tap-target);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 200ms ease;
+}
+
+.lp-nav-link:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* Texto con cambio de color al pasar el puntero */
+.lp-hover { transition: color 200ms ease; }
+
+@media (hover: hover) and (pointer: fine) {
+  .lp-nav-link:hover,
+  .lp-hover--action:hover { color: var(--color-action-strong); }
+  .lp-hover--trust:hover { color: var(--color-trust); }
+  .lp-hover--accent:hover { color: var(--color-accent-text); }
+  .lp-hover--status:hover { color: var(--color-status-text); }
+  /* Solo sobre la tarjeta Azul Marino del CTA */
+  .lp-hover--energy:hover { color: var(--oy-amarillo-canario); }
+}
+
+/* ── Botones: píldoras con contorno, sin sombras ni brillos ── */
+.lp-btn-cta,
+.lp-hero-btn-primary,
+.lp-hero-btn-ghost,
+.lp-cta-primary,
+.lp-cta-secondary {
+  border: var(--stroke-w) solid var(--stroke-ink);
+  box-shadow: none;
+  letter-spacing: var(--tracking-label);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms var(--ease-out);
+}
+
+.lp-btn-cta::before,
+.lp-cta-primary::before { display: none; }
+
+.lp-btn-cta,
+.lp-btn-cta:hover,
+.lp-cta-primary,
+.lp-cta-primary:hover,
+.lp-cta-amber,
+.lp-cta-amber:hover {
+  background: var(--color-energy);
+  color: var(--color-on-energy);
+  transform: none;
+  box-shadow: none;
+}
+
+/* CTA principal: Azul Marino (confianza) con contorno Cacao */
+.lp-hero-btn-primary,
+.lp-hero-btn-primary:hover {
+  background: var(--oy-azul-marino);
+  color: var(--oy-blanco);
+  transform: none;
+  box-shadow: none;
+}
+
+.lp-hero-btn-ghost,
+.lp-hero-btn-ghost:hover {
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  font-weight: 700;
+  border-color: var(--stroke-ink);
+  transform: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .lp-btn-cta:hover,
+  .lp-cta-primary:hover,
+  .lp-cta-amber:hover { background: var(--oy-ambar-calido); }
+  .lp-hero-btn-primary:hover { background: var(--oy-cacao-profundo); }
+  .lp-hero-btn-ghost:hover { background: var(--color-surface-hover); }
+}
+
+/* Presionar va al final para ganarle al hover */
+.lp-btn-cta:active,
+.lp-hero-btn-primary:active,
+.lp-hero-btn-ghost:active,
+.lp-cta-primary:active,
+.lp-cta-secondary:active {
+  transform: scale(0.97);
+  box-shadow: none;
+  transition: background-color 100ms ease, color 100ms ease, transform 100ms var(--ease-out);
+}
+
+/* ── Wordmark display aplastado ── */
+.lp-wordmark {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 0.08em;
+  margin: 0 0 24px;
+  font-size: clamp(4.5rem, 13vw, 11rem);
+  color: var(--color-trust);
+}
+
+/* "Ya" como sticker Amarillo con texto Cacao (9.5:1) */
+.lp-wordmark-ya {
+  display: inline-block;
+  padding: 0.04em 0.12em 0.1em;
+  border: calc(var(--stroke-w) * 2) solid var(--oy-cacao-profundo);
+  border-radius: 0.22em;
+  background: var(--oy-amarillo-canario);
+  color: var(--oy-cacao-profundo);
+  rotate: -4deg;
+  translate: 0 -0.04em;
+}
+
+
+/* ── Stickers decorativos ── */
+.lp-stickers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.lp-sticker {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  border-radius: 20px;
+  color: var(--oy-cacao-profundo);
+}
+
+.lp-sticker--pill {
+  width: auto;
+  height: auto;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.lp-sticker--amarillo { background: var(--oy-amarillo-canario); }
+.lp-sticker--esmeralda { background: var(--oy-verde-esmeralda); }
+.lp-sticker--fuego { background: var(--oy-naranja-fuego); color: var(--oy-blanco); }
+.lp-sticker--marino { background: var(--oy-azul-marino); color: var(--oy-blanco); }
+.lp-sticker--almendra { background: var(--oy-almendra-claro); }
+
+/* Posiciones de los stickers del hero (giro solo en los decorativos) */
+.lp-sticker--a { top: 14%; left: 12%; rotate: -12deg; }
+.lp-sticker--b { top: 22%; right: 13%; rotate: 9deg; }
+.lp-sticker--c { top: 48%; left: 7%; rotate: 8deg; }
+.lp-sticker--d { top: 55%; right: 8%; rotate: -10deg; }
+
+@media (max-width: 760px) {
+  .lp-sticker { width: 46px; height: 46px; border-radius: 16px; }
+  .lp-sticker svg { width: 20px; height: 20px; }
+  .lp-sticker--pill { width: auto; height: auto; font-size: 14px; }
+  .lp-sticker--fuego,
+  .lp-sticker--marino { display: none; }
+}
+
+/* ── Chips de oficio en píldora ── */
+.lp-trade-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 16px;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms var(--ease-out);
+}
+
+.lp-trade-chip[aria-pressed='true'] {
+  background: var(--oy-amarillo-canario);
+  color: var(--oy-cacao-profundo);
+  font-weight: 700;
+}
+
+.lp-trade-chip:active { transform: scale(0.97); }
+
+@media (hover: hover) and (pointer: fine) {
+  .lp-trade-chip:not([aria-pressed='true']):hover { background: var(--color-surface-hover); }
+}
+
+/* ── Tarjetas de la landing: recorte con contorno, sin sombra ── */
+.lp-testimon-card,
+.lp-faq-item {
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card);
+  box-shadow: none;
+}
+
+/* CTA para trabajadores: tarjeta grande Azul Marino plana */
+.lp-cta-card,
+html.theme-dark .lp-cta-card {
+  background: var(--oy-azul-marino);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card-lg);
+  box-shadow: none;
+}
+
+.lp-cta-glow { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-marquee-track { animation: none; }
+}
+
+/* ── Navegación: en móvil solo queda el CTA ── */
+.lp-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+@media (max-width: 600px) {
+  .lp-nav-actions > :not(.lp-btn-cta) { display: none; }
+}
+
+/* ── Preguntas frecuentes: lavado Azul Marino plano y tarjetas con contorno ── */
+.lp-faq {
+  padding: 96px 0;
+  background: var(--wash-marino);
+  border-top: var(--stroke-w) solid var(--stroke-ink);
+  border-bottom: var(--stroke-w) solid var(--stroke-ink);
+}
+
+.lp-faq .lp-sticker {
+  position: static;
+  display: inline-flex;
+  font-size: 13px;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.lp-faq-title {
+  margin: 20px 0 40px;
+  color: var(--color-trust);
+  font-size: clamp(2.4rem, 6vw, 4rem);
+}
+
+.lp-faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 500ms var(--ease-out), transform 500ms var(--ease-out);
+}
+
+.lp-faq-list--in {
+  opacity: 1;
+  transform: none;
+}
+
+.lp-faq-item {
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+}
+
+.lp-faq-q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: var(--tap-target);
+  padding: 18px 22px;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  color: var(--color-text-main);
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lp-faq-q:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; }
+
+.lp-faq-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  transition: background-color 200ms ease;
+}
+
+.lp-faq-item[data-open] .lp-faq-icon {
+  background: var(--oy-amarillo-canario);
+  color: var(--oy-cacao-profundo);
+}
+
+.lp-faq-fold {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 280ms var(--ease-out);
+}
+
+.lp-faq-item[data-open] .lp-faq-fold { grid-template-rows: 1fr; }
+
+.lp-faq-fold-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.lp-faq-a {
+  margin: 0;
+  padding: 0 22px 20px;
+  color: var(--color-text-muted);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.lp-faq-more {
+  margin-top: 36px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.lp-faq-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-trust);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .lp-faq-q:hover .lp-faq-icon { background: var(--color-warm-soft); }
+  .lp-faq-item[data-open] .lp-faq-q:hover .lp-faq-icon { background: var(--oy-amarillo-canario); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-faq-list,
+  .lp-faq-fold { transition: none; }
+}
+
+/* En móvil los stickers se van a las esquinas para no tapar el titular */
+@media (max-width: 600px) {
+  .lp-sticker--a { top: 3%; left: 5%; }
+  .lp-sticker--b { top: 3%; right: 5%; }
+}
+
+/* ── Plasma de marca detrás de la tarjeta CTA (inspirado en CRTWarp) ── */
+.lp-cta-warp {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.lp-cta-card > :not(.lp-cta-warp) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Texto secundario sobre el plasma: se aclara para seguir en AA */
+.lp-cta-desc { color: var(--oy-gris-200); }
+
+/* ── Many cambia de pose por píxeles (PixelSwap) ── */
+.lp-many-swap {
+  width: 300px;
+  max-width: 100%;
+  overflow: visible; /* deja respirar el resplandor de Many */
+}
+
+.lp-many-swap .lp-many-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ── Titulares dibujados (StrokeText) ── */
+.lp-stroke-title { max-width: 640px; }
+
+.lp-faq-title .oy-stroke-text + .oy-stroke-text,
+.lp-stroke-title .oy-stroke-text + .oy-stroke-text { margin-top: 0.08em; }
+
+/* ── Trabajos reales en Bogotá: muro de portafolio (DriftWall) ── */
+.lp-work {
+  padding: 96px 0;
+  border-top: var(--stroke-w) solid var(--stroke-ink);
+  background: var(--wash-almendra);
+}
+
+.lp-work .lp-sticker,
+.lp-testimonials .lp-sticker {
+  position: static;
+  display: inline-flex;
+  font-size: 13px;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.lp-work-title {
+  margin: 20px 0 16px;
+  color: var(--color-trust);
+  font-size: clamp(2.4rem, 6vw, 4rem);
+}
+
+.lp-work-sub {
+  max-width: 520px;
+  margin: 0 0 40px;
+  color: var(--color-text-muted);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.lp-work-wall {
+  position: relative;
+  height: clamp(380px, 52vw, 560px);
+  overflow: hidden;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-card-lg);
+  background: var(--color-surface);
+}
+
+@media (max-width: 600px) {
+  .lp-work { padding: 64px 0; }
+  .lp-work-wall { border-radius: var(--radius-frame); }
+}
+
+/* ============================================================
+   Secciones (antes estilos en línea en LandingPage.tsx)
+   ============================================================ */
+
+/* ── Hero: banda Almendra plana ── */
+.lp-hero-band {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 92vh;
+  padding: 60px 24px 40px;
+  overflow: hidden;
+  border-bottom: var(--stroke-w) solid var(--stroke-ink);
+  background: var(--color-warm-soft);
+  color: var(--color-text-main);
+  text-align: center;
+}
+
+.lp-hero-city {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 28px;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.lp-hero-city-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-status);
+  animation: many-status-pulse 2s infinite;
+}
+
+.lp-hero-slogan {
+  max-width: 540px;
+  margin-bottom: 16px;
+  color: var(--color-text-main);
+  font-family: var(--font-body);
+  font-size: clamp(1.15rem, 2.5vw, 1.5rem);
+  font-weight: 500;
+  line-height: 1.55;
+  letter-spacing: -0.2px;
+}
+
+.lp-hero-copy {
+  max-width: 400px;
+  margin-bottom: 40px;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.lp-hero-copy-strong { font-weight: 600; }
+
+.lp-hero-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 72px;
+}
+
+.lp-hero-many {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 100%;
+}
+
+.lp-hero-tagline {
+  max-width: 320px;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-style: italic;
+  text-align: center;
+}
+
+.lp-trade-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Many: plano, sin sombras proyectadas ni flotación continua (el saludo se conserva) */
+.lp-many-swap .lp-many-hero-img,
+.lp-many-swap .lp-many-hero-img:hover,
+.lp-cta-mascot-img {
+  filter: none;
+}
+
+.lp-many-swap .lp-many-hero-img,
+.lp-cta-mascot-img { animation: none; }
+
+/* ── Cifras ── */
+.lp-numbers {
+  padding: 56px 0;
+  border-bottom: var(--stroke-w) solid var(--stroke-ink);
+}
+
+.lp-numbers-kicker {
+  margin-bottom: 40px;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.lp-numbers-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.lp-number {
+  padding: 8px 16px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 500ms ease, transform 500ms ease;
+  transition-delay: calc(var(--lp-i, 0) * 100ms);
+}
+
+.lp-number:not(:last-child) { border-right: 1px solid var(--color-border); }
+
+.lp-numbers--in .lp-number {
+  opacity: 1;
+  transform: none;
+}
+
+.lp-number-value {
+  font-family: var(--font-heading);
+  font-size: 2.4rem;
+  font-weight: 900;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.lp-number-value--trust { color: var(--color-trust); }
+.lp-number-value--status { color: var(--color-status-text); }
+.lp-number-value--accent { color: var(--color-accent-text); }
+.lp-number-value--action { color: var(--color-action-strong); }
+
+.lp-number-label {
+  margin-top: 6px;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+@media (max-width: 760px) {
+  .lp-numbers-grid {
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: 28px;
+  }
+  .lp-number:nth-child(2n) { border-right: 0; }
+  .lp-number-value { font-size: 2rem; }
+}
+
+/* ── Cómo funciona ── */
+.lp-how { padding: 96px 0; }
+
+.lp-how-head { margin-bottom: 64px; }
+
+.lp-how-kicker {
+  margin-bottom: 12px;
+  color: var(--color-accent-text);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.lp-how-title {
+  margin-bottom: 12px;
+  color: var(--color-text-main);
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 3.5vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.lp-how-sub {
+  max-width: 400px;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.lp-how-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.lp-how-card {
+  position: relative;
+  padding: 40px 32px;
+  overflow: hidden;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-frame);
+  background: var(--color-surface);
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 550ms ease, transform 550ms ease;
+  transition-delay: calc(var(--lp-i, 0) * 120ms);
+}
+
+.lp-how--in .lp-how-card {
+  opacity: 1;
+  transform: none;
+}
+
+.lp-how-n {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  color: var(--color-border);
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.lp-how-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 20px;
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: 14px;
+}
+
+.lp-how-card--trust .lp-how-icon { background: var(--color-trust-soft); color: var(--color-trust); }
+.lp-how-card--accent .lp-how-icon { background: var(--wash-amarillo); color: var(--color-accent-text); }
+.lp-how-card--status .lp-how-icon { background: var(--color-status-soft); color: var(--color-status-text); }
+
+.lp-how-card-title {
+  margin-bottom: 10px;
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.lp-how-card-desc {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+@media (max-width: 760px) {
+  .lp-how { padding: 64px 0; }
+  .lp-how-head { margin-bottom: 40px; }
+  .lp-how-grid { grid-template-columns: 1fr; gap: 16px; }
+  .lp-how-card { padding: 32px 24px; }
+}
+
+/* ── FAQ: columna de lectura ── */
+.lp-faq-wrap { max-width: 760px; }
+
+/* ── CTA para trabajadores ── */
+.lp-cta-badge-pill {
+  border: var(--stroke-w) solid var(--oy-cacao-profundo);
+  background: var(--oy-blanco);
+  color: var(--oy-cacao-profundo);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.lp-cta-badge-icon { color: var(--oy-esmeralda-aa); }
+
+.lp-cta-kicker {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--oy-amarillo-canario); /* sobre Azul Marino: 6.9:1 */
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.lp-cta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.lp-cta-list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lp-cta-list-dot {
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--oy-ambar-calido);
+}
+
+.lp-cta-list-text {
+  color: var(--oy-gris-200);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.lp-cta-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+}
+
+.lp-cta-note {
+  color: var(--oy-gris-200);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+@media (max-width: 960px) {
+  .lp-cta-list { align-items: center; }
+  .lp-cta-actions-row { justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-hero-city-dot { animation: none; }
+  .lp-number,
+  .lp-how-card,
+  .lp-hover,
+  .lp-nav-link { transition: none; }
+}

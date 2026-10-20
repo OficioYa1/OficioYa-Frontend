@@ -1,0 +1,45 @@
+.oy-scroll-to-top {
+  position: fixed;
+  bottom: 88px;
+  right: 24px;
+  z-index: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  border: var(--stroke-w) solid var(--stroke-ink);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 6px 20px -4px rgba(15, 23, 42, 0.16);
+  font-family: var(--font-text);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+html.theme-dark .oy-scroll-to-top {
+  background: var(--color-surface-elevated);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
+}
+
+.oy-scroll-to-top:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+@media (max-width: 768px) {
+  .oy-scroll-to-top {
+    bottom: 96px; /* Para no tapar la barra inferior BottomNav */
+    right: 16px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  .oy-scroll-to-top__text {
+    display: none; /* Icono solo en pantallas muy compactas */
+  }
+}
