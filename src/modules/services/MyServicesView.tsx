@@ -46,6 +46,8 @@ const STATUS_META: Record<ServiceStatus, { label: string; tone: string }> = {
   cancelado: { label: 'Cancelado', tone: 'cancelado' }
 };
 
+// OFY-72 (RF-72): Consultar estado y respuestas de solicitudes enviadas
+// OFY-44 (RF-44): Consultar trabajos completados en el historial
 const FILTER_TABS: { id: ServiceStatus | 'todos'; label: string }[] = [
   { id: 'todos', label: 'Todos' },
   { id: 'pendiente', label: 'Pendientes' },
@@ -730,7 +732,7 @@ export const MyServicesView: React.FC<MyServicesViewProps> = ({
                             </>
                           ) : (
                             <div className="svc-inline-success" role="status">
-                              <MascotAvatar expression="entusiasta" size="sm" animate="none" />
+                              <MascotAvatar forceImage="cierre" size="md" animate="bounce" />
                               <div>
                                 <h5 style={{ margin: 0, fontSize: '13px', fontWeight: 800 }}>¡Calificación Registrada!</h5>
                                 <p className="svc-muted" style={{ margin: 0, fontSize: '11.5px' }}>

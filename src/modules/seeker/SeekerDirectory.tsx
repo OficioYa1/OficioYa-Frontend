@@ -28,6 +28,8 @@ import {
   Navigation,
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
+import { ManyState } from '../../components/mascot/ManyState';
+import { TradeRatingChips } from '../../components/reviews/TradeRatingChips';
 import { motion, AnimatePresence } from 'motion/react';
 import { SquishSwitch } from '../../components/ui/SquishSwitch';
 import { GlassIcons } from '../../components/ui/GlassIcons';
@@ -95,11 +97,11 @@ const parseSlotRange = (slot: string): [number, number] | null => {
 
 /** ¿La agenda publicada cubre ese día de la semana y esa franja? */
 const scheduleCovers = (schedule: Worker['schedule'], weekday: number | null, slot: TimeSlot | null) => {
-  const slotRange = slot ? TIME_SLOTS.find(t => t.id === slot)!.range : null;
-  return schedule.some(entry => {
+  const slotRange = slot ? (TIME_SLOTS.find(t => t.id === slot)?.range ?? null) : null;
+  return (schedule ?? []).some(entry => {
     if (weekday !== null && !parseScheduleDays(entry.day).has(weekday)) return false;
     if (!slotRange) return true;
-    return entry.slots.some(s => {
+    return (entry.slots ?? []).some(s => {
       const range = parseSlotRange(s);
       return range !== null && range[0] < slotRange[1] && range[1] > slotRange[0];
     });
@@ -120,7 +122,7 @@ const FEATURED_TRADES: { id: TradeCategory; color: GlassIconsColor }[] = [
   { id: 'pintura', color: 'fuego' },
   { id: 'cerrajeria', color: 'many' },
   { id: 'hogar', color: 'esmeralda' },
-  { id: 'aseo', color: 'almendra' }
+  { id: 'aseo', color: 'cacao' }
 ];
 
 const useWideLayout = () => {
@@ -141,6 +143,7 @@ interface SeekerDirectoryProps {
   onSelectWorker: (worker: Worker) => void;
   onOpenSendRequest: (selectedWorkers?: Worker[]) => void;
   onChangeTradeCategory: (trade?: TradeCategory) => void;
+  initialCategory?: TradeCategory;
   /** Muestra la banda PageHero propia (la vista de inicio la oculta porque trae la suya). */
   showHero?: boolean;
 }
@@ -334,11 +337,17 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
   onSelectWorker,
   onOpenSendRequest,
   onChangeTradeCategory,
+  initialCategory,
   showHero = true
 }) => {
   const wideLayout = useWideLayout();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<TradeCategory | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<TradeCategory | null>(initialCategory ?? null);
+
+  useEffect(() => {
+    setSelectedCategory(initialCategory ?? null);
+  }, [initialCategory]);
+
   const [selectedZone, setSelectedZone] = useState<string>('Todas las zonas');
   const [maxRadiusKm, setMaxRadiusKm] = useState<number>(12);
   const [maxBudgetRate, setMaxBudgetRate] = useState<number>(70000);
@@ -377,11 +386,10 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
 
   // Distancia Haversine para todos los trabajadores
   const workersWithDistance = useMemo(() => {
-    return workers.map(w => {
-      const distanceKm = calculateHaversineDistance(originLocation, {
-        lat: w.location.lat,
-        lng: w.location.lng
-      });
+    return (workers || []).map(w => {
+      const lat = w.location?.lat ?? FALLBACK_LOCATION_BOGOTA.lat;
+      const lng = w.location?.lng ?? FALLBACK_LOCATION_BOGOTA.lng;
+      const distanceKm = calculateHaversineDistance(originLocation, { lat, lng });
       return { ...w, distanceKm };
     });
   }, [workers, originLocation]);
@@ -406,7 +414,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
             w.name,
             w.tradeLabel,
             w.trade,
-            w.location.zoneName,
+            w.location?.zoneName ?? '',
             w.bio,
             ...(w.specializations ?? []),
             ...(w.equipment ?? []),
@@ -435,7 +443,8 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
 
         // Filtro de zona (RF-13)
         if (selectedZone !== 'Todas las zonas') {
-          if (!w.location.zoneName.toLowerCase().includes(selectedZone.toLowerCase().split('/')[0].trim())) {
+          const zoneName = w.location?.zoneName ?? '';
+          if (!zoneName.toLowerCase().includes(selectedZone.toLowerCase().split('/')[0].trim())) {
             return false;
           }
         }
@@ -446,12 +455,12 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
         }
 
         // Filtro de tarifa aproximada (RF-14)
-        if (w.hourlyRate > maxBudgetRate) {
+        if ((w.hourlyRate ?? 0) > maxBudgetRate) {
           return false;
         }
 
         // Filtro de calificación mínima (RF-16)
-        if (minRating > 0 && w.rating < minRating) {
+        if (minRating > 0 && (w.rating ?? 0) < minRating) {
           return false;
         }
 
@@ -462,7 +471,7 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
 
         // Filtro de disponibilidad semanal (RF-15)
         if (availabilityDay === 'fines_semana') {
-          const hasWeekend = w.schedule.some(s => s.day.toLowerCase().includes('sábado') || s.day.toLowerCase().includes('domingo') || s.day.toLowerCase().includes('todos los días'));
+          const hasWeekend = (w.schedule || []).some(s => s.day.toLowerCase().includes('sábado') || s.day.toLowerCase().includes('domingo') || s.day.toLowerCase().includes('todos los días'));
           if (!hasWeekend) return false;
         }
 
@@ -495,12 +504,12 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
       }
       if (sortBy === 'reputacion') {
         // Fórmula de reputación ponderada: calificación * 10 + log(reviewCount)
-        const repA = a.rating * 10 + (a.reviewCount || 0) * 0.5 + (a.completedJobsCount || 0) * 0.2;
-        const repB = b.rating * 10 + (b.reviewCount || 0) * 0.5 + (b.completedJobsCount || 0) * 0.2;
+        const repA = (a.rating ?? 5) * 10 + (a.reviewCount || 0) * 0.5 + (a.completedJobsCount || 0) * 0.2;
+        const repB = (b.rating ?? 5) * 10 + (b.reviewCount || 0) * 0.5 + (b.completedJobsCount || 0) * 0.2;
         return repB - repA;
       }
       if (sortBy === 'precio') {
-        return a.hourlyRate - b.hourlyRate;
+        return (a.hourlyRate ?? 0) - (b.hourlyRate ?? 0);
       }
       if (sortBy === 'trabajos') {
         return (b.completedJobsCount || 0) - (a.completedJobsCount || 0);
@@ -726,9 +735,10 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
           plate="inside"
           hover="lift"
           items={FEATURED_TRADES.map(({ id, color }) => {
-            const category = CATEGORIES.find(c => c.id === id)!;
+            const category = CATEGORIES.find(c => c.id === id);
+            if (!category) return null;
             return { icon: category.icon, label: category.label, color, onClick: () => handleCategoryChange(id) };
-          })}
+          }).filter(Boolean) as any}
         />
       </section>
 
@@ -850,16 +860,32 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
       </div>
 
       {filteredWorkers.length === 0 ? (
-        <div className="oy-empty">
-          <MascotAvatar size="lg" />
-          <h3 className="oy-empty__title">No encontramos profesionales con estos filtros</h3>
-          <p className="oy-empty__text">
-            Intenta aumentar el presupuesto, seleccionar otra zona o restablecer el oficio para ver más opciones en Bogotá D.C.
-          </p>
-          <button type="button" onClick={resetAllFilters} className="btn btn-secondary">
-            Restablecer todos los filtros
-          </button>
-        </div>
+        <ManyState
+          variant="sin-resultados"
+          title="No encontramos profesionales con estos filtros"
+          message="Intenta ampliar el radio de cobertura, explorar otra localidad o restablecer los filtros para ver todos los candidatos en Bogotá D.C."
+          actions={
+            <div className="seeker-empty-actions">
+              <button
+                type="button"
+                onClick={() => {
+                  setMaxRadiusKm(25);
+                  setSelectedZone('Todas las zonas');
+                }}
+                className="btn btn-primary"
+              >
+                Ampliar cobertura a 25 km
+              </button>
+              <button
+                type="button"
+                onClick={resetAllFilters}
+                className="btn btn-secondary"
+              >
+                Restablecer todos los filtros
+              </button>
+            </div>
+          }
+        />
       ) : (
         <motion.ul layout className="seeker-directory-grid">
           <AnimatePresence mode="popLayout">
@@ -876,21 +902,30 @@ export const SeekerDirectory: React.FC<SeekerDirectoryProps> = ({
                   <ProfileCard
                     name={worker.name}
                     title={worker.tradeLabel}
-                    avatarUrl={`https://i.pravatar.cc/300?u=${worker.id}`}
-                    initials={worker.initials}
-                    avatarColor={worker.avatarColor}
+                    avatarUrl={typeof worker.photoUrl === 'string' && worker.photoUrl ? (worker.photoUrl.startsWith('http') ? worker.photoUrl : `${import.meta.env.BASE_URL}${worker.photoUrl.replace(/^\//, '')}`) : `https://i.pravatar.cc/300?u=${worker.id}`}
+                    initials={worker.initials || 'OY'}
+                    avatarColor={worker.avatarColor || 'var(--oy-azul-marino)'}
                     available={worker.available}
                     status={worker.available ? 'Disponible' : 'Ocupado'}
                     verified={worker.verified}
                     meta={
-                      <span className="seeker-card-meta">
-                        <Star size={13} fill="var(--color-star)" color="var(--color-star)" aria-hidden="true" />
-                        <strong>{worker.rating.toFixed(1)}</strong>
-                        <span aria-hidden="true">·</span>
-                        <span>{formatDistance(worker.distanceKm || 0)}</span>
-                        <span aria-hidden="true">·</span>
-                        <strong>${worker.hourlyRate.toLocaleString()}/h</strong>
-                      </span>
+                      <div className="seeker-card-meta-container">
+                        <span className="seeker-card-meta">
+                          <Star size={13} fill="var(--color-star)" color="var(--color-star)" aria-hidden="true" />
+                          <strong>{(typeof worker.rating === 'number' && !isNaN(worker.rating) ? worker.rating : 5).toFixed(1)}</strong>
+                          <span aria-hidden="true">·</span>
+                          <span>{formatDistance(worker.distanceKm || 0)}</span>
+                          <span aria-hidden="true">·</span>
+                          <strong>${(typeof worker.hourlyRate === 'number' && !isNaN(worker.hourlyRate) ? worker.hourlyRate : 40000).toLocaleString()}/h</strong>
+                        </span>
+                        {worker.ratingByTrade && (
+                          <TradeRatingChips
+                            ratingByTrade={worker.ratingByTrade}
+                            primaryTrade={worker.trade}
+                            compact
+                          />
+                        )}
+                      </div>
                     }
                     onClick={() => onSelectWorker(worker)}
                     headingLevel={3}

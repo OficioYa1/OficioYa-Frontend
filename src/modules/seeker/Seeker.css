@@ -578,6 +578,21 @@ html.theme-dark .seeker-toolbar__btn.btn-secondary:hover,
   color: var(--oy-cacao-profundo, #3E1F14);
 }
 
+.seeker-card-meta-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.seeker-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
 /* ── Modales ── */
 .seeker-modal--filters { --oy-modal-w: 540px; }
 .seeker-modal--catalog { --oy-modal-w: 760px; }
