@@ -10,6 +10,7 @@ export const INITIAL_WORKERS: Worker[] = [
     avatarColor: 'var(--oy-azul-marino)',
     trade: 'electricidad',
     tradeLabel: 'Electricista Certificado SENA',
+    photoUrl: 'assets/demo/mateo-gomez.jpg',
     secondaryTrades: ['computacion'],
     rating: 4.9,
     reviewCount: 38,
@@ -52,7 +53,7 @@ export const INITIAL_WORKERS: Worker[] = [
       distinctTradesCount: 3,
       isCommunityReferrer: true,
       referredList: [
-        { name: 'Carlos Restrepo', trade: 'Plomería', status: 'verificado' },
+        { name: 'Don Carlos Mendoza', trade: 'Plomería', status: 'verificado' },
         { name: 'Elena Jaramillo', trade: 'Pintura', status: 'verificado' },
         { name: 'Andrés Henao', trade: 'Cerrajería', status: 'verificado' }
       ]
@@ -102,11 +103,13 @@ export const INITIAL_WORKERS: Worker[] = [
   },
   {
     id: 'w-2',
-    name: 'Carlos Restrepo',
-    initials: 'CR',
+    ownerUserId: 'usr-carlos-demo',
+    name: 'Don Carlos Mendoza',
+    initials: 'CM',
     avatarColor: 'var(--oy-naranja-many)',
     trade: 'plomeria',
     tradeLabel: 'Plomería & Redes Hidráulicas',
+    photoUrl: 'assets/demo/don-carlos-mendoza.jpg',
     secondaryTrades: ['albanileria'],
     rating: 4.8,
     reviewCount: 52,
@@ -188,6 +191,7 @@ export const INITIAL_WORKERS: Worker[] = [
     avatarColor: 'var(--oy-esmeralda-aa)',
     trade: 'pintura',
     tradeLabel: 'Pintura y Acabados de Interiores',
+    photoUrl: 'assets/demo/elena-jaramillo.jpg',
     secondaryTrades: ['hogar'],
     rating: 5.0,
     reviewCount: 29,
@@ -265,6 +269,7 @@ export const INITIAL_WORKERS: Worker[] = [
     avatarColor: 'var(--oy-cacao-profundo)',
     trade: 'cerrajeria',
     tradeLabel: 'Cerrajería de Seguridad 24H',
+    photoUrl: 'assets/demo/andres-henao.jpg',
     secondaryTrades: [],
     rating: 4.7,
     reviewCount: 64,
@@ -338,6 +343,7 @@ export const INITIAL_WORKERS: Worker[] = [
     name: 'Luis Fernando Ortiz',
     initials: 'LO',
     avatarColor: 'var(--oy-naranja-fuego-aa)',
+    photoUrl: 'assets/demo/luis-fernando-ortiz.jpg',
     trade: 'electrodomesticos',
     tradeLabel: 'Técnico de Lavadoras y Neveras',
     secondaryTrades: ['electricidad'],
@@ -406,6 +412,7 @@ export const INITIAL_WORKERS: Worker[] = [
     avatarColor: 'var(--oy-azul-marino)',
     trade: 'computacion',
     tradeLabel: 'Soporte Técnico y Redes Wi-Fi',
+    photoUrl: 'assets/demo/sofia-rendon.jpg',
     secondaryTrades: [],
     rating: 4.9,
     reviewCount: 22,
@@ -472,6 +479,7 @@ export const INITIAL_WORKERS: Worker[] = [
     avatarColor: 'var(--oy-naranja-many)',
     trade: 'albanileria',
     tradeLabel: 'Albañilería & Remodelaciones',
+    photoUrl: 'assets/demo/javier-canas.jpg',
     secondaryTrades: ['pintura'],
     rating: 4.8,
     reviewCount: 31,
@@ -538,6 +546,7 @@ export const INITIAL_WORKERS: Worker[] = [
     avatarColor: 'var(--oy-esmeralda-aa)',
     trade: 'aseo',
     tradeLabel: 'Aseo Profundo & Desinfección',
+    photoUrl: 'assets/demo/claudia-munoz.jpg',
     secondaryTrades: ['hogar'],
     rating: 4.9,
     reviewCount: 47,
@@ -604,6 +613,7 @@ export const INITIAL_WORKERS: Worker[] = [
     avatarColor: 'var(--oy-cacao-profundo)',
     trade: 'jardineria',
     tradeLabel: 'Jardinería & Mantenimiento Verde',
+    photoUrl: 'assets/demo/juan-camilo-velez.jpg',
     secondaryTrades: [],
     rating: 4.7,
     reviewCount: 19,
@@ -670,6 +680,7 @@ export const INITIAL_WORKERS: Worker[] = [
     avatarColor: 'var(--oy-naranja-fuego-aa)',
     trade: 'mascotas',
     tradeLabel: 'Peluquería Canina & Cuidado de Mascotas',
+    photoUrl: 'assets/demo/marcela-posada.jpg',
     secondaryTrades: [],
     rating: 5.0,
     reviewCount: 35,
@@ -739,6 +750,7 @@ export const INITIAL_WORKERS: Worker[] = [
     avatarColor: 'var(--oy-azul-marino)',
     trade: 'pintura',
     tradeLabel: 'Pintor de Obras Rápidas',
+    photoUrl: 'assets/demo/rodrigo-barrientos.jpg',
     secondaryTrades: [],
     rating: 2.6,
     reviewCount: 9,
@@ -834,7 +846,7 @@ export const INITIAL_SERVICES: ServiceRequest[] = [
   {
     id: 'srv-102',
     workerId: 'w-2',
-    workerName: 'Carlos Restrepo',
+    workerName: 'Don Carlos Mendoza',
     workerTrade: 'Plomería & Redes Hidráulicas',
     workerAvatarColor: '#0D9488',
     clientId: 'usr-default',
@@ -896,10 +908,10 @@ export const INITIAL_CONVERSATIONS: Conversation[] = [
   {
     id: 'conv-2',
     workerId: 'w-2',
-    workerName: 'Carlos Restrepo',
+    workerName: 'Don Carlos Mendoza',
     workerTrade: 'Plomería & Redes Hidráulicas',
     workerAvatarColor: '#0D9488',
-    workerInitials: 'CR',
+    workerInitials: 'CM',
     unreadCount: 0,
     lastMessage: 'Con gusto. Si necesitas otra revisión en Usaquén me escribes.',
     lastMessageTime: 'Ayer'
@@ -1008,7 +1020,41 @@ export const getStoredData = <T>(key: string, fallback: T): T => {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return fallback;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (key === 'oy-workers' && Array.isArray(parsed) && Array.isArray(fallback)) {
+      return (parsed as any[]).map(item => {
+        const initial = (fallback as any[]).find((f: any) => f.id === item.id);
+        const fallbackLocation = { lat: 4.6780, lng: -74.0470, zoneName: 'Bogotá D.C.', address: '' };
+        if (initial) {
+          return {
+            ...initial,
+            ...item,
+            name: initial.name,
+            initials: initial.initials,
+            photoUrl: initial.photoUrl || item.photoUrl,
+            ratingByTrade: initial.ratingByTrade || item.ratingByTrade,
+            location: {
+              ...initial.location,
+              ...(item.location || {})
+            },
+            schedule: Array.isArray(item.schedule) && item.schedule.length > 0 ? item.schedule : initial.schedule,
+            rating: typeof item.rating === 'number' && !isNaN(item.rating) ? item.rating : initial.rating,
+            hourlyRate: typeof item.hourlyRate === 'number' && !isNaN(item.hourlyRate) ? item.hourlyRate : initial.hourlyRate
+          };
+        }
+        return {
+          ...item,
+          location: {
+            ...fallbackLocation,
+            ...(item.location || {})
+          },
+          schedule: Array.isArray(item.schedule) ? item.schedule : [],
+          rating: typeof item.rating === 'number' && !isNaN(item.rating) ? item.rating : 5,
+          hourlyRate: typeof item.hourlyRate === 'number' && !isNaN(item.hourlyRate) ? item.hourlyRate : 40000
+        };
+      }) as unknown as T;
+    }
+    return parsed;
   } catch {
     return fallback;
   }
