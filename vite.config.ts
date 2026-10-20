@@ -5,6 +5,11 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   base: '/oficioya-frontend/',
+  server: {
+    watch: {
+      ignored: ['**/sprint_*/**', '**/docs/**', '**/*.pdf']
+    }
+  },
   build: {
     rollupOptions: {
       output: {
