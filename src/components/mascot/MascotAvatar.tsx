@@ -12,12 +12,35 @@ interface MascotAvatarProps {
   showHalo?: boolean;
   animate?: 'float' | 'wave' | 'bounce' | 'idle' | 'none';
   /** Force a specific image key regardless of trade/expression */
-  forceImage?: 'wave' | 'base' | 'electricista' | 'plomero';
+  forceImage?:
+    | 'wave'
+    | 'base'
+    | 'electricista'
+    | 'plomero'
+    | 'carpintero'
+    | 'cerrajero'
+    | 'pintura'
+    | 'electrodomesticos'
+    | 'jardinero'
+    | 'tecnologia'
+    | 'modista'
+    | 'hogar'
+    | 'mascotas'
+    | 'aseo'
+    | 'albanileria'
+    | 'clases'
+    | 'cable'
+    | 'llave'
+    | 'lupa'
+    | 'exito'
+    | 'disponible'
+    | 'escudo'
+    | 'soporte'
+    | 'cierre';
 }
 
 /* ─── Image configs ─────────────────────────────────────────────
-   All source images are character-design sheets.
-   objectPosition + scale crop to the HERO pose (large left figure).
+   Configuración de imagen y encuadre para cada oficio y estado
    ─────────────────────────────────────────────────────────────── */
 interface ImgConfig {
   src: string;
@@ -26,30 +49,30 @@ interface ImgConfig {
 }
 
 const CONFIGS: Record<string, ImgConfig> = {
-  // Many 3D saludando con cinturón de herramientas
-  wave: {
-    src: BRAND_ASSETS.manyWave,
-    objectPosition: 'center 10%',
-    scale: 1.1,
-  },
-  // Base character
-  base: {
-    src: BRAND_ASSETS.manyWave,
-    objectPosition: 'center 10%',
-    scale: 1.1,
-  },
-  // Electricista
-  electricista: {
-    src: BRAND_ASSETS.manyElectricista,
-    objectPosition: 'center 15%',
-    scale: 1.15,
-  },
-  // Plomero
-  plomero: {
-    src: BRAND_ASSETS.manyPlomero,
-    objectPosition: 'center 15%',
-    scale: 1.15,
-  },
+  wave: { src: BRAND_ASSETS.manyWave, objectPosition: 'center 10%', scale: 1.1 },
+  base: { src: BRAND_ASSETS.manyWave, objectPosition: 'center 10%', scale: 1.1 },
+  electricista: { src: BRAND_ASSETS.manyElectricista, objectPosition: 'center 15%', scale: 1.05 },
+  plomero: { src: BRAND_ASSETS.manyPlomero, objectPosition: 'center 15%', scale: 1.05 },
+  carpintero: { src: BRAND_ASSETS.manyCarpintero, objectPosition: 'center 15%', scale: 1.05 },
+  cerrajero: { src: BRAND_ASSETS.manyCerrajero, objectPosition: 'center 15%', scale: 1.05 },
+  pintura: { src: BRAND_ASSETS.manyPintura, objectPosition: 'center 15%', scale: 1.05 },
+  electrodomesticos: { src: BRAND_ASSETS.manyElectrodomesticos, objectPosition: 'center 15%', scale: 1.05 },
+  jardinero: { src: BRAND_ASSETS.manyJardinero, objectPosition: 'center 15%', scale: 1.05 },
+  tecnologia: { src: BRAND_ASSETS.manyTecnologia, objectPosition: 'center 15%', scale: 1.05 },
+  modista: { src: BRAND_ASSETS.manyModista, objectPosition: 'center 15%', scale: 1.05 },
+  hogar: { src: BRAND_ASSETS.manyHogar, objectPosition: 'center 15%', scale: 1.05 },
+  mascotas: { src: BRAND_ASSETS.manyMascotas, objectPosition: 'center 15%', scale: 1.05 },
+  aseo: { src: BRAND_ASSETS.manyAseo, objectPosition: 'center 15%', scale: 1.05 },
+  albanileria: { src: BRAND_ASSETS.manyAlbanileria, objectPosition: 'center 15%', scale: 1.05 },
+  clases: { src: BRAND_ASSETS.manyClases, objectPosition: 'center 15%', scale: 1.05 },
+  cable: { src: BRAND_ASSETS.manyCable, objectPosition: 'center 15%', scale: 1.05 },
+  llave: { src: BRAND_ASSETS.manyLlave, objectPosition: 'center 15%', scale: 1.05 },
+  lupa: { src: BRAND_ASSETS.manyLupa, objectPosition: 'center 15%', scale: 1.05 },
+  exito: { src: BRAND_ASSETS.manyExito, objectPosition: 'center 15%', scale: 1.05 },
+  disponible: { src: BRAND_ASSETS.manyDisponible, objectPosition: 'center 15%', scale: 1.05 },
+  escudo: { src: BRAND_ASSETS.manyEscudo, objectPosition: 'center 15%', scale: 1.05 },
+  soporte: { src: BRAND_ASSETS.manySoporte, objectPosition: 'center 15%', scale: 1.05 },
+  cierre: { src: BRAND_ASSETS.manyCierre, objectPosition: 'center 15%', scale: 1.05 },
 };
 
 function getConfig(
@@ -59,8 +82,17 @@ function getConfig(
 ): ImgConfig {
   if (forceImage && CONFIGS[forceImage]) return CONFIGS[forceImage];
   if (trade === 'electricidad') return CONFIGS.electricista;
-  if (trade === 'plomeria')     return CONFIGS.plomero;
-  // default: best single-character 3D image
+  if (trade === 'plomeria') return CONFIGS.plomero;
+  if (trade === 'cerrajeria') return CONFIGS.cerrajero;
+  if (trade === 'pintura') return CONFIGS.pintura;
+  if (trade === 'electrodomesticos') return CONFIGS.electrodomesticos;
+  if (trade === 'jardineria') return CONFIGS.jardinero;
+  if (trade === 'computacion') return CONFIGS.tecnologia;
+  if (trade === 'hogar') return CONFIGS.hogar;
+  if (trade === 'mascotas') return CONFIGS.mascotas;
+  if (trade === 'aseo') return CONFIGS.aseo;
+  if (trade === 'albanileria') return CONFIGS.albanileria;
+  if (trade === 'clases') return CONFIGS.clases;
   return CONFIGS.wave;
 }
 
