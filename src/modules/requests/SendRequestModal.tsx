@@ -470,7 +470,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
           ) : (
             <div className="oy-flow-success" role="status">
               <div className="oy-flow-success__mascot">
-                <MascotAvatar trade="plomeria" size="md" />
+                <MascotAvatar forceImage="exito" size="lg" animate="bounce" />
                 <span className="oy-flow-success__check" aria-hidden="true">
                   <CheckCircle2 size={24} />
                 </span>

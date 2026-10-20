@@ -43,7 +43,7 @@ const BOGOTA_ZONES = [
 ];
 
 const PAYMENT_OPTIONS: { id: PaymentMethod; label: string; icon: React.ReactNode }[] = [
-  { id: 'bre_b', label: 'Bre-B 🔑', icon: <KeyRound size={16} aria-hidden="true" /> },
+  { id: 'bre_b', label: 'Bre-B', icon: <KeyRound size={16} aria-hidden="true" /> },
   { id: 'transferencia', label: 'Nequi / Davi', icon: <Smartphone size={16} aria-hidden="true" /> },
   { id: 'efectivo', label: 'Efectivo', icon: <Banknote size={16} aria-hidden="true" /> },
   { id: 'tarjeta', label: 'Tarjeta', icon: <CreditCard size={16} aria-hidden="true" /> }

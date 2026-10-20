@@ -27,6 +27,8 @@ import {
 import type { ServiceRequest } from '../../types';
 import { TRADE_LABELS, rateUnitShort } from '../../utils/workerProfile';
 import { WorkerInlineHireFlow } from './WorkerInlineHireFlow';
+import { TradeRatingChips } from '../../components/reviews/TradeRatingChips';
+import { BeforeAfterSlider } from '../../components/common/BeforeAfterSlider';
 import './Worker.css';
 
 interface WorkerProfileViewProps {
@@ -55,6 +57,7 @@ function createFakeReviewTicket(worker: Worker, review: Review, reportReasonText
   };
 }
 
+// OFY-52 (RF-52): Consultar perfil de trabajador con oficios, reputación y disponibilidad
 export const WorkerProfileView: React.FC<WorkerProfileViewProps> = ({
   worker,
   onBack,
@@ -182,9 +185,8 @@ export const WorkerProfileView: React.FC<WorkerProfileViewProps> = ({
           >
             {worker.photoUrl ? (
               <img
-                src={worker.photoUrl}
-                alt=""
-                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                src={worker.photoUrl.startsWith('http') ? worker.photoUrl : `${import.meta.env.BASE_URL}${worker.photoUrl.replace(/^\//, '')}`}
+                alt={worker.name}
               />
             ) : (
               worker.initials
@@ -520,6 +522,11 @@ export const WorkerProfileView: React.FC<WorkerProfileViewProps> = ({
               <p className="wk-text" style={{ fontSize: '15px' }}>
                 En OficioYa las calificaciones y trabajos no se mezclan entre oficios distintos para proteger la reputación especializada y garantizar máxima transparencia.
               </p>
+              {worker.ratingByTrade && (
+                <div style={{ marginTop: 'var(--space-3)' }}>
+                  <TradeRatingChips ratingByTrade={worker.ratingByTrade} primaryTrade={worker.trade} />
+                </div>
+              )}
             </div>
 
             {/* Oficio Principal */}
@@ -709,6 +716,25 @@ export const WorkerProfileView: React.FC<WorkerProfileViewProps> = ({
             {/* PESTAÑA 4: PORTAFOLIO DE TRABAJOS */}
             {activeTab === 'galeria' && (
               <div className="wk-pane wk-fullpage__pane">
+                <section className="wk-card wk-fullpage__section-card" style={{ marginBottom: 'var(--space-6)' }}>
+                  <div className="wk-block" style={{ marginBottom: 'var(--space-4)' }}>
+                    <span className="oy-sticker oy-sticker--pill oy-sticker--amarillo">Caso Destacado</span>
+                    <h3 className="wk-block__title" style={{ marginTop: 'var(--space-2)' }}>
+                      Comparativa Antes y Después de la Intervención
+                    </h3>
+                    <p className="wk-text">
+                      Desliza el control interactivo o usa el teclado para constatar la calidad técnica de la reparación y acabados entregados.
+                    </p>
+                  </div>
+                  <BeforeAfterSlider
+                    beforeImage={`${import.meta.env.BASE_URL}assets/media/paso-1-fuga.webp`}
+                    afterImage={`${import.meta.env.BASE_URL}assets/media/paso-3-resuelto.webp`}
+                    beforeAlt="Fuga hidráulica y daño estructural antes de la intervención"
+                    afterAlt="Tubería renovada, soldadura hidrostática y área completamente seca y limpia"
+                    caption="Caso real verificado: sustitución de tramo colapsado e impermeabilización en Bogotá D.C."
+                    tradeLabel={worker.tradeLabel}
+                  />
+                </section>
                 <WorkerGallery images={worker.gallery} />
               </div>
             )}
