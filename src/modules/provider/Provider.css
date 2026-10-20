@@ -17,11 +17,13 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
   gap: var(--space-4);
+  align-items: start;
 }
 
 .pv-grid--2 {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
   gap: var(--space-5);
+  align-items: start;
 }
 
 .pv-muted { color: var(--color-text-muted); }
@@ -390,36 +392,264 @@
 .pv-details strong { color: var(--color-text-main); }
 
 /* ── Disponibilidad semanal (OFY-06) ── */
+.pv-week-panel {
+  padding: var(--space-5, 24px);
+}
+
+.pv-week-presets {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.pv-week-presets__title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.pv-week-presets__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pv-preset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 15px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.pv-preset-btn:hover {
+  border-color: var(--role-primary);
+  color: var(--role-primary);
+  background: rgba(255, 140, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.pv-preset-btn--active {
+  background: var(--role-primary);
+  color: #ffffff;
+  border-color: var(--role-primary);
+  box-shadow: 0 2px 10px rgba(255, 140, 0, 0.35);
+}
+
+.pv-preset-btn--active:hover {
+  background: var(--role-primary);
+  color: #ffffff;
+  opacity: 0.95;
+}
+
 .pv-week {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
 }
 
 .pv-day {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: var(--stroke-w) solid var(--stroke-ink);
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 20px;
   border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
   background: var(--color-surface);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
 }
 
-.pv-day[data-on='true'] { background: var(--wash-fuego); }
+.pv-day[data-on='true'] {
+  background: linear-gradient(145deg, rgba(255, 140, 0, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border-color: rgba(255, 140, 0, 0.38);
+  box-shadow: 0 4px 16px rgba(255, 140, 0, 0.08);
+}
 
-.pv-day .oy-chip { justify-content: center; }
+.pv-day[data-on='false'] {
+  opacity: 0.82;
+  background: rgba(0, 0, 0, 0.02);
+  border-color: var(--color-border);
+}
+
+.pv-day:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+}
+
+.pv-day__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pv-day__name-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pv-day__name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  letter-spacing: -0.01em;
+}
+
+.pv-day__status-sub {
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.pv-day__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.pv-day__toggle--on {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.45);
+  color: #15803d;
+}
+
+[data-theme='dark'] .pv-day__toggle--on {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.5);
+  color: #4ade80;
+}
+
+.pv-day__toggle--off:hover {
+  border-color: var(--role-primary);
+  color: var(--color-text-main);
+}
+
+.pv-day__indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.pv-day__toggle--on .pv-day__indicator {
+  box-shadow: 0 0 6px currentColor;
+}
 
 .pv-day__slot {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--glass-1, rgba(255, 255, 255, 0.5));
+  border: 1px solid var(--glass-border, rgba(0, 0, 0, 0.08));
+  border-radius: 14px;
+  padding: 10px 12px;
 }
 
-.pv-day__slot .input-base {
+.pv-day__field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pv-day__field-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  min-width: 62px;
+  user-select: none;
+}
+
+.pv-day__time-input.input-base {
+  flex: 1;
   min-width: 0;
-  padding: 6px 8px;
-  font-size: 13px;
+  min-height: 38px;
+  height: 38px;
+  padding: 6px 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.pv-day__time-input.input-base:focus {
+  border-color: var(--role-primary);
+  box-shadow: 0 0 0 3px var(--role-primary-ring);
+}
+
+.pv-day__rest {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 104px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px dashed var(--color-border);
+  background: rgba(0, 0, 0, 0.02);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.pv-day__rest:hover {
+  border-color: var(--role-primary);
+  color: var(--color-text-main);
+  background: rgba(255, 140, 0, 0.05);
+}
+
+.pv-day__rest-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.pv-day__rest-cta {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--role-primary);
+  text-decoration: underline;
 }
 
 /* ── Métodos de pago, portafolio, verificación, referidos ── */
@@ -626,10 +856,7 @@
 
 .pv-icon-btn--danger { color: var(--color-danger); }
 
-.pv-day__rest {
-  font-size: 13px;
-  text-align: center;
-}
+
 
 .pv-chip--cap { text-transform: capitalize; }
 
