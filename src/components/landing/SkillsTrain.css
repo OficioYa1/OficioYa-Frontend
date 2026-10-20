@@ -7,10 +7,12 @@
   border-bottom: 1.5px solid rgba(62, 31, 20, 0.1);
   overflow: hidden;
   transition: background-color 0.3s ease;
+  --train-ink: var(--oy-cacao-profundo, #3E1F14);
 }
 
 html.theme-dark .ollivere-train-section,
 [data-theme="dark"] .ollivere-train-section {
+  --train-ink: var(--stroke-ink, #3E1F14);
   background: rgba(255, 138, 80, 0.04);
   border-color: rgba(255, 138, 80, 0.15);
 }
@@ -39,7 +41,7 @@ html.theme-dark .ollivere-train-section,
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: var(--color-brand-primary, #E65100);
+  color: var(--color-brand-primary, var(--color-action-strong));
 }
 
 .ollivere-kicker-dot {
@@ -85,7 +87,7 @@ html.theme-dark .ollivere-train-controls,
   border-radius: 9999px;
   border: none;
   background: transparent;
-  color: var(--stroke-ink, #3E1F14);
+  color: var(--train-ink, #3E1F14);
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
@@ -98,7 +100,7 @@ html.theme-dark .ollivere-ctrl-btn,
 
 .ollivere-ctrl-btn:hover {
   background: rgba(255, 111, 0, 0.15);
-  color: #E65100;
+  color: var(--color-action-strong);
   transform: translateY(-1px);
 }
 
@@ -107,14 +109,14 @@ html.theme-dark .ollivere-ctrl-btn,
 }
 
 .ollivere-ctrl-btn--toggle.is-paused {
-  background: #E65100;
+  background: var(--color-action-strong);
   color: #FFFFFF !important;
-  box-shadow: 0 2px 8px rgba(230, 81, 0, 0.35);
+  box-shadow: 0 2px 8px rgba(194, 65, 12, 0.35);
 }
 
 .ollivere-ctrl-btn.is-active {
   background: rgba(255, 111, 0, 0.2);
-  color: #E65100;
+  color: var(--color-action-strong);
 }
 
 .ollivere-train-title {
@@ -123,13 +125,13 @@ html.theme-dark .ollivere-ctrl-btn,
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.025em;
-  color: var(--color-text-main, #1E293B);
+  color: var(--train-ink, #3E1F14);
   margin: 0 0 0.75rem 0;
 }
 
 html.theme-dark .ollivere-train-title,
 [data-theme="dark"] .ollivere-train-title {
-  color: #F8FAFC;
+  color: #FBF4EA;
 }
 
 .ollivere-train-sub {
@@ -168,7 +170,7 @@ html.theme-dark .ollivere-train-sub,
   left: 0;
   right: 0;
   height: 6px;
-  background: var(--stroke-ink, #3E1F14);
+  background: var(--train-ink, #3E1F14);
   opacity: 0.35;
   z-index: 0;
 }
@@ -182,8 +184,8 @@ html.theme-dark .ollivere-train-sub,
   height: 4px;
   background: repeating-linear-gradient(
     90deg,
-    var(--stroke-ink, #3E1F14) 0px,
-    var(--stroke-ink, #3E1F14) 16px,
+    var(--train-ink, #3E1F14) 0px,
+    var(--train-ink, #3E1F14) 16px,
     transparent 16px,
     transparent 32px
   );
@@ -252,10 +254,10 @@ html.theme-dark .ollivere-train-rails,
   width: 230px;
   height: 175px;
   background: #FF6F00;
-  border: 2px solid var(--stroke-ink, #3E1F14);
+  border: 2px solid var(--train-ink, #3E1F14);
   border-radius: 20px 8px 8px 8px;
   padding: 1rem;
-  box-shadow: 4px 6px 0 var(--stroke-ink, #3E1F14);
+  box-shadow: 4px 6px 0 var(--train-ink, #3E1F14);
   flex-shrink: 0;
   z-index: 2;
   animation: engineChug 1.8s ease-in-out infinite alternate;
@@ -424,10 +426,10 @@ html.theme-dark .ollivere-engine__chimney,
   justify-content: space-between;
   width: 230px;
   height: 160px;
-  border: 2px solid var(--stroke-ink, #3E1F14);
+  border: 2px solid var(--train-ink, #3E1F14);
   border-radius: 12px;
   padding: 1.2rem;
-  box-shadow: 4px 6px 0 var(--stroke-ink, #3E1F14);
+  box-shadow: 4px 6px 0 var(--train-ink, #3E1F14);
   flex-shrink: 0;
   cursor: pointer;
   z-index: 2;
@@ -458,7 +460,7 @@ html.theme-dark .ollivere-wagon-engine,
 
 .ollivere-wagon:hover {
   transform: translateY(-8px) scale(1.03) !important;
-  box-shadow: 6px 12px 0 var(--stroke-ink, #3E1F14);
+  box-shadow: 6px 12px 0 var(--train-ink, #3E1F14);
 }
 
 html.theme-dark .ollivere-wagon:hover,
@@ -473,7 +475,7 @@ html.theme-dark .ollivere-wagon:hover,
   bottom: 34px;
   width: 24px;
   height: 6px;
-  background: var(--stroke-ink, #3E1F14);
+  background: var(--train-ink, #3E1F14);
   border-radius: 3px;
   z-index: -1;
 }
@@ -570,7 +572,7 @@ html.theme-dark .ollivere-wagon__icon,
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--stroke-ink, #3E1F14);
+  background: var(--train-ink, #3E1F14);
   border: 3px solid #FFFFFF;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.35);
   animation: wheelSpin 1.4s linear infinite;

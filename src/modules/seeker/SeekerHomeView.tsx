@@ -13,6 +13,7 @@ interface SeekerHomeViewProps {
   onSelectWorker: (worker: Worker) => void;
   onOpenSendRequest: (workers?: Worker[]) => void;
   onChangeTradeCategory: (trade?: TradeCategory) => void;
+  initialCategory?: TradeCategory;
 }
 
 export const SeekerHomeView: React.FC<SeekerHomeViewProps> = ({
@@ -20,7 +21,8 @@ export const SeekerHomeView: React.FC<SeekerHomeViewProps> = ({
   userLocation,
   onSelectWorker,
   onOpenSendRequest,
-  onChangeTradeCategory
+  onChangeTradeCategory,
+  initialCategory
 }) => {
   const [problemDescription, setProblemDescription] = useState('');
 
@@ -74,6 +76,7 @@ export const SeekerHomeView: React.FC<SeekerHomeViewProps> = ({
           onSelectWorker={onSelectWorker}
           onOpenSendRequest={onOpenSendRequest}
           onChangeTradeCategory={onChangeTradeCategory}
+          initialCategory={initialCategory}
           showHero={false}
         />
       </section>

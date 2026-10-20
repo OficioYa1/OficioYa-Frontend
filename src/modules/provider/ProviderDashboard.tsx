@@ -35,7 +35,8 @@ import {
   Zap,
   MapPin,
   ArrowUpCircle,
-  Hourglass
+  Hourglass,
+  Coffee
 } from 'lucide-react';
 import { MascotAvatar } from '../../components/mascot/MascotAvatar';
 import { SquishSwitch } from '../../components/ui/SquishSwitch';
@@ -130,6 +131,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
 
   // RF-28: Cálculo de tiempo restante de solicitudes (30 minutos sin respuesta)
   const [timeLeftMap, setTimeLeftMap] = useState<Record<string, number>>({});
+  const [activePreset, setActivePreset] = useState<'weekdays' | 'all' | 'weekend' | null>(null);
 
   useEffect(() => {
     const tick = () => {
@@ -211,7 +213,40 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
 
   // RF-06: Agenda semanal
   const updateDay = (day: WeekDay, patch: Partial<DaySchedule>) => {
+    setActivePreset(null);
     const next: WeeklyAvailability = { ...weeklySchedule, [day]: { ...weeklySchedule[day], ...patch } };
+    update({ weeklyAvailability: next, schedule: scheduleFromWeek(next) });
+  };
+
+  const applyPreset = (preset: 'weekdays' | 'all' | 'weekend') => {
+    setActivePreset(preset);
+    const next: WeeklyAvailability = { ...weeklySchedule };
+    WEEK_DAYS.forEach(d => {
+      if (preset === 'weekdays') {
+        const isWk = ['lun', 'mar', 'mie', 'jue', 'vie'].includes(d.key);
+        next[d.key] = {
+          ...next[d.key],
+          active: isWk,
+          from: isWk ? next[d.key].from || '08:00' : next[d.key].from,
+          to: isWk ? next[d.key].to || '18:00' : next[d.key].to
+        };
+      } else if (preset === 'all') {
+        next[d.key] = {
+          ...next[d.key],
+          active: true,
+          from: next[d.key].from || '08:00',
+          to: next[d.key].to || '18:00'
+        };
+      } else if (preset === 'weekend') {
+        const isWeekend = ['sab', 'dom'].includes(d.key);
+        next[d.key] = {
+          ...next[d.key],
+          active: isWeekend,
+          from: isWeekend ? next[d.key].from || '09:00' : next[d.key].from,
+          to: isWeekend ? next[d.key].to || '17:00' : next[d.key].to
+        };
+      }
+    });
     update({ weeklyAvailability: next, schedule: scheduleFromWeek(next) });
   };
 
@@ -451,20 +486,26 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
         </div>
 
         <div className="pv-live__switch">
-          <span className="pv-row">
+          <div className="pv-live__mascot-hint hide-on-mobile" title="Many te ayuda a recibir solicitudes cuando estás disponible">
+            <MascotAvatar forceImage="disponible" size="sm" animate={isAvailableNow ? 'bounce' : 'none'} />
+          </div>
+          <span className="pv-row pv-row--status" data-on={isAvailableNow}>
             <span className="pv-dot" data-on={isAvailableNow} aria-hidden="true" />
             {isAvailableNow ? 'DISPONIBLE YA' : 'FUERA DE LÍNEA'}
           </span>
-          <SquishSwitch
-            checked={isAvailableNow}
-            onChange={setAvailable}
-            disabled={isPaused}
-            ariaLabel="Disponible Ya"
-            trackOnColor="var(--oy-cacao-profundo)"
-            width={60}
-            height={34}
-            radius={17}
-          />
+          {/* Verde Esmeralda con halo radar: el manual lo reserva para este estado */}
+          <span className="oy-halo pv-switch-halo" data-on={isAvailableNow}>
+            <SquishSwitch
+              checked={isAvailableNow}
+              onChange={setAvailable}
+              disabled={isPaused}
+              ariaLabel="Disponible Ya"
+              trackOnColor="var(--oy-verde-esmeralda)"
+              width={60}
+              height={34}
+              radius={17}
+            />
+          </span>
         </div>
       </section>
 
@@ -705,39 +746,100 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           </div>
           <span className="pv-tag pv-tag--fuego"><CalendarDays size={13} aria-hidden="true" /> {activeDays} días activos</span>
         </div>
-        <div className="oy-panel oy-panel--almendra">
+        <div className="oy-panel oy-panel--almendra pv-week-panel">
+          <div className="pv-week-presets">
+            <span className="pv-week-presets__title">Atajos de configuración:</span>
+            <div className="pv-week-presets__buttons">
+              <button
+                type="button"
+                className={`pv-preset-btn ${activePreset === 'weekdays' ? 'pv-preset-btn--active' : ''}`}
+                onClick={() => applyPreset('weekdays')}
+              >
+                Lunes a Viernes (8am - 6pm)
+              </button>
+              <button
+                type="button"
+                className={`pv-preset-btn ${activePreset === 'all' ? 'pv-preset-btn--active' : ''}`}
+                onClick={() => applyPreset('all')}
+              >
+                Toda la semana (7 días)
+              </button>
+              <button
+                type="button"
+                className={`pv-preset-btn ${activePreset === 'weekend' ? 'pv-preset-btn--active' : ''}`}
+                onClick={() => applyPreset('weekend')}
+              >
+                Solo fines de semana
+              </button>
+            </div>
+          </div>
+
           <div className="pv-week">
             {WEEK_DAYS.map(d => {
               const day = weeklySchedule[d.key];
               return (
                 <div key={d.key} className="pv-day" data-on={day.active}>
-                  <button
-                    type="button"
-                    className="oy-chip"
-                    aria-pressed={day.active}
-                    onClick={() => updateDay(d.key, { active: !day.active })}
-                  >
-                    {d.label}
-                  </button>
+                  <div className="pv-day__header">
+                    <div className="pv-day__name-group">
+                      <span className="pv-day__name">{d.label}</span>
+                      <span className="pv-day__status-sub">
+                        {day.active ? `${day.from} a ${day.to}` : 'Sin atención'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className={`pv-day__toggle ${day.active ? 'pv-day__toggle--on' : 'pv-day__toggle--off'}`}
+                      aria-pressed={day.active}
+                      onClick={() => updateDay(d.key, { active: !day.active })}
+                      title={day.active ? `Pausar atención el ${d.label}` : `Activar horario el ${d.label}`}
+                    >
+                      <span className="pv-day__indicator" aria-hidden="true" />
+                      <span>{day.active ? 'Activo' : 'Descanso'}</span>
+                    </button>
+                  </div>
+
                   {day.active ? (
                     <div className="pv-day__slot">
-                      <input
-                        type="time"
-                        className="input-base"
-                        value={day.from}
-                        aria-label={`${d.label}: desde`}
-                        onChange={e => updateDay(d.key, { from: e.target.value })}
-                      />
-                      <input
-                        type="time"
-                        className="input-base"
-                        value={day.to}
-                        aria-label={`${d.label}: hasta`}
-                        onChange={e => updateDay(d.key, { to: e.target.value })}
-                      />
+                      <div className="pv-day__field">
+                        <label className="pv-day__field-label" htmlFor={`pv-time-from-${d.key}`}>
+                          <Clock size={12} aria-hidden="true" /> Inicio
+                        </label>
+                        <input
+                          id={`pv-time-from-${d.key}`}
+                          type="time"
+                          className="input-base pv-day__time-input"
+                          value={day.from}
+                          aria-label={`${d.label}: hora de inicio`}
+                          onChange={e => updateDay(d.key, { from: e.target.value })}
+                        />
+                      </div>
+                      <div className="pv-day__field">
+                        <label className="pv-day__field-label" htmlFor={`pv-time-to-${d.key}`}>
+                          <Clock size={12} aria-hidden="true" /> Fin
+                        </label>
+                        <input
+                          id={`pv-time-to-${d.key}`}
+                          type="time"
+                          className="input-base pv-day__time-input"
+                          value={day.to}
+                          aria-label={`${d.label}: hora de finalización`}
+                          onChange={e => updateDay(d.key, { to: e.target.value })}
+                        />
+                      </div>
                     </div>
                   ) : (
-                    <span className="pv-muted pv-day__rest">Descanso</span>
+                    <button
+                      type="button"
+                      className="pv-day__rest"
+                      onClick={() => updateDay(d.key, { active: true })}
+                      title={`Habilitar horario para ${d.label}`}
+                    >
+                      <div className="pv-day__rest-left">
+                        <Coffee size={15} aria-hidden="true" />
+                        <span>Día de descanso</span>
+                      </div>
+                      <span className="pv-day__rest-cta">Habilitar</span>
+                    </button>
                   )}
                 </div>
               );

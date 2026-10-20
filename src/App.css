@@ -21,9 +21,27 @@
   padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)); /* Espacio para BottomNav en móvil */
 }
 
+.app-content-area--chat {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0 !important;
+  height: calc(100dvh - 72px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 767px) {
+  .app-content-area--chat {
+    height: calc(100dvh - 72px - 64px);
+  }
+}
+
 @media (min-width: 768px) {
   .app-content-area {
     padding-bottom: 32px;
+  }
+  .app-content-area--chat {
+    padding-bottom: 0 !important;
   }
 }
 
@@ -74,10 +92,8 @@
 
 /* ── CROSSFADE TRANSITIONS ───────────────────────────────────────── */
 .crossfade-wrapper {
-  transition: opacity 0.22s ease-in-out, filter 0.22s ease-in-out;
+  transition: opacity 0.22s ease-in-out;
   opacity: 1;
-  filter: blur(0);
-  will-change: opacity, filter;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -85,7 +101,6 @@
 
 .crossfade-wrapper--hidden {
   opacity: 0;
-  filter: blur(4px);
   pointer-events: none;
 }
 

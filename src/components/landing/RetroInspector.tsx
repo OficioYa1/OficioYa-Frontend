@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Wrench, Zap, KeyRound, PaintBucket, Tv2, BookOpen, ShieldCheck, Clock, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Wrench, Zap, KeyRound, PaintBucket, ShieldCheck, Clock, CheckCircle2 } from 'lucide-react';
 import { playTactileClick, playChime } from '../../utils/audioChimes';
 import { HoloCard3D } from '../ui/HoloCard3D';
 import './RetroInspector.css';
 
 export interface RetroInspectorProps {
-  selectedTrade?: string;
   onSelectTrade?: (trade: string) => void;
-  onExploreExperts?: (trade: string) => void;
 }
 
 interface TradeSpec {
@@ -25,17 +23,6 @@ interface TradeSpec {
 
 const TRADE_SPECS: TradeSpec[] = [
   {
-    id: 'electricidad',
-    name: 'Electricidad Certificada RETIE',
-    icon: <Zap size={18} />,
-    image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&auto=format&fit=crop&q=80',
-    kit: 'Multímetro Fluke True-RMS, Pinza amperimétrica, Herramienta aislada 1000V',
-    response: '< 20 minutos en Bogotá',
-    warranty: 'Garantía de circuito y tablero eléctrico',
-    certification: 'Matrícula Conte / Retie validada',
-    rating: '4.8 / 5 (480+ servicios)'
-  },
-  {
     id: 'plomeria',
     name: 'Plomería & Redes Hidráulicas',
     icon: <Wrench size={18} />,
@@ -47,15 +34,15 @@ const TRADE_SPECS: TradeSpec[] = [
     rating: '4.9 / 5 (620+ servicios)'
   },
   {
-    id: 'pintura',
-    name: 'Pintura & Acabados Finos',
-    icon: <PaintBucket size={18} />,
-    image: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=800&auto=format&fit=crop&q=80',
-    kit: 'Turbina Airless Graco, Lijadora con aspiración ciclónica, Medidor de humedad',
-    response: '< 25 minutos para cotización',
-    warranty: 'Garantía de adherencia y cero manchas',
-    certification: 'Portafolio de obras finalizadas validado',
-    rating: '5.0 / 5 (340+ servicios)'
+    id: 'electricidad',
+    name: 'Electricidad Certificada RETIE',
+    icon: <Zap size={18} />,
+    image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&auto=format&fit=crop&q=80',
+    kit: 'Multímetro Fluke True-RMS, Pinza amperimétrica, Herramienta aislada 1000V',
+    response: '< 20 minutos en Bogotá',
+    warranty: 'Garantía de circuito y tablero eléctrico',
+    certification: 'Matrícula Conte / Retie validada',
+    rating: '4.8 / 5 (480+ servicios)'
   },
   {
     id: 'cerrajeria',
@@ -69,43 +56,27 @@ const TRADE_SPECS: TradeSpec[] = [
     rating: '4.9 / 5 (210+ servicios)'
   },
   {
-    id: 'electrodomesticos',
-    name: 'Electrodomésticos & Línea Blanca',
-    icon: <Tv2 size={18} />,
-    image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&auto=format&fit=crop&q=80',
-    kit: 'Tester digital de circuitos, Manómetros de refrigeración, Bomba de vacío',
-    response: '< 30 minutos en Bogotá',
-    warranty: '90 días en repuestos y mano de obra',
-    certification: 'Técnico certificado por fabricantes',
-    rating: '4.8 / 5 (190+ servicios)'
-  },
-  {
-    id: 'clases',
-    name: 'Clases Particulares & Asistencia',
-    icon: <BookOpen size={18} />,
-    image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop&q=80',
-    kit: 'Material pedagógico interactivo, Guías de refuerzo, Evaluación diagnóstica',
-    response: 'Agendamiento inmediato en tu zona',
-    warranty: 'Garantía de progreso y primera sesión de prueba',
-    certification: 'Título profesional y antecedentes verificados',
-    rating: '5.0 / 5 (410+ servicios)'
+    id: 'pintura',
+    name: 'Pintura & Acabados Finos',
+    icon: <PaintBucket size={18} />,
+    image: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=800&auto=format&fit=crop&q=80',
+    kit: 'Turbina Airless Graco, Lijadora con aspiración ciclónica, Medidor de humedad',
+    response: '< 25 minutos para cotización',
+    warranty: 'Garantía de adherencia y cero manchas',
+    certification: 'Portafolio de obras finalizadas validado',
+    rating: '5.0 / 5 (340+ servicios)'
   }
 ];
 
-export const RetroInspector: React.FC<RetroInspectorProps> = ({ selectedTrade, onSelectTrade, onExploreExperts }) => {
+/**
+ * RetroInspector inspirado en la experiencia interactiva iMac G3 / Hardware breakdown de thibaut.cool.
+ * - Carcasa retro translúcida con barra de control inspirada en sistemas operativos vintage.
+ * - Ficha técnica desglosando kit de herramientas, tiempo de respuesta y garantías.
+ * - Sonido táctil en tiempo real sintetizado con Web Audio API.
+ */
+export const RetroInspector: React.FC<RetroInspectorProps> = ({ onSelectTrade }) => {
   const [selectedIdx, setSelectedIdx] = useState(0);
-
-  // Sync tab with external selectedTrade prop (e.g. from Toolbox Orbit)
-  useEffect(() => {
-    if (selectedTrade) {
-      const idx = TRADE_SPECS.findIndex(t => t.id === selectedTrade);
-      if (idx !== -1) {
-        setSelectedIdx(idx);
-      }
-    }
-  }, [selectedTrade]);
-
-  const current = TRADE_SPECS[selectedIdx] || TRADE_SPECS[0];
+  const current = TRADE_SPECS[selectedIdx];
 
   const handleTabClick = (idx: number) => {
     setSelectedIdx(idx);
@@ -115,7 +86,7 @@ export const RetroInspector: React.FC<RetroInspectorProps> = ({ selectedTrade, o
   };
 
   return (
-    <section id="inspector-section" className="thibaut-inspector-section" aria-labelledby="thibaut-inspector-title">
+    <section className="thibaut-inspector-section" aria-labelledby="thibaut-inspector-title">
       <div className="thibaut-inspector-wrap">
         
         {/* Intro */}
@@ -226,18 +197,6 @@ export const RetroInspector: React.FC<RetroInspectorProps> = ({ selectedTrade, o
                     <div className="thibaut-spec-row">
                       <span className="thibaut-spec-row__label">Reputación en Barrio:</span>
                       <span className="thibaut-spec-row__value">{current.rating}</span>
-                    </div>
-
-                    <div style={{ marginTop: '1.2rem', paddingTop: '0.8rem', borderTop: '1px dashed rgba(255,255,255,0.15)', display: 'flex', justifyContent: 'flex-end' }}>
-                      <button
-                        type="button"
-                        onClick={() => onExploreExperts?.(current.id)}
-                        className="lp-hero-btn-primary"
-                        style={{ padding: '8px 16px', fontSize: '0.82rem', gap: '6px' }}
-                      >
-                        <span>Ver profesionales en {current.name.split(' ')[0]}</span>
-                        <ArrowRight size={14} />
-                      </button>
                     </div>
                   </div>
                 </div>

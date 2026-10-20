@@ -67,7 +67,7 @@ export const EditorialManifesto: React.FC<EditorialManifestoProps> = ({ onExplor
               onClick={onExplore}
               title="Reputación verificada por vecinos"
             >
-              <ShieldCheck size={20} color="var(--color-brand-primary, #E65100)" style={{ marginRight: '0.4rem' }} />
+              <ShieldCheck size={20} color="var(--color-brand-primary, var(--color-action-strong))" style={{ marginRight: '0.4rem' }} />
               <span className="danilo-manifesto__capsule-text">4.9 ★ Verificado</span>
             </motion.span>
             <span>reputación</span>

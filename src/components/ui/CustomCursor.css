@@ -15,11 +15,11 @@
   height: 8px;
   margin: -4px 0 0 -4px;
   border-radius: 50%;
-  background-color: var(--color-brand-primary, #E65100);
+  background-color: var(--color-brand-primary, var(--color-action-strong));
   pointer-events: none;
   z-index: 100000;
   transition: opacity 0.25s ease, transform 0.15s ease;
-  box-shadow: 0 0 10px rgba(230, 81, 0, 0.4);
+  box-shadow: 0 0 10px rgba(194, 65, 12, 0.4);
 }
 
 .danilo-cursor-ring {
@@ -58,9 +58,9 @@
   width: 64px;
   height: 64px;
   margin: -32px 0 0 -32px;
-  border-color: var(--color-brand-primary, #E65100);
-  background: rgba(230, 81, 0, 0.12);
-  box-shadow: 0 0 20px rgba(230, 81, 0, 0.25);
+  border-color: var(--color-brand-primary, var(--color-action-strong));
+  background: rgba(194, 65, 12, 0.12);
+  box-shadow: 0 0 20px rgba(194, 65, 12, 0.25);
 }
 
 .danilo-cursor-dot.is-hovering {
@@ -71,8 +71,8 @@
 /* Mouse down / Click state */
 .danilo-cursor-ring.is-pressed {
   transform: scale(0.85);
-  border-color: var(--color-brand-primary, #E65100);
-  background: rgba(230, 81, 0, 0.25);
+  border-color: var(--color-brand-primary, var(--color-action-strong));
+  background: rgba(194, 65, 12, 0.25);
 }
 
 /* Text label inside cursor ring */
@@ -82,7 +82,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-brand-primary, #E65100);
+  color: var(--color-brand-primary, var(--color-action-strong));
   opacity: 0;
   transform: scale(0.7);
   transition: opacity 0.2s ease, transform 0.2s ease;

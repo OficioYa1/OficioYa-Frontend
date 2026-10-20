@@ -20,7 +20,7 @@
   height: 100%;
   overflow: hidden;
   background: rgba(20, 15, 12, 0.92);
-  border: 1.5px solid rgba(229, 143, 73, 0.35);
+  border: 1.5px solid rgba(194, 65, 12, 0.35);
   box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.65), 0 8px 24px -4px rgba(0, 0, 0, 0.4);
   cursor: pointer;
   will-change: transform;
@@ -29,7 +29,7 @@
 }
 
 .sld-track:hover {
-  border-color: rgba(229, 143, 73, 0.6);
+  border-color: rgba(194, 65, 12, 0.6);
 }
 
 .sld-track[data-done="true"] {
@@ -43,7 +43,7 @@
   top: 4px;
   left: 4px;
   bottom: 4px;
-  background: rgba(229, 143, 73, 0.25);
+  background: rgba(194, 65, 12, 0.25);
   pointer-events: none;
   will-change: width;
 }
@@ -72,7 +72,7 @@
   top: 4px;
   left: 4px;
   height: 48px;
-  background: linear-gradient(135deg, #E58F49 0%, #D47A32 100%);
+  background: linear-gradient(135deg, var(--color-action-strong) 0%, #D47A32 100%);
   color: #120D0A;
   border: none;
   outline: none;
@@ -95,7 +95,7 @@
 
 /* Cuando se confirma, el tirador se transforma en éxito verde */
 .sld-track[data-done="true"] .sld-grip {
-  background: linear-gradient(135deg, #55BA95 0%, #079455 100%);
+  background: var(--color-status);
   color: #ffffff;
   box-shadow: 0 0 25px rgba(85, 186, 149, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }

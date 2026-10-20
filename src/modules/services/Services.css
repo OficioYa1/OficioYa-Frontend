@@ -131,6 +131,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
   gap: var(--space-5);
+  align-items: start;
 }
 
 .svc-card {
@@ -141,6 +142,7 @@
   border-radius: var(--radius-card-lg);
   background: var(--color-surface);
   transition: transform 200ms var(--ease-out);
+  align-self: start;
 }
 
 @media (hover: hover) and (pointer: fine) {

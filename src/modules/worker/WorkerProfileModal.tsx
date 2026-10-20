@@ -103,7 +103,11 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
               style={{ '--wk-avatar-bg': worker.avatarColor } as React.CSSProperties}
               aria-hidden="true"
             >
-              {worker.photoUrl ? <img src={worker.photoUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : worker.initials}
+              {worker.photoUrl ? (
+                <img src={worker.photoUrl.startsWith('http') ? worker.photoUrl : `${import.meta.env.BASE_URL}${worker.photoUrl.replace(/^\//, '')}`} alt={worker.name} />
+              ) : (
+                worker.initials
+              )}
             </div>
 
             <div className="wk-head__text">

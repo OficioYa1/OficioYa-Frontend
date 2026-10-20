@@ -221,6 +221,7 @@
 .lp-sticker--b { top: 22%; right: 13%; rotate: 9deg; }
 .lp-sticker--c { top: 48%; left: 7%; rotate: 8deg; }
 .lp-sticker--d { top: 55%; right: 8%; rotate: -10deg; }
+.lp-sticker--e { top: 8%; right: 30%; rotate: -6deg; }
 
 @media (max-width: 760px) {
   .lp-sticker { width: 46px; height: 46px; border-radius: 16px; }
@@ -425,6 +426,7 @@ html.theme-dark .lp-cta-card {
 
 /* En móvil los stickers se van a las esquinas para no tapar el titular */
 @media (max-width: 600px) {
+  .lp-sticker--e { display: none; }
   .lp-sticker--a { top: 3%; left: 5%; }
   .lp-sticker--b { top: 3%; right: 5%; }
 }
@@ -446,16 +448,75 @@ html.theme-dark .lp-cta-card {
 .lp-cta-desc { color: var(--oy-gris-200); }
 
 /* ── Many cambia de pose por píxeles (PixelSwap) ── */
+.lp-hero-many {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.lp-many-frame {
+  position: relative;
+  width: 100%;
+  max-width: 540px;
+  border-radius: var(--radius-frame, 28px);
+  overflow: hidden;
+  border: 2px solid var(--stroke-ink);
+  background: var(--color-surface, #FFFFFF);
+  box-shadow: 0 20px 48px -10px rgba(15, 23, 42, 0.22), 0 4px 14px rgba(15, 23, 42, 0.08);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) ease;
+}
+
+html.theme-dark .lp-many-frame {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--color-surface-elevated, #142046);
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.65), 0 0 40px rgba(255, 199, 44, 0.12);
+}
+
 .lp-many-swap {
-  width: 300px;
-  max-width: 100%;
-  overflow: visible; /* deja respirar el resplandor de Many */
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  display: block;
+  overflow: hidden;
 }
 
 .lp-many-swap .lp-many-hero-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  display: block;
+}
+
+.lp-many-frame-badge {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #F8FAFC;
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.lp-many-frame-badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--oy-amarillo-canario);
+  box-shadow: 0 0 8px rgba(255, 199, 44, 0.85);
 }
 
 /* ── Titulares dibujados (StrokeText) ── */
@@ -471,8 +532,7 @@ html.theme-dark .lp-cta-card {
   background: var(--wash-almendra);
 }
 
-.lp-work .lp-sticker,
-.lp-testimonials .lp-sticker {
+.lp-work .lp-sticker {
   position: static;
   display: inline-flex;
   font-size: 13px;
@@ -848,6 +908,7 @@ html.theme-dark .lp-cta-card {
   flex-wrap: wrap;
   align-items: center;
   gap: 20px;
+  margin-top: 1.5rem;
 }
 
 .lp-cta-note {

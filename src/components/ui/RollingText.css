@@ -25,7 +25,7 @@
 }
 
 .danilo-rolling-secondary {
-  color: var(--color-brand-primary, #E65100);
+  color: var(--color-brand-primary, var(--color-action-strong));
 }
 
 /* Efecto hover: desliza la pista vertical hacia arriba exactamente 50% (una línea completa) */

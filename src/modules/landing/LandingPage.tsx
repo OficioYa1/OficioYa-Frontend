@@ -1,30 +1,48 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { TradeCategory } from '../../types';
 import {
-  Wrench, Zap, PaintBucket, KeyRound, Tv2, BookOpen,
-  ArrowRight, Award, Plus, Minus, LogIn, Search, HelpCircle, Briefcase, ChevronDown, Menu, X,
-  UserCheck, Star, ShieldCheck, Quote, CheckCircle2
+  Wrench, Zap, PaintBucket, KeyRound,
+  ArrowRight, Tv2, BookOpen,
+  Plus, Minus, Quote,
+  LogIn, Search, HelpCircle, Briefcase, ChevronDown, Menu, X,
+  Star, CheckCircle2,
+  Laptop, Home, Dog, Sparkles, Trees, Hammer
 } from 'lucide-react';
 import './LandingPage.css';
 import './LandingSticker.css';
 import './LandingLiquidNav.css';
 import { AppFooter } from '../../components/layout/AppFooter';
 import { BRAND_ASSETS } from '../../utils/assets';
+import { PixelSwap } from '../../components/ui/PixelSwap';
 import { StrokeText, BorderGlow, DriftWall, RollingText } from '../../components/ui';
 import type { DriftWallItem } from '../../components/ui';
-import { EditorialManifesto } from '../../components/landing/EditorialManifesto';
-import { AsymmetricShowcase } from '../../components/landing/AsymmetricShowcase';
-import { SkillsTrain } from '../../components/landing/SkillsTrain';
-import { StickyProcess } from '../../components/landing/StickyProcess';
-import { RetroInspector } from '../../components/landing/RetroInspector';
-import { PaperBroadsheet } from '../../components/landing/PaperBroadsheet';
-import { LightBreakIntro } from '../../components/landing/LightBreakIntro';
-import { ToolboxOrbit } from '../../components/landing/ToolboxOrbit';
+import { HeroVideo, TrailerDialog, HowItWorks, TradeReputation, Comparison, EarningsCalculator } from './LandingStory';
 import { INITIAL_WORKERS } from '../../services/mockData';
-import { ScrollToTop } from '../../components/common/ScrollToTop';
+import { SkillsTrain } from '../../components/landing/SkillsTrain';
+import { FloatingSupport } from '../../components/common/FloatingSupport';
+import { LivePulseTicker } from '../../components/landing/LivePulseTicker';
 
 const PlasmaWarp = React.lazy(() => import('../../components/background/PlasmaWarp'));
 
+const getManyTradeImage = (tradeKey: string): string => {
+  switch (tradeKey) {
+    case 'electricidad': return BRAND_ASSETS.manyElectricista;
+    case 'plomeria': return BRAND_ASSETS.manyPlomero;
+    case 'cerrajeria': return BRAND_ASSETS.manyCerrajero;
+    case 'pintura': return BRAND_ASSETS.manyPintura;
+    case 'electrodomesticos': return BRAND_ASSETS.manyElectrodomesticos;
+    case 'computacion': return BRAND_ASSETS.manyTecnologia;
+    case 'hogar': return BRAND_ASSETS.manyHogar;
+    case 'mascotas': return BRAND_ASSETS.manyMascotas;
+    case 'aseo': return BRAND_ASSETS.manyAseo;
+    case 'jardineria': return BRAND_ASSETS.manyJardinero;
+    case 'albanileria': return BRAND_ASSETS.manyAlbanileria;
+    case 'clases': return BRAND_ASSETS.manyClases;
+    default: return BRAND_ASSETS.manyWave;
+  }
+};
+
+// Historias de ejemplo de la demo: sin fotos de stock que se hagan pasar por clientes
 const TESTIMONIALS = [
   {
     name: 'Camila Restrepo',
@@ -32,7 +50,6 @@ const TESTIMONIALS = [
     trade: 'Plomería de emergencia',
     rating: 5,
     comment: 'Tenía una fuga urgente bajo el lavaplatos un domingo a las 8 p.m. Don Carlos llegó en 18 minutos y dejó todo impecable. El trato directo y transparente me dio total tranquilidad.',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
   },
   {
     name: 'Andrés Felipe Morales',
@@ -40,7 +57,6 @@ const TESTIMONIALS = [
     trade: 'Electricidad e iluminación',
     rating: 5,
     comment: 'Instalaron todo el cableado y luminarias de mi apartamento. Poder revisar las fotos de sus trabajos anteriores antes de contratar fue el factor decisivo. Recomendadísimo.',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
   },
   {
     name: 'Valentina Gómez',
@@ -48,12 +64,12 @@ const TESTIMONIALS = [
     trade: 'Aseo profundo y desinfección',
     rating: 5,
     comment: 'Doña Claudia hizo el aseo de entrega de mudanza. Dejó los tapetes y muebles a vapor como nuevos. Pagué directo por Nequi sin enredos de comisiones ni intermediarios.',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80'
   }
 ];
 
 interface LandingPageProps {
-  onEnterApp: (role?: 'seeker' | 'provider') => void;
+  onEnterApp: (role?: 'seeker' | 'provider', category?: TradeCategory) => void;
+  onLogin?: () => void;
   onOpenContact?: () => void;
 }
 
@@ -63,20 +79,26 @@ interface TradeOption {
 }
 
 const TRADES: TradeOption[] = [
-  { key: 'electricidad',    label: 'Electricidad',    icon: <Zap size={15} />,        tagline: 'Instalaciones eléctricas, cableado y circuitos seguros.' },
-  { key: 'plomeria',        label: 'Plomería',        icon: <Wrench size={15} />,      tagline: 'Destapes, fugas y redes hidráulicas con garantía de trabajo.' },
-  { key: 'pintura',         label: 'Pintura',         icon: <PaintBucket size={15} />, tagline: 'Acabados finos y pintura arquitectónica para tu hogar.' },
-  { key: 'cerrajeria',      label: 'Cerrajería',      icon: <KeyRound size={15} />,    tagline: 'Aperturas de emergencia 24 horas, sin daño a tus cerraduras.' },
-  { key: 'electrodomesticos', label: 'Electrodomésticos', icon: <Tv2 size={15} />,    tagline: 'Reparación de lavadoras, neveras y aires acondicionados.' },
-  { key: 'clases',          label: 'Clases',          icon: <BookOpen size={15} />,    tagline: 'Profesores particulares verificados para todas las materias.' },
+  { key: 'electricidad',      label: 'Electricidad',          icon: <Zap size={15} />,        tagline: 'Instalaciones eléctricas, cableado y circuitos seguros.' },
+  { key: 'plomeria',          label: 'Plomería',              icon: <Wrench size={15} />,      tagline: 'Destapes, fugas y redes hidráulicas en tu barrio.' },
+  { key: 'pintura',           label: 'Pintura',               icon: <PaintBucket size={15} />, tagline: 'Acabados finos y pintura arquitectónica para tu hogar.' },
+  { key: 'cerrajeria',        label: 'Cerrajería',            icon: <KeyRound size={15} />,    tagline: 'Aperturas de emergencia 24 horas, sin daño a tus cerraduras.' },
+  { key: 'electrodomesticos', label: 'Electrodomésticos',     icon: <Tv2 size={15} />,        tagline: 'Reparación de lavadoras, neveras y aires acondicionados.' },
+  { key: 'computacion',       label: 'Computación',           icon: <Laptop size={15} />,     tagline: 'Soporte técnico, redes Wi-Fi y mantenimiento de equipos.' },
+  { key: 'hogar',             label: 'Hogar & Reparaciones',  icon: <Home size={15} />,       tagline: 'Instalaciones, armado de muebles y reparaciones generales.' },
+  { key: 'mascotas',          label: 'Mascotas',              icon: <Dog size={15} />,        tagline: 'Peluquería canina a domicilio, paseos y cuidados expertos.' },
+  { key: 'aseo',              label: 'Aseo & Limpieza',       icon: <Sparkles size={15} />,   tagline: 'Limpieza profunda, desinfección pos-mudanza y lavado a vapor.' },
+  { key: 'jardineria',        label: 'Jardinería',            icon: <Trees size={15} />,      tagline: 'Corte de césped, poda de árboles y mantenimiento de jardines.' },
+  { key: 'albanileria',       label: 'Albañilería',           icon: <Hammer size={15} />,     tagline: 'Enchapes, pañetes, drywall y remodelaciones en tu hogar.' },
+  { key: 'clases',            label: 'Clases Particulares',   icon: <BookOpen size={15} />,   tagline: 'Profesores particulares verificados para todas las materias.' },
 ];
 
 
 const FAQS = [
-  { q: '¿Cómo verifican a los profesionales?', a: 'Validamos antecedentes judiciales, revisamos su cédula de ciudadanía y requerimos al menos 3 reseñas de clientes reales antes de activar su perfil.' },
+  { q: '¿Cómo verifican a los profesionales?', a: 'Cada profesional verifica su teléfono o correo al registrarse. Después de 10 trabajos puede mostrar su cédula y ganar el sello de identidad verificada. Las reseñas solo las dejan clientes con un servicio completado.' },
   { q: '¿Cuánto cobra OficioYa de comisión?', a: 'Cero. El trato es 100% directo entre tú y el profesional. OficioYa no cobra comisiones ni intermediaciones.' },
   { q: '¿Puedo contratar para hoy mismo?', a: 'Sí. El filtro de disponibilidad te muestra únicamente quienes están activos en este momento y pueden atenderte hoy.' },
-  { q: '¿En qué zonas de Bogotá funciona?', a: 'Actualmente operamos en todas las localidades de Bogotá D.C. y municipios del área metropolitana como Chía, Soacha y Cota.' },
+  { q: '¿En qué zonas de Bogotá funciona?', a: 'Funcionamos en las localidades de Bogotá D.C. Te mostramos primero a quienes están más cerca de tu zona.' },
 ];
 
 // Fotos de portafolio de los trabajadores semilla (sin repetir URL).
@@ -123,6 +145,48 @@ function HoverText({ children, tone = 'action' }: { children: React.ReactNode; t
 }
 
 // Item desplegable FAQ
+// Many cambia de pose por píxeles al elegir un oficio: dos caras que se
+// alternan, la entrante recibe la pose nueva y PixelSwap la revela.
+function ManySwap({ src, alt, imgClassName, onClick }: { src: string; alt: string; imgClassName: string; onClick: () => void }) {
+  const [faces, setFaces] = useState<[{ src: string; alt: string }, { src: string; alt: string }]>([{ src, alt }, { src, alt }]);
+  const [front, setFront] = useState(false);
+  const prevSrcRef = useRef(src);
+
+  useEffect(() => {
+    if (prevSrcRef.current === src) return;
+    prevSrcRef.current = src;
+    const next = !front;
+    setFaces(prev => {
+      const copy: typeof prev = [prev[0], prev[1]];
+      copy[next ? 1 : 0] = { src, alt };
+      return copy;
+    });
+    setFront(next);
+  }, [src, alt, front]);
+
+  const face = (f: { src: string; alt: string }) => (
+    <img src={f.src} alt={f.alt} className={imgClassName} onClick={onClick} draggable={false} />
+  );
+
+  return (
+    <PixelSwap
+      className="lp-many-swap"
+      firstContent={face(faces[0])}
+      secondContent={face(faces[1])}
+      active={front}
+      trigger="manual"
+      aspectRatio="16 / 10"
+      pattern="bottom-to-top"
+      randomness={0.35}
+      pixelSize={22}
+      pixelRadius={0}
+      pixelScale={0.2}
+      duration={760}
+      pixelDuration={320}
+      fadeOutgoing
+    />
+  );
+}
 
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
@@ -141,19 +205,13 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenContact }) => {
-  const [showLightIntro, setShowLightIntro] = useState<boolean>(() => {
-    try {
-      return sessionStorage.getItem('oy_intro_seen') !== 'true';
-    } catch {
-      return true;
-    }
-  });
-
+export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onLogin, onOpenContact }) => {
   const [selectedTrade, setSelectedTrade] = useState<TradeCategory>('electricidad');
+  const [manyAnimate, setManyAnimate] = useState<'float' | 'wave'>('float');
   const [heroVisible, setHeroVisible] = useState(false);
   const [showSearchMenu, setShowSearchMenu] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [trailerOpen, setTrailerOpen] = useState(false);
 
   const [faqRef, faqVisible]     = useReveal();
   const [ctaRef, ctaVisible]     = useReveal();
@@ -163,21 +221,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
     return () => clearTimeout(t);
   }, []);
 
-  const handleStartAsSeeker   = () => onEnterApp('seeker');
+  const handleStartAsSeeker = (trade?: TradeCategory | unknown) => {
+    let cat: TradeCategory | undefined = undefined;
+    if (typeof trade === 'string' && trade) {
+      cat = trade as TradeCategory;
+    } else if (trade && typeof trade === 'object' && 'title' in trade) {
+      const title = String((trade as any).title || '').toLowerCase();
+      const matched = TRADES.find(t => title.includes(t.key) || title.includes(t.label.toLowerCase()));
+      if (matched) cat = matched.key;
+    }
+    onEnterApp('seeker', cat);
+  };
   const handleStartAsProvider = () => onEnterApp('provider');
 
   const handleTradeSelect = (trade: TradeCategory) => {
     setSelectedTrade(trade);
+    setManyAnimate('wave');
+    setTimeout(() => setManyAnimate('float'), 800);
   };
+  const triggerWave = () => { setManyAnimate('wave'); setTimeout(() => setManyAnimate('float'), 800); };
+  const currentTrade = TRADES.find(t => t.key === selectedTrade) ?? TRADES[0];
 
   return (
     <div className="lp-root">
-      {/* ── INTRO INTERACTIVA: BLACKOUT → SWITCH ROJO "DESCUBRE" → BOMBILLO QUE SE ROMPE ── */}
-      {showLightIntro && (
-        <LightBreakIntro
-          onComplete={() => setShowLightIntro(false)}
-        />
-      )}
 
       {/* ── MARQUESINA (único movimiento continuo, estilo sticker) ── */}
       <div className="lp-marquee" aria-hidden="true">
@@ -199,7 +265,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
             <img src={BRAND_ASSETS.logo} alt="OficioYa" className="lp-brand-logo" />
             <div>
               <span className="lp-brand-name">Oficio<span className="lp-brand-ya">Ya</span></span>
-              <span className="lp-brand-tagline">Directorio Inteligente</span>
+              <span className="lp-brand-tagline">Directorio de Trabajo Inteligente</span>
             </div>
           </div>
 
@@ -252,7 +318,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
                         onClick={() => {
                           setSelectedTrade(trade.key);
                           setMobileNavOpen(false);
-                          handleStartAsSeeker();
+                          handleStartAsSeeker(trade.key);
                         }}
                       >
                         <span className="lp-liquid-menu__icon-box">
@@ -297,24 +363,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
               <RollingText text="Para trabajadores" alternateText="Ofrecer oficio" />
             </button>
 
-            {/* Botón para revivir el efecto del bombillo */}
-            <button
-              type="button"
-              className="lp-nav-link lp-nav-link--liquid"
-              onClick={() => setShowLightIntro(true)}
-              data-cursor-text="Bombillo"
-              title="Revivir animación del bombillo e interruptor"
-            >
-              <Zap size={14} className="lp-nav-link__icon" style={{ color: 'var(--brand-yellow, #FFC72C)' }} aria-hidden="true" />
-              <span>Intro Luz</span>
-            </button>
-
             {/* Iniciar sesión Liquid 3D Button */}
             <button
               type="button"
               onClick={() => {
                 setMobileNavOpen(false);
-                handleStartAsSeeker();
+                if (onLogin) {
+                  onLogin();
+                } else {
+                  handleStartAsSeeker();
+                }
               }}
               className="lp-btn-liquid-3d"
               data-cursor-text="Iniciar Sesion"
@@ -333,99 +391,105 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
 
       {/* ── HERO ── */}
       <section className={`lp-hero lp-hero-band ${heroVisible ? 'lp-hero--in' : ''}`}>
-        {/* Stickers decorativos con la paleta del manual (estáticos, rotados) */}
-        <div className="lp-stickers" aria-hidden="true">
-          <span className="lp-sticker lp-sticker--amarillo lp-sticker--a"><Wrench size={28} /></span>
-          <span className="lp-sticker lp-sticker--esmeralda lp-sticker--b"><UserCheck size={26} /></span>
-          <span className="lp-sticker lp-sticker--fuego lp-sticker--c"><Zap size={26} /></span>
-          <span className="lp-sticker lp-sticker--marino lp-sticker--d"><Award size={26} /></span>
+        <div className="lp-hero-split">
+          <div className="lp-hero-text">
+            <div className="lp-hero-city">
+              <span className="lp-hero-city-dot" />
+              Bogotá D.C.
+            </div>
+            <h1 className="oy-display lp-hero-title">
+              El talento de tu zona <span className="lp-hero-title-mark">a un clic</span> de distancia.
+            </h1>
+
+            <p className="lp-hero-copy">
+              Plomeros, electricistas, cerrajeros y más, con{' '}
+              <span className="lp-hero-copy-strong"><HoverText>reseñas de vecinos</HoverText></span>
+              {' '}y la distancia real desde tu barrio.
+            </p>
+
+            <div className="lp-hero-ctas">
+              <BorderGlow animated>
+                <button onClick={handleStartAsSeeker} className="lp-hero-btn-primary">
+                  Encontrar técnico en mi barrio
+                </button>
+              </BorderGlow>
+              <button onClick={handleStartAsProvider} className="lp-hero-btn-ghost">
+                Publicar mi oficio gratis
+              </button>
+            </div>
+            <p className="lp-hero-micro">0 % comisiones · pagas directo por Nequi, Daviplata o efectivo</p>
+          </div>
+
+          <HeroVideo onOpenTrailer={() => setTrailerOpen(true)} />
         </div>
-
-        {/* Badge ciudad — texto suelto, sin recuadro opaco */}
-        <div className="lp-hero-city">
-          <span className="lp-hero-city-dot" />
-          Bogotá D.C.
-        </div>
-
-        {/* Wordmark */}
-        <h1 className="oy-display lp-wordmark" aria-label="OficioYa">
-          <span className="lp-wordmark-oficio">Oficio</span>
-          <span className="lp-wordmark-ya">Ya</span>
-        </h1>
-
-        {/* Eslogan */}
-        <p className="lp-hero-slogan">
-          El talento de tu zona a un click de distancia
-        </p>
-
-        {/* Texto descriptivo — sin recuadro, flotante */}
-        <p className="lp-hero-copy">
-          Plomeros, electricistas, pintores y más — con{' '}
-          <span className="lp-hero-copy-strong"><HoverText>reputación verificada</HoverText></span>
-          {' '}y geolocalización en tiempo real.
-        </p>
-
-        {/* CTAs */}
-        <div className="lp-hero-ctas">
-          <BorderGlow animated>
-            <button
-              onClick={handleStartAsSeeker}
-              className="lp-hero-btn-primary"
-            >
-              Buscar expertos
-            </button>
-          </BorderGlow>
-          <button
-            onClick={handleStartAsProvider}
-            className="lp-hero-btn-ghost"
-          >
-            Soy trabajador independiente
-          </button>
-        </div>
-
-        {/* Caja de herramientas interactiva con órbita espacial 3D */}
-        <ToolboxOrbit
-          currentTrade={selectedTrade}
-          onSelectTrade={handleTradeSelect}
-        />
       </section>
 
-      {/* ── MANIFIESTO EDITORIAL (Inspirado en danilodemarco.com) ── */}
-      <EditorialManifesto onExplore={handleStartAsSeeker} />
+      {/* ── TICKER DE ACTIVIDAD HIPERLOCAL EN VIVO ("El Pulso de Bogotá") ── */}
+      <LivePulseTicker onSelectTrade={(trade) => handleStartAsSeeker(trade as TradeCategory)} />
+
+      <HowItWorks />
+
+      {/* ── ¿QUÉ SE DAÑÓ? Many cambia de traje según el oficio ── */}
+      <section className="lp-trades-pick" aria-labelledby="lp-trades-title">
+        <div className="lp-wrap lp-trades-pick__grid">
+          <div className="lp-hero-many">
+            <div className="lp-many-frame">
+              <ManySwap
+                src={getManyTradeImage(selectedTrade)}
+                alt={`Many en oficio de ${currentTrade.label.toLowerCase()}`}
+                imgClassName={`lp-many-hero-img ${manyAnimate === 'wave' ? 'lp-many-waving' : ''}`}
+                onClick={triggerWave}
+              />
+              <div className="lp-many-frame-badge">
+                <span className="lp-many-frame-badge__dot" />
+                <span>Many · {currentTrade.label}</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <span className="ls-kicker">¿Qué se dañó?</span>
+            <h2 id="lp-trades-title" className="oy-display ls-title">Elige el oficio y Many te muestra quién está cerca.</h2>
+            <div className="lp-trade-row">
+              {TRADES.map(t => (
+                <button
+                  key={t.key}
+                  onClick={() => handleTradeSelect(t.key)}
+                  className="lp-trade-chip oy-chip-pop"
+                  aria-pressed={selectedTrade === t.key}
+                >
+                  {t.icon} {t.label}
+                </button>
+              ))}
+            </div>
+            <p className="lp-hero-tagline" aria-live="polite">{currentTrade.tagline}</p>
+            <button type="button" className="ls-link-btn" onClick={() => handleStartAsSeeker(selectedTrade)}>
+              Ver profesionales de {currentTrade.label.toLowerCase()}
+            </button>
+          </div>
+        </div>
+      </section>
 
       {/* ── CARAVANA / TREN DE OFICIOS (Inspirado en ollivere.webflow.io) ── */}
-      <SkillsTrain onSelectTrade={(trade) => handleTradeSelect(trade as any)} />
+      <SkillsTrain onSelectTrade={(trade) => handleStartAsSeeker(trade as TradeCategory)} />
 
-      {/* ── METODOLOGÍA SIN VUELTAS: PROCESO STICKY (Inspirado en ollivere.webflow.io) ── */}
-      <StickyProcess onStart={handleStartAsSeeker} />
-
-      {/* ── INSPECTOR DE HERRAMIENTAS Y FICHA TÉCNICA 3D (Inspirado en thibaut.cool) ── */}
-      <RetroInspector 
-        selectedTrade={selectedTrade}
-        onSelectTrade={(trade) => handleTradeSelect(trade as any)}
-        onExploreExperts={() => handleStartAsSeeker()}
-      />
-
-      {/* ── EDICIÓN EDITORIAL IMPRESA / BROADSHEET & CLASIFICADOS (Inspirado en niccolomiranda.com) ── */}
-      <PaperBroadsheet onExplore={handleStartAsSeeker} />
-
-
-      {/* ── SELECCIÓN EDITORIAL ASIMÉTRICA (Inspirado en danilodemarco.com) ── */}
-      <AsymmetricShowcase onSelectWorker={() => handleStartAsSeeker()} />
+      <TradeReputation onExplore={() => handleStartAsSeeker(selectedTrade)} />
 
       {/* ── TRABAJOS REALES: muro de portafolio ── */}
       <section className="lp-work" aria-labelledby="lp-work-title">
         <div className="lp-wrap lp-work-head">
-          <span className="lp-sticker lp-sticker--esmeralda lp-sticker--pill">Portafolio verificado</span>
-          <h2 id="lp-work-title" className="oy-display lp-work-title">Trabajos reales en Bogotá</h2>
+          <span className="ls-kicker">Portafolios</span>
+          <h2 id="lp-work-title" className="oy-display ls-title">Mira su trabajo antes de llamar.</h2>
           <p className="lp-work-sub">
-            Fotos de obras terminadas por los profesionales de OficioYa. Pasa el puntero para detener el muro o elige una para buscar expertos.
+            Cada profesional sube fotos de sus trabajos a su perfil. Pasa el puntero para detener el muro o elige una foto para buscar expertos.
           </p>
         </div>
         <div className="lp-wrap">
           <div className="lp-work-wall">
             <DriftWall
               items={PORTFOLIO}
+              columns={5}
+              tileWidth={260}
+              tileHeight={180}
               ariaLabel="Fotos de trabajos realizados"
               onItemClick={handleStartAsSeeker}
             />
@@ -433,16 +497,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
         </div>
       </section>
 
-      {/* ── TESTIMONIOS VERIFICADOS (Item 18) ── */}
+      <Comparison />
+
+      {/* ── HISTORIAS DE EJEMPLO ── */}
       <section className="lp-testimonials" aria-labelledby="lp-testimonials-title">
         <div className="lp-wrap">
           <div className="lp-testimonials-head">
-            <span className="lp-sticker lp-sticker--esmeralda lp-sticker--pill">Opiniones demo</span>
+            <span className="ls-kicker">Historias</span>
             <h2 id="lp-testimonials-title" className="oy-display lp-testimonials-title">
-              Historias de clientes en Bogotá
+              Así se resuelve con OficioYa
             </h2>
             <p className="lp-testimonials-sub">
-              Vecinos reales que resolvieron sus problemas de hogar sin comisiones, con precio acordado y garantía.
+              Así se ve una experiencia con OficioYa: precio acordado por chat y pago directo, sin comisiones.
             </p>
           </div>
 
@@ -453,16 +519,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
                   {Array.from({ length: t.rating }).map((_, i) => (
                     <Star key={i} size={16} fill="var(--color-star)" color="var(--stroke-ink)" />
                   ))}
-                  <span className="lp-testi-card__badge">
-                    <ShieldCheck size={13} aria-hidden="true" /> Verificado
-                  </span>
                 </div>
                 <p className="lp-testi-card__comment">
                   <Quote size={16} className="lp-testi-card__quote-icon" aria-hidden="true" />
                   "{t.comment}"
                 </p>
                 <div className="lp-testi-card__author">
-                  <img src={t.avatar} alt={t.name} className="lp-testi-card__avatar" loading="lazy" />
+                  <span className="lp-testi-card__avatar lp-testi-card__initials" aria-hidden="true">{t.name.split(' ').map(n => n[0]).slice(0, 2).join('')}</span>
                   <div className="lp-testi-card__meta">
                     <strong className="lp-testi-card__name">{t.name}</strong>
                     <span className="lp-testi-card__trade">{t.trade}</span>
@@ -472,30 +535,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* ── FAQ DESPLEGABLE ── */}
-      <section id="faq-section" ref={faqRef} className="lp-faq">
-        <div className="lp-wrap lp-faq-wrap">
-          <span className="lp-sticker lp-sticker--amarillo lp-sticker--pill">Preguntas frecuentes</span>
-          <h2 className="oy-display lp-faq-title">
-            <StrokeText text="Todo lo que" tone="cacao" trigger="scroll" fontSize={64} />{' '}
-            <StrokeText text="necesitas saber." tone="cacao" trigger="scroll" fontSize={64} />
-          </h2>
-
-          <div className={`lp-faq-list ${faqVisible ? 'lp-faq-list--in' : ''}`}>
-            {FAQS.map((faq, i) => (
-              <FaqItem key={i} q={faq.q} a={faq.a} />
-            ))}
-          </div>
-
-          <p className="lp-faq-more">
-            ¿Tienes otra pregunta?{' '}
-            <button type="button" className="lp-faq-link" onClick={handleStartAsSeeker}>
-              Contáctanos desde la app
-            </button>
-          </p>
         </div>
       </section>
 
@@ -541,10 +580,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
                 ))}
               </div>
 
+              <EarningsCalculator />
+
               <div className="lp-cta-actions-row">
                 <BorderGlow>
                   <button onClick={handleStartAsProvider} className="lp-cta-primary lp-cta-amber">
-                    Empezar gratis <ArrowRight size={16} />
+                    Publicar mi oficio gratis <ArrowRight size={16} />
                   </button>
                 </BorderGlow>
                 <span className="lp-cta-note">
@@ -556,11 +597,41 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
         </div>
       </section>
 
+      {/* ── FAQ DESPLEGABLE (Última sección antes del footer) ── */}
+      <section id="faq-section" ref={faqRef} className="lp-faq">
+        <div className="lp-wrap lp-faq-wrap">
+          <span className="lp-sticker lp-sticker--amarillo lp-sticker--pill">Preguntas frecuentes</span>
+          <h2 className="oy-display lp-faq-title">
+            <StrokeText text="Todo lo que" tone="cacao" trigger="scroll" fontSize={64} />{' '}
+            <StrokeText text="necesitas saber." tone="cacao" trigger="scroll" fontSize={64} />
+          </h2>
+
+          <div className={`lp-faq-list ${faqVisible ? 'lp-faq-list--in' : ''}`}>
+            {FAQS.map((faq, i) => (
+              <FaqItem key={i} q={faq.q} a={faq.a} />
+            ))}
+          </div>
+
+          <p className="lp-faq-more">
+            ¿Tienes otra pregunta?{' '}
+            <button type="button" className="lp-faq-link" onClick={handleStartAsSeeker}>
+              Contáctanos desde la app
+            </button>
+          </p>
+        </div>
+      </section>
+
+      <TrailerDialog open={trailerOpen} onClose={() => setTrailerOpen(false)} />
+
       {/* ── FOOTER ── */}
       <AppFooter onOpenContact={onOpenContact} />
 
-      {/* Botón Flotante para Volver Arriba (Item 7) */}
-      <ScrollToTop />
+      {/* Asistente Flotante de Soporte ("¿Necesitas una mano?") */}
+      <FloatingSupport
+        onStartSeeker={handleStartAsSeeker}
+        onOpenContact={onOpenContact}
+        onSelectTrade={(trade) => handleTradeSelect(trade as any)}
+      />
     </div>
   );
 };

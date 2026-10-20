@@ -11,7 +11,7 @@
   padding: 0.55rem 0.95rem;
   background: rgba(22, 17, 14, 0.88);
   backdrop-filter: blur(14px);
-  border: 1px solid rgba(229, 143, 73, 0.35);
+  border: 1px solid rgba(194, 65, 12, 0.35);
   border-radius: 9999px;
   color: var(--oy-cream, #FBF6EE);
   font-family: var(--font-body, 'Inter', sans-serif);
@@ -25,12 +25,12 @@
 
 .oy-cursor-hint-badge:hover {
   transform: translateY(-2px) scale(1.03);
-  border-color: var(--oy-gold, #E58F49);
+  border-color: var(--oy-gold, var(--color-action-strong));
   background: rgba(35, 27, 23, 0.95);
 }
 
 .oy-hint-sparkle {
-  color: var(--oy-gold, #E58F49);
+  color: var(--oy-gold, var(--color-action-strong));
 }
 
 .oy-hint-kbd {
@@ -46,7 +46,7 @@
   font-family: var(--font-mono, monospace);
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--oy-gold, #E58F49);
+  color: var(--oy-gold, var(--color-action-strong));
 }
 
 /* Overlay semitransparente para atrapar clics fuera */
@@ -64,10 +64,10 @@
   max-width: calc(100vw - 32px);
   padding: 0.75rem 0.95rem;
   background: #15100D;
-  border: 1.5px solid var(--oy-gold, #E58F49);
+  border: 1.5px solid var(--oy-gold, var(--color-action-strong));
   border-radius: 1.15rem;
   border-top-left-radius: 2px; /* Efecto punta hacia el cursor */
-  box-shadow: 0 18px 45px -8px rgba(0, 0, 0, 0.8), 0 0 25px rgba(229, 143, 73, 0.2);
+  box-shadow: 0 18px 45px -8px rgba(0, 0, 0, 0.8), 0 0 25px rgba(194, 65, 12, 0.2);
   color: var(--oy-cream, #FBF6EE);
   z-index: 10001;
   pointer-events: auto;
@@ -94,7 +94,7 @@
 }
 
 .oy-prompt-icon {
-  color: var(--oy-gold, #E58F49);
+  color: var(--oy-gold, var(--color-action-strong));
   flex-shrink: 0;
 }
 
@@ -131,7 +131,7 @@
 }
 
 .oy-prompt-submit-btn:hover {
-  background: var(--oy-gold, #E58F49);
+  background: var(--oy-gold, var(--color-action-strong));
   color: #120D0A;
 }
 
@@ -173,7 +173,7 @@
 }
 
 .oy-prompt-pill:hover {
-  background: rgba(229, 143, 73, 0.2);
-  border-color: var(--oy-gold, #E58F49);
-  color: var(--oy-gold, #E58F49);
+  background: rgba(194, 65, 12, 0.2);
+  border-color: var(--oy-gold, var(--color-action-strong));
+  color: var(--oy-gold, var(--color-action-strong));
 }

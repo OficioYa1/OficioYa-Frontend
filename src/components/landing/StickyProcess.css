@@ -31,7 +31,7 @@ html.theme-dark .ollivere-process-section,
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: var(--color-brand-primary, #E65100);
+  color: var(--color-brand-primary, var(--color-action-strong));
   margin-bottom: 0.75rem;
 }
 
@@ -41,13 +41,13 @@ html.theme-dark .ollivere-process-section,
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.03em;
-  color: var(--color-text-main, #1E293B);
+  color: var(--stroke-ink, #3E1F14);
   margin: 0 0 1rem;
 }
 
 html.theme-dark .ollivere-process-title,
 [data-theme="dark"] .ollivere-process-title {
-  color: #F8FAFC;
+  color: #FBF4EA;
 }
 
 .ollivere-process-desc {
@@ -103,8 +103,8 @@ html.theme-dark .ollivere-progress-track,
 .ollivere-progress-bar {
   height: 100%;
   border-radius: 9999px;
-  background: var(--color-brand-primary, #E65100);
-  box-shadow: 0 0 10px rgba(230, 81, 0, 0.5);
+  background: var(--color-brand-primary, var(--color-action-strong));
+  box-shadow: 0 0 10px rgba(194, 65, 12, 0.5);
   transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -141,13 +141,13 @@ html.theme-dark .ollivere-step-pill,
 }
 
 .ollivere-step-pill.is-active {
-  color: var(--color-brand-primary, #E65100);
-  background: rgba(230, 81, 0, 0.1);
+  color: var(--color-brand-primary, var(--color-action-strong));
+  background: rgba(194, 65, 12, 0.1);
 }
 
 html.theme-dark .ollivere-step-pill.is-active,
 [data-theme="dark"] .ollivere-step-pill.is-active {
-  background: rgba(230, 81, 0, 0.22);
+  background: rgba(194, 65, 12, 0.22);
   color: #FFA726;
 }
 
@@ -204,7 +204,7 @@ html.theme-dark .ollivere-card:hover,
   font-family: var(--font-display, 'DM Sans', sans-serif);
   font-size: 1.25rem;
   font-weight: 800;
-  color: var(--color-brand-primary, #E65100);
+  color: var(--color-brand-primary, var(--color-action-strong));
   margin-bottom: 1rem;
 }
 

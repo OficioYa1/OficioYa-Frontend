@@ -30,7 +30,7 @@ html.theme-dark .danilo-showcase,
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: var(--color-brand-primary, #E65100);
+  color: var(--color-brand-primary, var(--color-action-strong));
 }
 
 .danilo-showcase__title {
@@ -39,13 +39,13 @@ html.theme-dark .danilo-showcase,
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.03em;
-  color: var(--color-text-main, #1E293B);
+  color: var(--stroke-ink, #3E1F14);
   margin: 0;
 }
 
 html.theme-dark .danilo-showcase__title,
 [data-theme="dark"] .danilo-showcase__title {
-  color: #F8FAFC;
+  color: #FBF4EA;
 }
 
 .danilo-showcase__desc {
@@ -149,7 +149,7 @@ html.theme-dark .danilo-card:hover,
   font-family: var(--font-display, 'DM Sans', sans-serif);
   font-size: 1.5rem;
   font-weight: 800;
-  color: var(--color-brand-primary, #E65100);
+  color: var(--color-brand-primary, var(--color-action-strong));
   letter-spacing: -0.02em;
 }
 
@@ -227,7 +227,7 @@ html.theme-dark .danilo-card__footer,
 }
 
 .danilo-card__trade {
-  color: var(--color-brand-primary, #E65100);
+  color: var(--color-brand-primary, var(--color-action-strong));
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }

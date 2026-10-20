@@ -213,7 +213,7 @@ export const AdminModerationModal: React.FC<AdminModerationModalProps> = ({
             <div role="tabpanel" id={`${uid}-panel-verif`} aria-labelledby={`${uid}-tab-verif`}>
               {pendingVerifications === 0 ? (
                 <div className="oy-empty">
-                  <MascotAvatar size="sm" />
+                  <MascotAvatar forceImage="escudo" size="md" />
                   <p className="oy-empty__title">Sin pendientes</p>
                   <p className="oy-empty__text">No hay cédulas ni referidos esperando revisión.</p>
                 </div>

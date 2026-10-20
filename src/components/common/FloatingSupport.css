@@ -1,0 +1,425 @@
+/* ==========================================================================
+   FLOATING SUPPORT ASSISTANT — "¿Necesitas una mano?"
+   Ubicado de forma fija y permanente en la esquina inferior DERECHA del viewport.
+   En reposo: Icono circular compacto de Many + burbuja de mensaje.
+   En hover: Se expande fluidamente hacia la izquierda.
+   Al clic: Despliega el panel de opciones de soporte.
+   ========================================================================== */
+
+.oy-floating-support {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  left: auto !important;
+  z-index: 9999 !important;
+  font-family: var(--font-text, 'Inter', sans-serif);
+  pointer-events: auto;
+}
+
+/* Contenedor del trigger (avatar + mensaje) alineado a la derecha */
+.oy-floating-support__trigger-wrap {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+/* Botón flotante: en reposo es un icono circular elegante */
+.oy-floating-support__btn {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  background: #ffffff;
+  color: var(--color-text-main, #20150d);
+  border: 1.5px solid rgba(32, 21, 13, 0.16);
+  border-radius: 9999px;
+  box-shadow: 0 10px 30px -4px rgba(32, 21, 13, 0.22), 0 2px 8px -2px rgba(32, 21, 13, 0.12);
+  cursor: pointer;
+  user-select: none;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 5px;
+  height: 54px;
+  min-width: 54px;
+  max-width: 54px;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: max-width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              padding 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s ease,
+              border-color 0.25s ease,
+              transform 0.25s ease;
+}
+
+/* Avatar de Many dentro del botón */
+.oy-floating-support__avatar-box {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #fff4e5;
+  border: 1.5px solid #fed7aa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.oy-floating-support__avatar-img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+/* Punto verde de disponible en vivo */
+.oy-floating-support__live-dot {
+  position: absolute;
+  bottom: -1px;
+  left: -1px;
+  width: 10px;
+  height: 10px;
+  background: #10b981;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.35);
+}
+
+/* Texto que se expande hacia la izquierda */
+.oy-floating-support__expand-text {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  margin-left: 14px;
+  margin-right: 10px;
+  opacity: 0;
+  transform: translateX(10px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+
+.oy-floating-support__expand-title {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--color-text-main, #20150d);
+  line-height: 1.2;
+}
+
+.oy-floating-support__expand-sub {
+  font-size: 11px;
+  color: #ea580c;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* EXPANSIÓN AL PASAR EL PUNTERO (Hover o Focus) */
+.oy-floating-support__trigger-wrap:hover .oy-floating-support__btn,
+.oy-floating-support__btn:focus-visible,
+.oy-floating-support__btn[aria-expanded="true"] {
+  max-width: 260px;
+  padding: 5px 6px 5px 16px;
+  border-color: #ea580c;
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px -4px rgba(234, 88, 12, 0.3);
+}
+
+.oy-floating-support__trigger-wrap:hover .oy-floating-support__expand-text,
+.oy-floating-support__btn:focus-visible .oy-floating-support__expand-text,
+.oy-floating-support__btn[aria-expanded="true"] .oy-floating-support__expand-text {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.oy-floating-support__trigger-wrap:hover .oy-floating-support__avatar-img {
+  transform: scale(1.08) rotate(-4deg);
+}
+
+/* Globo / Burbuja de mensaje flotante en reposo */
+.oy-floating-support__badge {
+  background: #20150d;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(32, 21, 13, 0.22);
+  pointer-events: none;
+  animation: oy-support-badge-float 3s ease-in-out infinite;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* La burbujita se oculta cuando el botón se expande */
+.oy-floating-support__trigger-wrap:hover .oy-floating-support__badge,
+.oy-floating-support__btn:focus-visible ~ .oy-floating-support__badge,
+.oy-floating-support__btn[aria-expanded="true"] ~ .oy-floating-support__badge {
+  opacity: 0;
+  transform: translateX(6px);
+}
+
+@keyframes oy-support-badge-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* Popover / Menú desplegable alineado a la DERECHA */
+.oy-floating-support__card {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  right: 0;
+  left: auto;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  background: #ffffff;
+  border: 1.5px solid rgba(32, 21, 13, 0.12);
+  border-radius: 20px;
+  box-shadow: 0 20px 48px -10px rgba(32, 21, 13, 0.28), 0 4px 16px -2px rgba(32, 21, 13, 0.12);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: oy-support-pop-right 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+@keyframes oy-support-pop-right {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.oy-floating-support__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(32, 21, 13, 0.08);
+  padding-bottom: 10px;
+}
+
+.oy-floating-support__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.oy-floating-support__header-title {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-main, #20150d);
+  margin: 0;
+}
+
+.oy-floating-support__header-sub {
+  font-size: 11.5px;
+  color: #6c5a4e;
+  margin: 0;
+}
+
+.oy-floating-support__close-btn {
+  background: transparent;
+  border: none;
+  color: #8c7a6e;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.oy-floating-support__close-btn:hover {
+  background: rgba(32, 21, 13, 0.06);
+  color: var(--color-text-main, #20150d);
+}
+
+.oy-floating-support__options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.oy-floating-support__action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #fbf7f2;
+  border: 1px solid rgba(32, 21, 13, 0.08);
+  border-radius: 12px;
+  color: var(--color-text-main, #20150d);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  width: 100%;
+}
+
+.oy-floating-support__action-btn:hover {
+  background: #fdf2e9;
+  border-color: #f97316;
+  transform: translateX(-2px);
+}
+
+.oy-floating-support__action-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.oy-floating-support__action-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary, #ea580c);
+  box-shadow: 0 1px 3px rgba(32, 21, 13, 0.08);
+  flex-shrink: 0;
+}
+
+.oy-floating-support__direct-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #15803d;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 8px;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.oy-floating-support__direct-link:hover {
+  background: #dcfce7;
+}
+
+/* En pantallas pequeñas */
+@media (max-width: 768px) {
+  .oy-floating-support {
+    bottom: 88px !important;
+    right: 16px !important;
+  }
+  .oy-floating-support__badge {
+    display: none;
+  }
+  .oy-floating-support__card {
+    width: 280px;
+  }
+}
+
+/* ==========================================================================
+   MODO OSCURO — Soporte Asistente Flotante
+   Garantiza contraste óptimo (WCAG AA), legibilidad y elegancia visual
+   ========================================================================== */
+html.theme-dark .oy-floating-support__btn {
+  background: #141c2e;
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.5), 0 2px 8px -2px rgba(0, 0, 0, 0.3);
+}
+
+html.theme-dark .oy-floating-support__avatar-box {
+  background: #1e293b;
+  border-color: rgba(249, 115, 22, 0.4);
+}
+
+html.theme-dark .oy-floating-support__expand-title {
+  color: #f8fafc;
+}
+
+html.theme-dark .oy-floating-support__expand-sub {
+  color: #fb923c;
+}
+
+html.theme-dark .oy-floating-support__trigger-wrap:hover .oy-floating-support__btn,
+html.theme-dark .oy-floating-support__btn:focus-visible,
+html.theme-dark .oy-floating-support__btn[aria-expanded="true"] {
+  border-color: #f97316;
+  box-shadow: 0 16px 36px -4px rgba(249, 115, 22, 0.35);
+}
+
+html.theme-dark .oy-floating-support__badge {
+  background: #0f172a;
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+html.theme-dark .oy-floating-support__card {
+  background: #0d1527;
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+html.theme-dark .oy-floating-support__header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+html.theme-dark .oy-floating-support__header-title {
+  color: #f8fafc;
+}
+
+html.theme-dark .oy-floating-support__header-sub {
+  color: #94a3b8;
+}
+
+html.theme-dark .oy-floating-support__close-btn {
+  color: #94a3b8;
+}
+
+html.theme-dark .oy-floating-support__close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+html.theme-dark .oy-floating-support__action-btn {
+  background: #162035;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+}
+
+html.theme-dark .oy-floating-support__action-btn:hover {
+  background: #1e2c47;
+  border-color: #f97316;
+  color: #ffffff;
+}
+
+html.theme-dark .oy-floating-support__action-icon {
+  background: #0d1527;
+  color: #fb923c;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+html.theme-dark .oy-floating-support__direct-link {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.32);
+  color: #34d399;
+}
+
+html.theme-dark .oy-floating-support__direct-link:hover {
+  background: rgba(16, 185, 129, 0.22);
+  color: #6ee7b7;
+}
+

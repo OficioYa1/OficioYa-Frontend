@@ -1,0 +1,153 @@
+.many-state {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px 24px;
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--stroke-card, #e2e8f0);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  max-width: 580px;
+  margin: 24px auto;
+  overflow: hidden;
+}
+
+.many-state--celebracion {
+  background: var(--color-status-soft, #f0fdf4);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.many-state--error {
+  border-color: rgba(234, 88, 12, 0.3);
+}
+
+.many-state__figure {
+  position: relative;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.many-state__custom-img {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15));
+}
+
+.many-state__badge {
+  position: absolute;
+  right: -6px;
+  bottom: 0px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-card, #ffffff);
+  border: 2px solid var(--stroke-ink, #0f172a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-heading, #0f172a);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.many-state--sin-resultados .many-state__badge svg {
+  animation: many-search-bob 2.4s ease-out infinite;
+}
+
+.many-state__title {
+  font-family: var(--font-display, inherit);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-heading, #0f172a);
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+
+.many-state__message {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-muted, #64748b);
+  margin: 0 0 20px 0;
+  max-width: 440px;
+}
+
+.many-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.many-state__actions .btn {
+  min-height: 42px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Confeti ligero en CSS puro: 18 piezas */
+.many-state__confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.many-state__confetti span {
+  --hue: var(--oy-amarillo-canario, #ffc72c);
+  position: absolute;
+  top: -10px;
+  left: calc(5% + (var(--i) * 5.2%));
+  width: 8px;
+  height: 12px;
+  background: var(--hue);
+  border-radius: 2px;
+  opacity: 0;
+  animation: many-confetti-fall 1.5s cubic-bezier(0.2, 0.7, 0.3, 1) calc(var(--i) * 35ms) 1 forwards;
+}
+
+.many-state__confetti span:nth-child(3n) {
+  --hue: var(--oy-naranja-fuego, #ea580c);
+}
+
+.many-state__confetti span:nth-child(3n + 1) {
+  --hue: var(--oy-verde-esmeralda, #10b981);
+}
+
+.many-state__confetti span:nth-child(4n) {
+  --hue: var(--oy-azul-marino, #1e3a8a);
+}
+
+@keyframes many-confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(320px) rotate(540deg);
+    opacity: 0;
+  }
+}
+
+@keyframes many-search-bob {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(-2px, -2px) rotate(-10deg);
+  }
+  75% {
+    transform: translate(2px, -1px) rotate(10deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .many-state__confetti {
+    display: none;
+  }
+  .many-state--sin-resultados .many-state__badge svg {
+    animation: none;
+  }
+}

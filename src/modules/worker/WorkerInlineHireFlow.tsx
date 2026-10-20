@@ -43,7 +43,7 @@ const BOGOTA_ZONES = [
 ];
 
 const PAYMENT_OPTIONS: { id: PaymentMethod; label: string; icon: React.ReactNode }[] = [
-  { id: 'bre_b', label: 'Bre-B 🔑', icon: <KeyRound size={16} aria-hidden="true" /> },
+  { id: 'bre_b', label: 'Bre-B', icon: <KeyRound size={16} aria-hidden="true" /> },
   { id: 'transferencia', label: 'Nequi / Davi', icon: <Smartphone size={16} aria-hidden="true" /> },
   { id: 'efectivo', label: 'Efectivo', icon: <Banknote size={16} aria-hidden="true" /> },
   { id: 'tarjeta', label: 'Tarjeta', icon: <CreditCard size={16} aria-hidden="true" /> }
@@ -170,7 +170,7 @@ export const WorkerInlineHireFlow: React.FC<WorkerInlineHireFlowProps> = ({
               style={{ cursor: 'not-allowed', opacity: 0.65, gap: '5px' }}
               title="El profesional debe aceptar la petición para hacer la reserva"
             >
-              <Lock size={13} aria-hidden="true" style={{ color: 'var(--brand-amber, #E58F49)' }} /> Reserva Bloqueada
+              <Lock size={13} aria-hidden="true" style={{ color: 'var(--brand-amber, var(--color-action-strong))' }} /> Reserva Bloqueada
             </span>
           </div>
 

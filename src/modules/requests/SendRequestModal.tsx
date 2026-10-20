@@ -63,9 +63,7 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
   const [urgency, setUrgency] = useState<UrgencyLevel>('urgente');
   const [budget, setBudget] = useState('80000');
   const [paymentMethod] = useState<PaymentMethod>('bre_b');
-  const [attachedPhotos, setAttachedPhotos] = useState<string[]>([
-    'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&auto=format&fit=crop'
-  ]);
+  const [attachedPhotos, setAttachedPhotos] = useState<string[]>([]);
   const [newPhotoUrl, setNewPhotoUrl] = useState('');
   const [showPhotoInput, setShowPhotoInput] = useState(false);
 
@@ -462,18 +460,17 @@ export const SendRequestModal: React.FC<SendRequestModalProps> = ({
                 />
                 <button
                   type="submit"
+                  className="oy-flow-plain-submit"
                   disabled={recipients === 0}
-                  style={{ display: 'none' }}
-                  aria-hidden="true"
                 >
-                  Confirmar
+                  Enviar sin deslizar
                 </button>
               </div>
             </form>
           ) : (
             <div className="oy-flow-success" role="status">
               <div className="oy-flow-success__mascot">
-                <MascotAvatar trade="plomeria" size="md" />
+                <MascotAvatar forceImage="exito" size="lg" animate="bounce" />
                 <span className="oy-flow-success__check" aria-hidden="true">
                   <CheckCircle2 size={24} />
                 </span>

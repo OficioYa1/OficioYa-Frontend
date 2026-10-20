@@ -103,9 +103,9 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
               </div>
 
               <div className="oy-stat pf-stat--amarillo">
-                <span className="oy-stat__label">Garantía Digital</span>
+                <span className="oy-stat__label">Pagos</span>
                 <span className="pf-stat__guarantee">
-                  <ShieldCheck size={18} aria-hidden="true" /> 100% Protegida
+                  <ShieldCheck size={18} aria-hidden="true" /> Directo, 0 % comisión
                 </span>
               </div>
             </div>

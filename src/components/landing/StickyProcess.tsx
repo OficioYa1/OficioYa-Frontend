@@ -23,7 +23,7 @@ const STEPS: StepData[] = [
     title: 'Describís la necesidad o avería',
     desc: 'Indicas tu localidad en Bogotá o activas tu GPS. Many calcula automáticamente qué profesionales verificados están activos y disponibles a menos de 2 km.',
     detail: 'Respuesta estimada < 20 minutos',
-    icon: <MapPin size={24} color="var(--color-brand-primary, #E65100)" />
+    icon: <MapPin size={24} color="var(--color-brand-primary, var(--color-action-strong))" />
   },
   {
     number: '02',
@@ -165,7 +165,7 @@ export const StickyProcess: React.FC<StickyProcessProps> = ({ onStart }) => {
                       fontFamily: 'var(--font-text)',
                       fontWeight: 700,
                       fontSize: '0.8125rem',
-                      color: 'var(--color-brand-primary, #E65100)',
+                      color: 'var(--color-brand-primary, var(--color-action-strong))',
                       cursor: 'pointer'
                     }}
                   >
