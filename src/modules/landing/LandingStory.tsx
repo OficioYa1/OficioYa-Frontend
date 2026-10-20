@@ -176,39 +176,39 @@ export function TradeReputation({ onExplore }: { onExplore: () => void }) {
   );
 }
 
-/* ── Comparador: WhatsApp en neutro, nunca en rojo ── */
+/* ── Comparador: Métodos tradicionales vs OficioYa ── */
 const COMPARE: [string, string, string][] = [
-  ['¿Sabes quién es?', 'Depende de quién responda', 'Perfil con oficio, zona y sello de identidad'],
-  ['¿Ves trabajos anteriores?', 'Casi nunca', 'Fotos de trabajos en su perfil'],
-  ['¿Las reseñas son reales?', 'No hay reseñas', 'Solo de clientes con un servicio completado'],
-  ['¿Sabes qué tan cerca está?', 'No', 'Distancia real desde tu zona'],
-  ['¿Cuánto cuesta usarlo?', 'Gratis', 'Gratis, 0 % de comisión'],
+  ['¿Sabes quién entra a tu casa?', 'Dependes de la suerte o de un contacto informal', 'Perfil con oficio, zona y cédula verificada'],
+  ['¿Ves trabajos anteriores?', 'Rara vez hay fotos o evidencias previas', 'Portafolio real con fotos de obras terminadas'],
+  ['¿Las reseñas son comprobables?', 'No hay opiniones o son de dudosa procedencia', 'Solo de clientes con un servicio completado'],
+  ['¿Sabes la distancia exacta?', 'No sabes desde dónde se desplaza el técnico', 'Cálculo hiperlocal y distancia real desde tu barrio'],
+  ['¿Cobro transparente?', 'Tarifas sorpresa y regateo informal', 'Precios acordados por chat directo y 0 % comisiones'],
 ];
 
 export function Comparison() {
-  const [side, setSide] = useState<'whatsapp' | 'oficioya'>('oficioya');
+  const [side, setSide] = useState<'traditional' | 'oficioya'>('oficioya');
   return (
     <section className="ls-section ls-compare" aria-labelledby="ls-compare-title">
       <div className="lp-wrap">
         <span className="ls-kicker">La diferencia</span>
-        <h2 id="ls-compare-title" className="oy-display ls-title">Buscar a ciegas en WhatsApp o contratar con OficioYa.</h2>
+        <h2 id="ls-compare-title" className="oy-display ls-title">Buscar a ciegas por tu cuenta o contratar con confianza en OficioYa.</h2>
         <div className="ls-compare__switch" role="group" aria-label="Columna visible en el celular">
-          <button type="button" aria-pressed={side === 'whatsapp'} onClick={() => setSide('whatsapp')}>Grupos de WhatsApp</button>
+          <button type="button" aria-pressed={side === 'traditional'} onClick={() => setSide('traditional')}>Métodos tradicionales</button>
           <button type="button" aria-pressed={side === 'oficioya'} onClick={() => setSide('oficioya')}>OficioYa</button>
         </div>
         <table className="ls-compare__table" data-side={side}>
           <thead>
             <tr>
               <th scope="col"><span className="ls-sr-only">Pregunta</span></th>
-              <th scope="col" className="ls-col-wa">Grupos de WhatsApp</th>
+              <th scope="col" className="ls-col-wa">Métodos tradicionales (postes, voz a voz)</th>
               <th scope="col" className="ls-col-oy">OficioYa</th>
             </tr>
           </thead>
           <tbody>
-            {COMPARE.map(([q, wa, oy]) => (
+            {COMPARE.map(([q, trad, oy]) => (
               <tr key={q}>
                 <th scope="row">{q}</th>
-                <td className="ls-col-wa"><Minus size={16} aria-hidden="true" /> {wa}</td>
+                <td className="ls-col-wa"><Minus size={16} aria-hidden="true" /> {trad}</td>
                 <td className="ls-col-oy"><Check size={16} aria-hidden="true" /> {oy}</td>
               </tr>
             ))}

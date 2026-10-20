@@ -5,7 +5,8 @@ import {
   ArrowRight, Tv2, BookOpen,
   Plus, Minus, Quote,
   LogIn, Search, HelpCircle, Briefcase, ChevronDown, Menu, X,
-  Star, CheckCircle2
+  Star, CheckCircle2,
+  Laptop, Home, Dog, Sparkles, Trees, Hammer
 } from 'lucide-react';
 import './LandingPage.css';
 import './LandingSticker.css';
@@ -15,11 +16,31 @@ import { BRAND_ASSETS } from '../../utils/assets';
 import { PixelSwap } from '../../components/ui/PixelSwap';
 import { StrokeText, BorderGlow, DriftWall, RollingText } from '../../components/ui';
 import type { DriftWallItem } from '../../components/ui';
-import { HeroVideo, TrailerDialog, HowItWorks, TradeReputation, Comparison, EarningsCalculator, ProImage } from './LandingStory';
+import { HeroVideo, TrailerDialog, HowItWorks, TradeReputation, Comparison, EarningsCalculator } from './LandingStory';
 import { INITIAL_WORKERS } from '../../services/mockData';
-import { ScrollToTop } from '../../components/common/ScrollToTop';
+import { SkillsTrain } from '../../components/landing/SkillsTrain';
+import { FloatingSupport } from '../../components/common/FloatingSupport';
+import { LivePulseTicker } from '../../components/landing/LivePulseTicker';
 
 const PlasmaWarp = React.lazy(() => import('../../components/background/PlasmaWarp'));
+
+const getManyTradeImage = (tradeKey: string): string => {
+  switch (tradeKey) {
+    case 'electricidad': return BRAND_ASSETS.manyElectricista;
+    case 'plomeria': return BRAND_ASSETS.manyPlomero;
+    case 'cerrajeria': return BRAND_ASSETS.manyCerrajero;
+    case 'pintura': return BRAND_ASSETS.manyPintura;
+    case 'electrodomesticos': return BRAND_ASSETS.manyElectrodomesticos;
+    case 'computacion': return BRAND_ASSETS.manyTecnologia;
+    case 'hogar': return BRAND_ASSETS.manyHogar;
+    case 'mascotas': return BRAND_ASSETS.manyMascotas;
+    case 'aseo': return BRAND_ASSETS.manyAseo;
+    case 'jardineria': return BRAND_ASSETS.manyJardinero;
+    case 'albanileria': return BRAND_ASSETS.manyAlbanileria;
+    case 'clases': return BRAND_ASSETS.manyClases;
+    default: return BRAND_ASSETS.manyWave;
+  }
+};
 
 // Historias de ejemplo de la demo: sin fotos de stock que se hagan pasar por clientes
 const TESTIMONIALS = [
@@ -47,7 +68,8 @@ const TESTIMONIALS = [
 ];
 
 interface LandingPageProps {
-  onEnterApp: (role?: 'seeker' | 'provider') => void;
+  onEnterApp: (role?: 'seeker' | 'provider', category?: TradeCategory) => void;
+  onLogin?: () => void;
   onOpenContact?: () => void;
 }
 
@@ -57,12 +79,18 @@ interface TradeOption {
 }
 
 const TRADES: TradeOption[] = [
-  { key: 'electricidad',    label: 'Electricidad',    icon: <Zap size={15} />,        tagline: 'Instalaciones eléctricas, cableado y circuitos seguros.' },
-  { key: 'plomeria',        label: 'Plomería',        icon: <Wrench size={15} />,      tagline: 'Destapes, fugas y redes hidráulicas en tu barrio.' },
-  { key: 'pintura',         label: 'Pintura',         icon: <PaintBucket size={15} />, tagline: 'Acabados finos y pintura arquitectónica para tu hogar.' },
-  { key: 'cerrajeria',      label: 'Cerrajería',      icon: <KeyRound size={15} />,    tagline: 'Aperturas de emergencia 24 horas, sin daño a tus cerraduras.' },
-  { key: 'electrodomesticos', label: 'Electrodomésticos', icon: <Tv2 size={15} />,    tagline: 'Reparación de lavadoras, neveras y aires acondicionados.' },
-  { key: 'clases',          label: 'Clases',          icon: <BookOpen size={15} />,    tagline: 'Profesores particulares verificados para todas las materias.' },
+  { key: 'electricidad',      label: 'Electricidad',          icon: <Zap size={15} />,        tagline: 'Instalaciones eléctricas, cableado y circuitos seguros.' },
+  { key: 'plomeria',          label: 'Plomería',              icon: <Wrench size={15} />,      tagline: 'Destapes, fugas y redes hidráulicas en tu barrio.' },
+  { key: 'pintura',           label: 'Pintura',               icon: <PaintBucket size={15} />, tagline: 'Acabados finos y pintura arquitectónica para tu hogar.' },
+  { key: 'cerrajeria',        label: 'Cerrajería',            icon: <KeyRound size={15} />,    tagline: 'Aperturas de emergencia 24 horas, sin daño a tus cerraduras.' },
+  { key: 'electrodomesticos', label: 'Electrodomésticos',     icon: <Tv2 size={15} />,        tagline: 'Reparación de lavadoras, neveras y aires acondicionados.' },
+  { key: 'computacion',       label: 'Computación',           icon: <Laptop size={15} />,     tagline: 'Soporte técnico, redes Wi-Fi y mantenimiento de equipos.' },
+  { key: 'hogar',             label: 'Hogar & Reparaciones',  icon: <Home size={15} />,       tagline: 'Instalaciones, armado de muebles y reparaciones generales.' },
+  { key: 'mascotas',          label: 'Mascotas',              icon: <Dog size={15} />,        tagline: 'Peluquería canina a domicilio, paseos y cuidados expertos.' },
+  { key: 'aseo',              label: 'Aseo & Limpieza',       icon: <Sparkles size={15} />,   tagline: 'Limpieza profunda, desinfección pos-mudanza y lavado a vapor.' },
+  { key: 'jardineria',        label: 'Jardinería',            icon: <Trees size={15} />,      tagline: 'Corte de césped, poda de árboles y mantenimiento de jardines.' },
+  { key: 'albanileria',       label: 'Albañilería',           icon: <Hammer size={15} />,     tagline: 'Enchapes, pañetes, drywall y remodelaciones en tu hogar.' },
+  { key: 'clases',            label: 'Clases Particulares',   icon: <BookOpen size={15} />,   tagline: 'Profesores particulares verificados para todas las materias.' },
 ];
 
 
@@ -147,7 +175,7 @@ function ManySwap({ src, alt, imgClassName, onClick }: { src: string; alt: strin
       secondContent={face(faces[1])}
       active={front}
       trigger="manual"
-      aspectRatio="1 / 1"
+      aspectRatio="16 / 10"
       pattern="bottom-to-top"
       randomness={0.35}
       pixelSize={22}
@@ -177,7 +205,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenContact }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onLogin, onOpenContact }) => {
   const [selectedTrade, setSelectedTrade] = useState<TradeCategory>('electricidad');
   const [manyAnimate, setManyAnimate] = useState<'float' | 'wave'>('float');
   const [heroVisible, setHeroVisible] = useState(false);
@@ -193,7 +221,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
     return () => clearTimeout(t);
   }, []);
 
-  const handleStartAsSeeker   = () => onEnterApp('seeker');
+  const handleStartAsSeeker = (trade?: TradeCategory | unknown) => {
+    let cat: TradeCategory | undefined = undefined;
+    if (typeof trade === 'string' && trade) {
+      cat = trade as TradeCategory;
+    } else if (trade && typeof trade === 'object' && 'title' in trade) {
+      const title = String((trade as any).title || '').toLowerCase();
+      const matched = TRADES.find(t => title.includes(t.key) || title.includes(t.label.toLowerCase()));
+      if (matched) cat = matched.key;
+    }
+    onEnterApp('seeker', cat);
+  };
   const handleStartAsProvider = () => onEnterApp('provider');
 
   const handleTradeSelect = (trade: TradeCategory) => {
@@ -202,7 +240,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
     setTimeout(() => setManyAnimate('float'), 800);
   };
   const triggerWave = () => { setManyAnimate('wave'); setTimeout(() => setManyAnimate('float'), 800); };
-  const currentTrade = TRADES.find(t => t.key === selectedTrade)!;
+  const currentTrade = TRADES.find(t => t.key === selectedTrade) ?? TRADES[0];
 
   return (
     <div className="lp-root">
@@ -227,7 +265,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
             <img src={BRAND_ASSETS.logo} alt="OficioYa" className="lp-brand-logo" />
             <div>
               <span className="lp-brand-name">Oficio<span className="lp-brand-ya">Ya</span></span>
-              <span className="lp-brand-tagline">Directorio Inteligente</span>
+              <span className="lp-brand-tagline">Directorio de Trabajo Inteligente</span>
             </div>
           </div>
 
@@ -280,7 +318,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
                         onClick={() => {
                           setSelectedTrade(trade.key);
                           setMobileNavOpen(false);
-                          handleStartAsSeeker();
+                          handleStartAsSeeker(trade.key);
                         }}
                       >
                         <span className="lp-liquid-menu__icon-box">
@@ -330,7 +368,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
               type="button"
               onClick={() => {
                 setMobileNavOpen(false);
-                handleStartAsSeeker();
+                if (onLogin) {
+                  onLogin();
+                } else {
+                  handleStartAsSeeker();
+                }
               }}
               className="lp-btn-liquid-3d"
               data-cursor-text="Iniciar Sesion"
@@ -382,18 +424,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
         </div>
       </section>
 
+      {/* ── TICKER DE ACTIVIDAD HIPERLOCAL EN VIVO ("El Pulso de Bogotá") ── */}
+      <LivePulseTicker onSelectTrade={(trade) => handleStartAsSeeker(trade as TradeCategory)} />
+
       <HowItWorks />
 
       {/* ── ¿QUÉ SE DAÑÓ? Many cambia de traje según el oficio ── */}
       <section className="lp-trades-pick" aria-labelledby="lp-trades-title">
         <div className="lp-wrap lp-trades-pick__grid">
           <div className="lp-hero-many">
-            <ManySwap
-              src={selectedTrade === 'plomeria' ? BRAND_ASSETS.manyPlomero : selectedTrade === 'electricidad' ? BRAND_ASSETS.manyElectricista : BRAND_ASSETS.manyWave}
-              alt={selectedTrade === 'plomeria' ? 'Many plomero' : selectedTrade === 'electricidad' ? 'Many electricista' : 'Many saludando'}
-              imgClassName={`lp-many-hero-img ${manyAnimate === 'wave' ? 'lp-many-waving' : ''}`}
-              onClick={triggerWave}
-            />
+            <div className="lp-many-frame">
+              <ManySwap
+                src={getManyTradeImage(selectedTrade)}
+                alt={`Many en oficio de ${currentTrade.label.toLowerCase()}`}
+                imgClassName={`lp-many-hero-img ${manyAnimate === 'wave' ? 'lp-many-waving' : ''}`}
+                onClick={triggerWave}
+              />
+              <div className="lp-many-frame-badge">
+                <span className="lp-many-frame-badge__dot" />
+                <span>Many · {currentTrade.label}</span>
+              </div>
+            </div>
           </div>
           <div>
             <span className="ls-kicker">¿Qué se dañó?</span>
@@ -411,14 +462,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
               ))}
             </div>
             <p className="lp-hero-tagline" aria-live="polite">{currentTrade.tagline}</p>
-            <button type="button" className="ls-link-btn" onClick={handleStartAsSeeker}>
+            <button type="button" className="ls-link-btn" onClick={() => handleStartAsSeeker(selectedTrade)}>
               Ver profesionales de {currentTrade.label.toLowerCase()}
             </button>
           </div>
         </div>
       </section>
 
-      <TradeReputation onExplore={handleStartAsSeeker} />
+      {/* ── CARAVANA / TREN DE OFICIOS (Inspirado en ollivere.webflow.io) ── */}
+      <SkillsTrain onSelectTrade={(trade) => handleStartAsSeeker(trade as TradeCategory)} />
+
+      <TradeReputation onExplore={() => handleStartAsSeeker(selectedTrade)} />
 
       {/* ── TRABAJOS REALES: muro de portafolio ── */}
       <section className="lp-work" aria-labelledby="lp-work-title">
@@ -433,6 +487,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
           <div className="lp-work-wall">
             <DriftWall
               items={PORTFOLIO}
+              columns={5}
+              tileWidth={260}
+              tileHeight={180}
               ariaLabel="Fotos de trabajos realizados"
               onItemClick={handleStartAsSeeker}
             />
@@ -478,30 +535,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* ── FAQ DESPLEGABLE ── */}
-      <section id="faq-section" ref={faqRef} className="lp-faq">
-        <div className="lp-wrap lp-faq-wrap">
-          <span className="lp-sticker lp-sticker--amarillo lp-sticker--pill">Preguntas frecuentes</span>
-          <h2 className="oy-display lp-faq-title">
-            <StrokeText text="Todo lo que" tone="cacao" trigger="scroll" fontSize={64} />{' '}
-            <StrokeText text="necesitas saber." tone="cacao" trigger="scroll" fontSize={64} />
-          </h2>
-
-          <div className={`lp-faq-list ${faqVisible ? 'lp-faq-list--in' : ''}`}>
-            {FAQS.map((faq, i) => (
-              <FaqItem key={i} q={faq.q} a={faq.a} />
-            ))}
-          </div>
-
-          <p className="lp-faq-more">
-            ¿Tienes otra pregunta?{' '}
-            <button type="button" className="lp-faq-link" onClick={handleStartAsSeeker}>
-              Contáctanos desde la app
-            </button>
-          </p>
         </div>
       </section>
 
@@ -559,11 +592,32 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
                   Sin tarjeta de crédito
                 </span>
               </div>
-              <div className="lp-cta-pro-img">
-                <ProImage />
-              </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ── FAQ DESPLEGABLE (Última sección antes del footer) ── */}
+      <section id="faq-section" ref={faqRef} className="lp-faq">
+        <div className="lp-wrap lp-faq-wrap">
+          <span className="lp-sticker lp-sticker--amarillo lp-sticker--pill">Preguntas frecuentes</span>
+          <h2 className="oy-display lp-faq-title">
+            <StrokeText text="Todo lo que" tone="cacao" trigger="scroll" fontSize={64} />{' '}
+            <StrokeText text="necesitas saber." tone="cacao" trigger="scroll" fontSize={64} />
+          </h2>
+
+          <div className={`lp-faq-list ${faqVisible ? 'lp-faq-list--in' : ''}`}>
+            {FAQS.map((faq, i) => (
+              <FaqItem key={i} q={faq.q} a={faq.a} />
+            ))}
+          </div>
+
+          <p className="lp-faq-more">
+            ¿Tienes otra pregunta?{' '}
+            <button type="button" className="lp-faq-link" onClick={handleStartAsSeeker}>
+              Contáctanos desde la app
+            </button>
+          </p>
         </div>
       </section>
 
@@ -572,8 +626,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenCont
       {/* ── FOOTER ── */}
       <AppFooter onOpenContact={onOpenContact} />
 
-      {/* Botón Flotante para Volver Arriba (Item 7) */}
-      <ScrollToTop />
+      {/* Asistente Flotante de Soporte ("¿Necesitas una mano?") */}
+      <FloatingSupport
+        onStartSeeker={handleStartAsSeeker}
+        onOpenContact={onOpenContact}
+        onSelectTrade={(trade) => handleTradeSelect(trade as any)}
+      />
     </div>
   );
 };

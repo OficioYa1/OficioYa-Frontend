@@ -19,7 +19,7 @@ interface ShowcaseItem {
 const SHOWCASE_ITEMS: ShowcaseItem[] = [
   {
     index: '01.',
-    name: 'Don Carlos Restrepo',
+    name: 'Don Carlos Mendoza',
     trade: 'Plomería & Redes',
     zone: 'Cedritos · Bogotá',
     rating: 4.9,
